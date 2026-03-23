@@ -1,21 +1,40 @@
-infographic sequence-steps-badge-card
+infographic relation-dagre-flow-lr-compact-card
 data
   title Target-host deploy loop
-  desc Local preview, remote execution, and fetched evidence stay inside one operator flow.
-  sequences
-    - label package
-      desc ran.package_bootstrap
-    - label preview
+  desc Preview locally, execute remotely, and fetch evidence back into the same operator loop.
+  nodes
+    - id package
+      label package bundle
+      desc mix ran.package_bootstrap
+    - id preview
+      label preview
       desc ran-install or Deploy Studio
-    - label ship
-      desc bundle plus rendered files
-    - label preflight
-      desc host probe and readiness
-    - label remote ranctl
-      desc plan, apply, verify
-    - label fetchback
-      desc remote runs and debug packs
-  order asc
+    - id readiness
+      label readiness
+      desc Profile, effective config, blockers
+    - id ship
+      label ship bundle
+      desc Bundle plus rendered files
+    - id preflight
+      label remote preflight
+      desc Host probe and native readiness
+    - id remote
+      label remote ranctl
+      desc Precheck, plan, apply, verify
+    - id fetch
+      label fetchback
+      desc Remote runs and debug packs
+    - id dashboard
+      label dashboard
+      desc Deploy Studio and Debug Desk
+  relations
+    package -> preview
+    preview -> readiness
+    readiness -> ship
+    ship -> preflight
+    preflight -> remote
+    remote -> fetch
+    fetch -> dashboard
 theme
   palette #92400e #d97706 #0f766e #1d4ed8 #334155 #7c2d12
   base

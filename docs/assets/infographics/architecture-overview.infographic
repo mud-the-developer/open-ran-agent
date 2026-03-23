@@ -1,19 +1,41 @@
-infographic sequence-steps-badge-card
+infographic relation-dagre-flow-tb-compact-card
 data
   title Open RAN Agent at a glance
-  desc Deterministic operator flow from surface ownership to backend runtime.
-  sequences
-    - label Operator surface
-      desc Dashboard, skills, CI
-    - label bin/ranctl
-      desc Single mutating entrypoint
-    - label BEAM umbrella
-      desc Policy, DU high, scheduler, FAPI
-    - label Native boundary
-      desc Port gateway and backend adapters
-    - label Backend runtime
+  desc Operator surface, BEAM control ownership, native boundary, and evidence loop.
+  nodes
+    - id ops
+      label Operator surface
+      desc Dashboard, skills, local CI
+    - id ranctl
+      label bin/ranctl
+      desc Single mutable action entrypoint
+    - id core
+      label ran_core and ran_config
+      desc Policy, topology, observability
+    - id du
+      label DU path
+      desc ran_du_high plus scheduler host
+    - id fapi
+      label ran_fapi_core
+      desc Canonical IR and capability checks
+    - id native
+      label Native boundary
+      desc fapi_rt_gateway and adapters
+    - id runtime
+      label Backend runtime
       desc DU low, fronthaul, vendor workers
-  order asc
+    - id evidence
+      label Artifacts and evidence
+      desc Plans, captures, remote runs
+  relations
+    ops -> ranctl
+    ranctl -> core
+    ranctl -> du
+    du -> fapi
+    fapi -> native
+    native -> runtime
+    ranctl -> evidence
+    core -> evidence
 theme
   palette #0f766e #1d4ed8 #0f172a #ea580c #475569
   base
