@@ -1,0 +1,48 @@
+infographic sequence-interaction-wide-compact-card
+data
+  title Target-host deploy lanes
+  desc Local preview, remote execution, and fetched evidence stay in one operator loop.
+  sequences
+    - label Local operator
+      children
+        - id package
+          label package bundle
+          step 0
+        - id preview
+          label preview
+          step 1
+        - id readiness
+          label readiness
+          step 2
+        - id ship
+          label ship bundle
+          step 3
+    - label Remote host
+      children
+        - id preflight
+          label remote preflight
+          step 4
+        - id remote
+          label remote ranctl
+          step 5
+    - label Evidence loop
+      children
+        - id fetch
+          label fetchback
+          step 6
+        - id dashboard
+          label dashboard
+          step 7
+  relations
+    package -> preview
+    preview -> readiness
+    readiness -> ship
+    ship -> preflight
+    preflight -> remote
+    remote -> fetch
+    fetch -> dashboard
+theme
+  palette #92400e #d97706 #0f766e #1d4ed8 #334155 #7c2d12
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

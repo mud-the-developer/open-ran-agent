@@ -1,31 +1,31 @@
-infographic relation-dagre-flow-tb-compact-card
+infographic relation-dagre-flow-lr-badge-card
 data
-  title Open RAN Agent at a glance
-  desc Operator surface, BEAM control ownership, native boundary, and evidence loop.
+  title Open RAN Agent architecture
+  desc Operator surface, BEAM control lanes, native gateway, and evidence capture.
   nodes
     - id ops
       label Operator surface
       desc Dashboard, skills, CI
     - id ranctl
       label bin/ranctl
-      desc Single mutable action entrypoint
+      desc Single mutable entrypoint
     - id core
       label ran_core / ran_config
-      desc Policy, topology, observability
+      desc Policy and topology
     - id du
       label DU path
-      desc ran_du_high plus scheduler host
+      desc DU-high and scheduler host
     - id fapi
       label ran_fapi_core
-      desc Canonical IR and capability checks
+      desc IR and capability checks
     - id native
       label Native boundary
-      desc fapi_rt_gateway and adapters
+      desc Port gateway and adapters
     - id runtime
       label Backend runtime
-      desc DU low, fronthaul, vendor workers
+      desc DU-low and vendor workers
     - id evidence
-      label Artifacts and evidence
+      label Artifacts / evidence
       desc Plans, captures, remote runs
   relations
     ops -> ranctl
@@ -37,7 +37,7 @@ data
     ranctl -> evidence
     core -> evidence
 theme
-  palette #0f766e #1d4ed8 #0f172a #ea580c #475569
+  palette #115e59 #1d4ed8 #0f172a #d97706 #475569
   base
     text
       font-family Arial, Helvetica, sans-serif

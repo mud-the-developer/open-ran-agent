@@ -1,7 +1,7 @@
-infographic relation-dagre-flow-tb-badge-card
+infographic relation-dagre-flow-lr-compact-card
 data
   title Target-host deploy loop
-  desc Preview locally, execute remotely, and pull evidence back into the same operator loop.
+  desc Preview locally, execute remotely, and fetch evidence back into the same operator loop.
   nodes
     - id package
       label package bundle
@@ -11,13 +11,13 @@ data
       desc ran-install or Deploy Studio
     - id readiness
       label readiness
-      desc Profile, effective config
+      desc Profile, effective config, blockers
     - id ship
       label ship bundle
       desc Bundle plus rendered files
     - id preflight
       label remote preflight
-      desc Host probe and readiness
+      desc Host probe and native readiness
     - id remote
       label remote ranctl
       desc Precheck, plan, apply, verify

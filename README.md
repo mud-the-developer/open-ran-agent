@@ -25,7 +25,7 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 
 ## Architecture at a glance
 
-![Open RAN Agent architecture overview](docs/assets/figures/architecture-overview.png)
+![Open RAN Agent architecture overview](docs/assets/figures/architecture-overview.svg)
 
 <sub>Figure source: [docs/assets/infographics/architecture-overview.infographic](docs/assets/infographics/architecture-overview.infographic)</sub>
 
@@ -95,7 +95,7 @@ Read ADRs in order under [docs/adr](docs/adr). Use [AGENTS.md](AGENTS.md) for pe
 
 ### 2) Try the control surface
 
-![ranctl lifecycle](docs/assets/figures/ranctl-lifecycle.png)
+![ranctl lifecycle](docs/assets/figures/ranctl-lifecycle.svg)
 
 <sub>Figure source: [docs/assets/infographics/ranctl-lifecycle.infographic](docs/assets/infographics/ranctl-lifecycle.infographic)</sub>
 
@@ -207,7 +207,7 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 
 ## Advanced workflows
 
-![Target-host deploy and evidence loop](docs/assets/figures/target-host-deploy.png)
+![Target-host deploy and evidence loop](docs/assets/figures/target-host-deploy.svg)
 
 <sub>Figure source: [docs/assets/infographics/target-host-deploy.infographic](docs/assets/infographics/target-host-deploy.infographic)</sub>
 

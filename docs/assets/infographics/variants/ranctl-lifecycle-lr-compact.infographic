@@ -1,7 +1,7 @@
-infographic relation-dagre-flow-tb-badge-card
+infographic relation-dagre-flow-lr-compact-card
 data
   title ranctl lifecycle
-  desc The operator path stays explicit and verify can branch toward observe or rollback evidence.
+  desc Evidence stays explicit and verify can branch to steady state or rollback.
   nodes
     - id precheck
       label precheck
@@ -14,19 +14,19 @@ data
       desc Explicit operator gate
     - id apply
       label apply
-      desc Mutate runtime and persist
+      desc Mutate runtime and persist state
     - id verify
       label verify
-      desc Health and signatures
+      desc Health checks and signatures
     - id observe
       label observe
-      desc Steady-state surface
+      desc Steady state dashboard surface
     - id capture
       label capture-artifacts
-      desc Logs, config, evidence
+      desc Logs, config, and evidence bundle
     - id rollback
       label rollback
-      desc Restore target and recheck
+      desc Restore target then verify again
   relations
     precheck -> plan
     plan -> approval

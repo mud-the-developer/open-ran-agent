@@ -1,0 +1,46 @@
+infographic sequence-interaction-compact-compact-card
+data
+  title ranctl lifecycle lanes
+  desc Control and evidence stay explicit from precheck through rollback.
+  sequences
+    - label Control path
+      children
+        - id precheck
+          label precheck
+          step 0
+        - id plan
+          label plan
+          step 1
+        - id approval
+          label approval
+          step 2
+        - id apply
+          label apply
+          step 3
+        - id verify
+          label verify
+          step 4
+        - id observe
+          label observe
+          step 5
+    - label Evidence and fallback
+      children
+        - id capture
+          label capture-artifacts
+          step 5
+        - id rollback
+          label rollback
+          step 6
+  relations
+    precheck -> plan
+    plan -> approval
+    approval -> apply
+    apply -> verify
+    verify -> observe
+    verify -> capture
+    capture -> rollback
+theme
+  palette #15803d #1d4ed8 #d97706 #ea580c #7c3aed #dc2626
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

@@ -1,0 +1,53 @@
+infographic sequence-interaction-wide-compact-card
+data
+  title Open RAN Agent architecture lanes
+  desc One operator action fans out through BEAM control, native adapters, runtime work, and evidence.
+  sequences
+    - label Operator surface
+      children
+        - id ops
+          label Dashboard / skills
+          step 0
+        - id ranctl
+          label bin/ranctl
+          step 1
+    - label BEAM control
+      children
+        - id core
+          label ran_core / ran_config
+          step 2
+        - id du
+          label DU path
+          step 3
+        - id fapi
+          label ran_fapi_core
+          step 4
+    - label Native boundary
+      children
+        - id native
+          label Port gateway
+          step 5
+    - label Backend runtime
+      children
+        - id runtime
+          label DU-low and vendor workers
+          step 6
+    - label Evidence loop
+      children
+        - id evidence
+          label Plans, captures, remote runs
+          step 6
+  relations
+    ops -> ranctl
+    ranctl -> core
+    ranctl -> du
+    du -> fapi
+    fapi -> native
+    native -> runtime
+    ranctl -> evidence
+    core -> evidence
+theme
+  palette #115e59 #1d4ed8 #0f172a #d97706 #475569
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

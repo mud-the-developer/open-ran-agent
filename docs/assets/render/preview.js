@@ -8,7 +8,13 @@ const figures = [
 
 const params = new URLSearchParams(window.location.search);
 const figure = figures.includes(params.get("figure")) ? params.get("figure") : figures[0];
-const sourcePath = `../infographics/${figure}.infographic`;
+const sourceOverride = params.get("source");
+const safeOverride = typeof sourceOverride === "string" &&
+  sourceOverride.startsWith("../") &&
+  sourceOverride.endsWith(".infographic")
+  ? sourceOverride
+  : null;
+const sourcePath = safeOverride || `../infographics/${figure}.infographic`;
 
 const nav = document.getElementById("figure-nav");
 const sourcePathNode = document.getElementById("source-path");
@@ -19,7 +25,7 @@ for (const name of figures) {
   const link = document.createElement("a");
   link.href = `?figure=${name}`;
   link.textContent = name;
-  if (name === figure) link.className = "active";
+  if (!safeOverride && name === figure) link.className = "active";
   nav.appendChild(link);
 }
 
