@@ -18,22 +18,9 @@ This path is for contract validation and tests only. It is not a live RT gateway
 
 ## Layering
 
-```text
-ran_du_high
-   |
-   v
-ran_scheduler_host
-   |
-   v
-ran_fapi_core  -> canonical IR and backend profile negotiation
-   |
-   v
-fapi_rt_gateway (Port sidecar)
-   |
-   +-- local_fapi_profile
-   +-- aerial_fapi_profile
-   `-- stub_fapi_profile
-```
+![DU-high southbound layering](../assets/figures/architecture/04-du-high-southbound-contract.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/04-du-high-southbound-contract.infographic](../assets/infographics/architecture/04-du-high-southbound-contract.infographic)</sub>
 
 ## Canonical IR
 

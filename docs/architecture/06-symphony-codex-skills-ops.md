@@ -6,56 +6,15 @@ Operations automation is allowed to decide and orchestrate, but not to own live 
 
 ## Flow
 
-```text
-incident or request
-        |
-        v
-Symphony workflow
-        |
-        v
-Codex reasoning
-        |
-        v
-skill selection
-        |
-        v
-bin/ranctl <command>
-        |
-        +--> plan / approval / apply / verify / rollback
-        |
-        `--> artifacts / observability
-```
+![Symphony, Codex, skills, and ops](../assets/figures/architecture/06-ops-flow.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/06-ops-flow.infographic](../assets/infographics/architecture/06-ops-flow.infographic)</sub>
 
 ## Backend Switch And Rollback Flow
 
-```text
-request switch to target backend
-          |
-          v
-      ranctl precheck
-          |
-          v
-        ranctl plan -----> save rollback target and verify window
-          |
-          v
-      explicit approval
-          |
-          v
-        ranctl apply
-          |
-          v
-       ranctl verify
-       /           \
-      /pass         \fail
-     v               v
- target active   capture artifacts
-                     |
-                     v
-                ranctl rollback
-                     |
-                     v
-                 ranctl verify
-```
+![Backend switch and rollback flow](../assets/figures/architecture/06-backend-switch-and-rollback.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/06-backend-switch-and-rollback.infographic](../assets/infographics/architecture/06-backend-switch-and-rollback.infographic)</sub>
 
 ## Responsibilities
 

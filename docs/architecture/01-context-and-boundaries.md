@@ -2,35 +2,9 @@
 
 ## External Context
 
-```text
-                        +----------------------+
-                        | Operations engineer  |
-                        +----------+-----------+
-                                   |
-                                   v
-                   +---------------+---------------+
-                   | Symphony / Codex / skills     |
-                   +---------------+---------------+
-                                   |
-                                   v
-+----------+   +-------------------+-------------------+   +----------+
-| 5G Core  +-->| CU-CP / CU-UP / DU-high BEAM services +-->| Artifacts|
-+----------+   +-------------------+-------------------+   +----------+
-                                   |
-                                   v
-                       +-----------+-----------+
-                       | fapi_rt_gateway       |
-                       | native Port sidecar   |
-                       +-----------+-----------+
-                                   |
-               +-------------------+-------------------+
-               |                                       |
-               v                                       v
-        local_du_low adapter                    aerial adapter
-               |                                       |
-               v                                       v
-          RU-side low-PHY                          future Aerial stack
-```
+![External context and boundaries](../assets/figures/architecture/01-context-and-boundaries.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/01-context-and-boundaries.infographic](../assets/infographics/architecture/01-context-and-boundaries.infographic)</sub>
 
 ## Boundary Rules
 

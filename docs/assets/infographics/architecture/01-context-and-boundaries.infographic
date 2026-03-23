@@ -1,0 +1,50 @@
+infographic relation-dagre-flow-tb-badge-card
+data
+  title External context and boundaries
+  desc Operator orchestration stays above BEAM services, while southbound runtime crosses a strict native boundary.
+  nodes
+    - id engineer
+      label Operations engineer
+      desc Human operator
+    - id ops
+      label Symphony / Codex / skills
+      desc Workflow and reasoning layer
+    - id core
+      label 5G Core
+      desc External core network
+    - id beam
+      label CU-CP / CU-UP / DU-high
+      desc BEAM services
+    - id artifacts
+      label Artifacts
+      desc Evidence and captured outputs
+    - id gateway
+      label fapi_rt_gateway
+      desc Native Port sidecar
+    - id local_adapter
+      label local_du_low adapter
+      desc Repository-owned local profile
+    - id aerial_adapter
+      label aerial adapter
+      desc Future vendor-facing profile
+    - id lowphy
+      label RU-side low-PHY
+      desc External low-PHY path
+    - id aerial_stack
+      label Future Aerial stack
+      desc Deferred vendor runtime
+  relations
+    engineer -> ops
+    ops -> beam
+    core -> beam
+    beam -> artifacts
+    beam -> gateway
+    gateway -> local_adapter
+    gateway -> aerial_adapter
+    local_adapter -> lowphy
+    aerial_adapter -> aerial_stack
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #7c3aed
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

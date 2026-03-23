@@ -6,17 +6,9 @@
 
 ## Lifecycle
 
-```text
-request
-  -> precheck
-  -> plan
-  -> apply
-  -> verify
-  -> success
-      or
-     rollback
-  -> capture-artifacts
-```
+![ranctl lifecycle](../assets/figures/ranctl-lifecycle.svg)
+
+<sub>Figure source: [../assets/infographics/ranctl-lifecycle.infographic](../assets/infographics/ranctl-lifecycle.infographic)</sub>
 
 ## Core Object Model
 

@@ -14,23 +14,9 @@ Failures must be isolated so a restart or rollback can be scoped to the smallest
 
 ## Failure Domain Diagram
 
-```text
- node
- |
- +-- association
- |   `-- association session workers
- |
- +-- cell_group:cg-001
- |   +-- ue_subtree:ue-1
- |   +-- scheduler_session
- |   `-- fapi_session
- |
- +-- backend_gateway:local
- |   `-- native sidecar process
- |
- `-- change:chg-20260320-001
-     `-- verify / rollback workers
-```
+![Failure domain diagram](../assets/figures/architecture/03-failure-domains.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/03-failure-domains.infographic](../assets/infographics/architecture/03-failure-domains.infographic)</sub>
 
 ## Isolation Policy
 

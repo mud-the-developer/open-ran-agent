@@ -1,0 +1,38 @@
+infographic relation-dagre-flow-tb-badge-card
+data
+  title DU-high southbound layering
+  desc DU-high stays scheduler-agnostic and only speaks canonical IR through the gateway boundary.
+  nodes
+    - id du
+      label ran_du_high
+      desc DU-high orchestration
+    - id scheduler
+      label ran_scheduler_host
+      desc Scheduler boundary
+    - id fapi
+      label ran_fapi_core
+      desc Canonical IR and profile negotiation
+    - id gateway
+      label fapi_rt_gateway
+      desc Port sidecar
+    - id local
+      label local_fapi_profile
+      desc Local DU-low backend
+    - id aerial
+      label aerial_fapi_profile
+      desc Future Aerial backend
+    - id stub
+      label stub_fapi_profile
+      desc Contract validation path
+  relations
+    du -> scheduler
+    scheduler -> fapi
+    fapi -> gateway
+    gateway -> local
+    gateway -> aerial
+    gateway -> stub
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #7c3aed
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

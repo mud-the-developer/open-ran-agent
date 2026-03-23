@@ -16,42 +16,9 @@ The first meaningful target is:
 
 ## System Shape
 
-```text
-                +--------------------------------------+
-                | Symphony / Codex / skill workflows   |
-                | decision support only                |
-                +-------------------+------------------+
-                                    |
-                                    v
-                           +--------+--------+
-                           |    bin/ranctl   |
-                           | deterministic   |
-                           +--------+--------+
-                                    |
-             +----------------------+----------------------+
-             |                                             |
-             v                                             v
-   +---------+----------+                       +----------+-----------+
-   | BEAM control plane |                       | observability /      |
-   | CU-CP / CU-UP /    |                       | artifacts / config   |
-   | DU-high / actions  |                       +----------------------+
-   +---------+----------+
-             |
-             v
-   +---------+----------+
-   | ran_fapi_core      |
-   | canonical IR       |
-   +---------+----------+
-             |
-             v
-   +---------+----------+
-   | native fapi gateway|
-   | Port sidecar       |
-   +----+-----------+---+
-        |           |
-        v           v
- local_du_low   aerial_backend
-```
+![System overview](../assets/figures/architecture/00-system-overview.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/00-system-overview.infographic](../assets/infographics/architecture/00-system-overview.infographic)</sub>
 
 ## Major Boundaries
 

@@ -1,0 +1,50 @@
+infographic relation-dagre-flow-tb-badge-card
+data
+  title Backend switch and rollback flow
+  desc A backend switch remains explicit from precheck through verification, artifact capture, and fallback.
+  nodes
+    - id request
+      label Request switch to target backend
+      desc Operator or workflow intent
+    - id precheck
+      label ranctl precheck
+      desc Validate target and blast radius
+    - id plan
+      label ranctl plan
+      desc Save rollback target and verify window
+    - id approval
+      label Explicit approval
+      desc Human gate
+    - id apply
+      label ranctl apply
+      desc Activate target backend
+    - id verify
+      label ranctl verify
+      desc Health and verification checks
+    - id active
+      label Target active
+      desc Pass path
+    - id capture
+      label Capture artifacts
+      desc Failure evidence
+    - id rollback
+      label ranctl rollback
+      desc Restore previous target
+    - id reverify
+      label ranctl verify
+      desc Post-rollback recheck
+  relations
+    request -> precheck
+    precheck -> plan
+    plan -> approval
+    approval -> apply
+    apply -> verify
+    verify -> active
+    verify -> capture
+    capture -> rollback
+    rollback -> reverify
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #dc2626
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

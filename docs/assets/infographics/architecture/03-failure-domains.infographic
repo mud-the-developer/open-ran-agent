@@ -1,0 +1,26 @@
+infographic hierarchy-tree-lr-tech-style-badge-card
+data
+  title Failure domain diagram
+  desc Restarts and rollback stay scoped to the smallest viable runtime owner.
+  root
+    label node
+    children
+      - label association
+        children
+          - label association session workers
+      - label cell_group:cg-001
+        children
+          - label ue_subtree:ue-1
+          - label scheduler_session
+          - label fapi_session
+      - label backend_gateway:local
+        children
+          - label native sidecar process
+      - label change:chg-20260320-001
+        children
+          - label verify / rollback workers
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #7c3aed
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

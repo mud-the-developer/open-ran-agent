@@ -1,0 +1,42 @@
+infographic relation-dagre-flow-tb-badge-card
+data
+  title System overview
+  desc Design-first control, native boundary, and backend split for one-DU MVP.
+  nodes
+    - id ops
+      label Symphony / Codex / skills
+      desc Decision support only
+    - id ranctl
+      label bin/ranctl
+      desc Deterministic control entrypoint
+    - id beam
+      label BEAM control plane
+      desc CU-CP, CU-UP, DU-high, actions
+    - id observe
+      label Observability / artifacts / config
+      desc Evidence, telemetry, config views
+    - id fapi
+      label ran_fapi_core
+      desc Canonical IR
+    - id gateway
+      label Native FAPI gateway
+      desc Port sidecar
+    - id local
+      label local_du_low
+      desc Local DU-low adapter path
+    - id aerial
+      label aerial_backend
+      desc Future Aerial backend path
+  relations
+    ops -> ranctl
+    ranctl -> beam
+    ranctl -> observe
+    beam -> fapi
+    fapi -> gateway
+    gateway -> local
+    gateway -> aerial
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #7c3aed
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

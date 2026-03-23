@@ -1,0 +1,38 @@
+infographic relation-dagre-flow-tb-badge-card
+data
+  title Symphony, Codex, skills, and ops
+  desc Operations automation may decide and orchestrate, but mutation still lives in ranctl.
+  nodes
+    - id incident
+      label Incident or request
+      desc External trigger
+    - id workflow
+      label Symphony workflow
+      desc Workflow coordination
+    - id codex
+      label Codex reasoning
+      desc Decision support
+    - id skill
+      label Skill selection
+      desc Procedure wrapper choice
+    - id ranctl
+      label bin/ranctl <command>
+      desc Deterministic execution
+    - id lifecycle
+      label Plan / approval / apply / verify / rollback
+      desc Mutable runtime path
+    - id evidence
+      label Artifacts / observability
+      desc Telemetry and evidence path
+  relations
+    incident -> workflow
+    workflow -> codex
+    codex -> skill
+    skill -> ranctl
+    ranctl -> lifecycle
+    ranctl -> evidence
+theme
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569 #7c3aed
+  base
+    text
+      font-family Arial, Helvetica, sans-serif

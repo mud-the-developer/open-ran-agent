@@ -44,45 +44,9 @@ Native contract gateways are not OTP apps in this umbrella, but they follow the 
 
 ## Supervision Topology
 
-```text
-OpenRanAgent.ReleaseSupervisor
-|
-+- RanCore.Application
-|  +- RanCore.Topology
-|  +- RanCore.NodeRegistry
-|  `- RanCore.ChangeRegistry
-|
-+- RanCuCp.Application
-|  `- RanCuCp.AssociationSupervisor
-|
-+- RanCuUp.Application
-|  `- RanCuUp.TunnelSupervisor
-|
-+- RanDuHigh.Application
-|  +- RanDuHigh.CellGroupSupervisor
-|  |  +- cell_group:<id>
-|  |  |  +- ue_subtree:<id>
-|  |  |  +- scheduler_session
-|  |  |  `- fapi_session
-|  `- RanDuHigh.BackendDrainCoordinator
-|
-+- RanFapiCore.Application
-|  +- RanFapiCore.ProfileRegistry
-|  `- RanFapiCore.GatewaySessionSupervisor
-|
-+- RanSchedulerHost.Application
-|  `- RanSchedulerHost.AdapterSupervisor
-|
-+- RanActionGateway.Application
-|  +- RanActionGateway.ChangeSupervisor
-|  `- RanActionGateway.ApprovalGate
-|
-+- RanObservability.Application
-|  `- RanObservability.ArtifactSupervisor
-|
-`- RanConfig.Application
-   `- RanConfig.ProfileCache
-```
+![OTP apps and supervision](../assets/figures/architecture/02-otp-apps-and-supervision.svg)
+
+<sub>Figure source: [../assets/infographics/architecture/02-otp-apps-and-supervision.infographic](../assets/infographics/architecture/02-otp-apps-and-supervision.infographic)</sub>
 
 ## Supervision Notes
 
