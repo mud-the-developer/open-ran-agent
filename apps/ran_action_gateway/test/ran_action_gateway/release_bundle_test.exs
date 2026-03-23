@@ -16,7 +16,6 @@ defmodule RanActionGateway.ReleaseBundleTest do
 
     write_fixture(repo_root, "README.md", "# fixture\n")
     write_fixture(repo_root, "AGENTS.md", "# agents\n")
-    write_fixture(repo_root, "CODEX_RAN_BOOTSTRAP.md", "# bootstrap\n")
     write_fixture(repo_root, "mix.exs", "defmodule Fixture do\nend\n")
     write_fixture(repo_root, "bin/ran-debug-latest", "#!/usr/bin/env sh\n")
     write_fixture(repo_root, "bin/ran-install", "#!/usr/bin/env sh\n")

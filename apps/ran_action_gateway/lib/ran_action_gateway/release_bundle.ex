@@ -9,7 +9,6 @@ defmodule RanActionGateway.ReleaseBundle do
     ".github/workflows",
     "AGENTS.md",
     "README.md",
-    "CODEX_RAN_BOOTSTRAP.md",
     "mix.exs",
     "bin",
     "apps",

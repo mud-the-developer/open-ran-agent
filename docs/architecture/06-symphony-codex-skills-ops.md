@@ -76,7 +76,7 @@ request switch to target backend
 ## Instruction Placement
 
 - `AGENTS.md` holds persistent repository rules that always apply.
-- task briefs such as [CODEX_RAN_BOOTSTRAP.md](../../CODEX_RAN_BOOTSTRAP.md) hold one-off or phase-specific work instructions.
+- task briefs can hold one-off or phase-specific work instructions outside the persistent repository rule set.
 - architecture documents hold the designed system shape.
 - ADRs hold durable decision records when a boundary or contract is chosen.
 

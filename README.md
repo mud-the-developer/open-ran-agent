@@ -106,7 +106,6 @@ If you maintain local lab files such as `OAI_config_WE_flexric.conf`, `srsran_co
 - Read ADRs in order under [docs/adr](docs/adr).
 - Treat [bin/ranctl](bin/ranctl) as the future operational control surface.
 - Use [AGENTS.md](AGENTS.md) for persistent repository rules.
-- Keep [CODEX_RAN_BOOTSTRAP.md](CODEX_RAN_BOOTSTRAP.md) as the task brief for this bootstrap phase instead of copying it into `AGENTS.md`.
 
 Suggested reading order for operators:
 
