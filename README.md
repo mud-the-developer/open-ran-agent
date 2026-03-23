@@ -25,7 +25,7 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 
 ## Architecture at a glance
 
-![Open RAN Agent architecture overview](docs/assets/figures/architecture-overview.svg)
+![Open RAN Agent architecture overview](docs/assets/figures/architecture-overview.png)
 
 <sub>Figure source: [docs/assets/infographics/architecture-overview.infographic](docs/assets/infographics/architecture-overview.infographic)</sub>
 
@@ -95,7 +95,7 @@ Read ADRs in order under [docs/adr](docs/adr). Use [AGENTS.md](AGENTS.md) for pe
 
 ### 2) Try the control surface
 
-![ranctl lifecycle](docs/assets/figures/ranctl-lifecycle.svg)
+![ranctl lifecycle](docs/assets/figures/ranctl-lifecycle.png)
 
 <sub>Figure source: [docs/assets/infographics/ranctl-lifecycle.infographic](docs/assets/infographics/ranctl-lifecycle.infographic)</sub>
 
@@ -137,10 +137,11 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 | `apps/` | BEAM umbrella applications for core control, CU/DU layers, config, observability, and test support |
 | `native/` | RT-sensitive gateway and backend adapter boundaries |
 | `docs/architecture/` | System walkthroughs and design documents |
-| `docs/assets/` | README figures and infographic source assets |
+| `docs/assets/` | README figures, infographic source, and preview render assets |
 | `docs/adr/` | Architectural decision records |
 | `config/` | Runtime config, environment profiles, and example topologies |
 | `ops/` | Deploy scripts, skills, and Symphony-facing integration assets |
+| `scripts/` | Regeneration helpers such as README figure export |
 | `examples/` | Example `ranctl` requests, incidents, and bootstrap references |
 | `AGENTS.md` | Persistent repository rules |
 
@@ -196,6 +197,7 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 |   |-- deploy/
 |   |-- skills/
 |   `-- symphony/
+|-- scripts/
 `-- examples/
     |-- incidents/
     `-- ranctl/
@@ -205,7 +207,7 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 
 ## Advanced workflows
 
-![Target-host deploy and evidence loop](docs/assets/figures/target-host-deploy.svg)
+![Target-host deploy and evidence loop](docs/assets/figures/target-host-deploy.png)
 
 <sub>Figure source: [docs/assets/infographics/target-host-deploy.infographic](docs/assets/infographics/target-host-deploy.infographic)</sub>
 

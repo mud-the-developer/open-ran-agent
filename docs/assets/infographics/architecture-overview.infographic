@@ -1,27 +1,21 @@
-infographic relation-dagre-flow-tb-simple-circle-node
+infographic sequence-steps-badge-card
 data
-  title Open RAN Agent Architecture
-  desc Deterministic operations from operator surface to native runtime boundary
-  nodes
-    - id ops
-      label Operator surface
-    - id ranctl
-      label bin/ranctl
-    - id beam
-      label BEAM umbrella
-    - id native
-      label Native boundary
-    - id runtime
-      label Backend runtime
-    - id evidence
-      label Artifacts and evidence
-  relations
-    ops - dashboard skills ci -> ranctl
-    ranctl - control actions -> beam
-    beam - canonical IR -> native
-    native - transport and timing -> runtime
-    ranctl - file backed outputs -> evidence
-    beam - observability -> evidence
+  title Open RAN Agent at a glance
+  desc Deterministic operator flow from surface ownership to backend runtime.
+  sequences
+    - label Operator surface
+      desc Dashboard, skills, CI
+    - label bin/ranctl
+      desc Single mutating entrypoint
+    - label BEAM umbrella
+      desc Policy, DU high, scheduler, FAPI
+    - label Native boundary
+      desc Port gateway and backend adapters
+    - label Backend runtime
+      desc DU low, fronthaul, vendor workers
+  order asc
 theme
-  palette #0f766e #1d4ed8 #ea580c #475569
-
+  palette #0f766e #1d4ed8 #0f172a #ea580c #475569
+  base
+    text
+      font-family Inter, ui-sans-serif, system-ui

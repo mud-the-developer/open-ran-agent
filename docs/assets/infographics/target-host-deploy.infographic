@@ -1,15 +1,23 @@
-infographic sequence-steps-simple
+infographic sequence-steps-badge-card
 data
-  title Target Host Deploy Loop
-  desc Preview locally then ship, preflight, run remotely, and fetch evidence back
+  title Target-host deploy loop
+  desc Local preview, remote execution, and fetched evidence stay inside one operator flow.
   sequences
-    - label package bundle
-    - label render preview
-    - label ship bundle
-    - label remote preflight
+    - label package
+      desc ran.package_bootstrap
+    - label preview
+      desc ran-install or Deploy Studio
+    - label ship
+      desc bundle plus rendered files
+    - label preflight
+      desc host probe and readiness
     - label remote ranctl
-    - label fetch evidence
+      desc plan, apply, verify
+    - label fetchback
+      desc remote runs and debug packs
   order asc
 theme
-  palette #7c2d12 #d97706 #0f766e #1d4ed8
-
+  palette #92400e #d97706 #0f766e #1d4ed8 #334155 #7c2d12
+  base
+    text
+      font-family Inter, ui-sans-serif, system-ui

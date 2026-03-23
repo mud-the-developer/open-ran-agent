@@ -2,9 +2,11 @@
 /cover/
 /coverage/
 /deps/
+/node_modules/
 /erl_crash.dump
 /.elixir_ls/
 /artifacts/
+/output/
 /.mudcode/
 /tmp/
 /.tmp/

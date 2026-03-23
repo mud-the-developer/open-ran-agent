@@ -1,15 +1,23 @@
-infographic sequence-steps-simple
+infographic sequence-steps-badge-card
 data
-  title ranctl Lifecycle
-  desc Precheck to verify with explicit approval and rollback evidence
+  title ranctl lifecycle
+  desc Every mutating action leaves evidence and keeps rollback explicit.
   sequences
     - label precheck
+      desc config, host, policy
     - label plan
+      desc render and rollback
     - label approval
+      desc explicit operator gate
     - label apply
+      desc mutate runtime
     - label verify
-    - label observe
+      desc steady state or fail
+    - label rollback
+      desc capture and restore
   order asc
 theme
-  palette #14532d #0f766e #1d4ed8 #ea580c
-
+  palette #15803d #1d4ed8 #d97706 #ea580c #7c3aed #dc2626
+  base
+    text
+      font-family Inter, ui-sans-serif, system-ui
