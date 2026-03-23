@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>RAN Symphony</title>
+    <link rel="stylesheet" href="/assets/dashboard.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="global-rail">
+        <div class="brand-mark">R</div>
+        <nav class="global-nav">
+          <button class="global-nav-item active" type="button">Mission</button>
+          <button class="global-nav-item" type="button">Runtime</button>
+          <button class="global-nav-item" type="button">Agents</button>
+          <button class="global-nav-item" type="button">Evidence</button>
+        </nav>
+        <div class="global-meta">
+          <span>RAN</span>
+          <span>Ops</span>
+        </div>
+      </aside>
+
+      <aside class="mission-rail">
+        <div class="rail-header">
+          <div class="section-kicker">Workspace</div>
+          <h1>RAN Symphony</h1>
+          <p>One operating surface for DU, RIC, agents, and changeflow.</p>
+        </div>
+
+        <section class="rail-block">
+          <div class="section-kicker">Missions</div>
+          <div id="mission-list" class="mission-list"></div>
+        </section>
+
+        <section class="rail-block">
+          <div class="section-kicker">Runs</div>
+          <div id="run-list" class="run-list"></div>
+        </section>
+
+        <section class="rail-block">
+          <div class="section-kicker">Skill Stack</div>
+          <div id="skill-stack" class="skill-stack"></div>
+        </section>
+      </aside>
+
+      <main class="workspace">
+        <header class="workspace-topbar">
+          <div>
+            <div id="workspace-kicker" class="section-kicker"></div>
+            <h2 id="workspace-title"></h2>
+          </div>
+          <div class="topbar-actions">
+            <div id="generated-at" class="timestamp"></div>
+            <button id="refresh-button" class="refresh" type="button">Refresh</button>
+          </div>
+        </header>
+
+        <section class="brief-panel">
+          <div class="brief-copy">
+            <div class="section-kicker">Run Brief</div>
+            <h3 id="brief-title"></h3>
+            <p id="brief-summary"></p>
+          </div>
+          <div id="brief-metrics" class="brief-metrics"></div>
+        </section>
+
+        <section class="workspace-stage">
+          <div class="stage-header">
+            <div>
+              <div class="section-kicker">Run Timeline</div>
+              <h3>Plans, applies, verifies, evidence</h3>
+            </div>
+            <div id="profile-chip" class="profile-chip"></div>
+          </div>
+          <div id="timeline" class="timeline"></div>
+        </section>
+
+        <section class="workspace-stage">
+          <div class="stage-header">
+            <div>
+              <div class="section-kicker">Runtime Lanes</div>
+              <h3>RAN fabric and agent mesh</h3>
+            </div>
+            <div id="runtime-status-chip" class="profile-chip"></div>
+          </div>
+          <div id="runtime-board" class="runtime-board"></div>
+        </section>
+
+        <section class="workspace-stage deploy-stage">
+          <div class="stage-header">
+            <div>
+              <div class="section-kicker">Deploy Studio</div>
+              <h3>Target-host preview and preflight</h3>
+            </div>
+            <div id="deploy-status-chip" class="profile-chip"></div>
+          </div>
+          <div class="deploy-grid">
+            <div id="deploy-form-panel" class="deploy-panel"></div>
+            <div id="deploy-output-panel" class="deploy-panel"></div>
+          </div>
+        </section>
+
+        <section class="composer-shell">
+          <div class="composer-label">Operator Composer</div>
+          <div id="action-strip" class="action-strip"></div>
+          <div class="composer-input">
+            Observe runtime, inspect evidence, or route the next `ranctl` action from this mission.
+          </div>
+          <div id="action-result" class="action-result"></div>
+          <div class="composer-label">Suggested Skills</div>
+          <div id="composer-suggestions" class="composer-suggestions"></div>
+        </section>
+      </main>
+
+      <aside class="context-rail">
+        <div class="context-header">
+          <div class="section-kicker">Inspector</div>
+          <h3>Focused Context</h3>
+        </div>
+
+        <section id="focus-summary" class="inspector-card"></section>
+        <section id="policy-panel" class="inspector-card"></section>
+        <section id="contract-panel" class="inspector-card"></section>
+        <section id="run-panel" class="inspector-card"></section>
+        <section id="evidence-panel" class="inspector-card"></section>
+        <section id="lane-panel" class="inspector-card"></section>
+      </aside>
+    </div>
+
+    <script src="/assets/dashboard.js"></script>
+  </body>
+</html>

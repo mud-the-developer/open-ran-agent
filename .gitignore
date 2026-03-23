@@ -1,0 +1,14 @@
+/_build/
+/cover/
+/deps/
+/erl_crash.dump
+/.elixir_ls/
+/artifacts/
+/.mudcode/
+/OAI_config_WE_flexric.conf
+/srsran_config.yml
+/examples/oai/OAI_config_WE_flexric_rfsim_local.conf
+/examples/oai/nrue_we_rfsim_local.conf
+/apps/*/erl_crash.dump
+.DS_Store
+*.swp

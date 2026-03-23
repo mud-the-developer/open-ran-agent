@@ -1,0 +1,16 @@
+{
+  "scope": "incident",
+  "cell_group": "cg-001",
+  "target_backend": null,
+  "change_id": null,
+  "incident_id": "inc-20260320-050",
+  "dry_run": true,
+  "ttl": "5m",
+  "reason": "capture artifacts after policy denial or verification failure",
+  "idempotency_key": "inc-20260320-050-capture",
+  "verify_window": {
+    "duration": "0s",
+    "checks": []
+  },
+  "max_blast_radius": "read_only"
+}

@@ -1,0 +1,20 @@
+import Config
+
+config :ran_config,
+  profile: :prod_controlled_failover,
+  default_backend: :local_fapi_profile
+
+config :ran_action_gateway,
+  approval_mode: :explicit_gate,
+  max_default_verify_window_ms: 60_000
+
+config :ran_config,
+  cell_groups: [
+    %{
+      id: "cg-001",
+      du: "du-prod-001",
+      backend: :local_fapi_profile,
+      failover_targets: [:aerial_fapi_profile],
+      scheduler: :cpu_scheduler
+    }
+  ]

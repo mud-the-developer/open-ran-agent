@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '28'
+          elixir-version: '1.19.5'
+
+      - name: Run fast contract CI
+        env:
+          MIX_ENV: test
+        run: mix contract_ci
+
+      - name: Upload architecture docs snapshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-docs
+          path: |
+            README.md
+            AGENTS.md
+            docs/architecture/**
+            docs/adr/**
+          if-no-files-found: error
+
+  runtime-contract:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: erlef/setup-beam@v1
+        with:
+          otp-version: '28'
+          elixir-version: '1.19.5'
+
+      - name: Run runtime and release smoke CI
+        env:
+          MIX_ENV: test
+        run: mix runtime_ci
+
+      - name: Upload release bundle and runtime smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runtime-smoke-artifacts
+          path: |
+            artifacts/releases/ci-smoke/**
+            artifacts/runtime/**
+            artifacts/captures/*.json
+          if-no-files-found: warn

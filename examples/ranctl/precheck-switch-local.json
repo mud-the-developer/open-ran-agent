@@ -1,0 +1,16 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-20260320-001",
+  "incident_id": null,
+  "dry_run": false,
+  "ttl": "15m",
+  "reason": "prepare switch to local backend",
+  "idempotency_key": "cg-001-switch-local-001",
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy", "cell_group_attached"]
+  },
+  "max_blast_radius": "single_cell_group"
+}

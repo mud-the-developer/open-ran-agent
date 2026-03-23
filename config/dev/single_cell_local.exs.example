@@ -1,0 +1,16 @@
+import Config
+
+config :ran_config,
+  profile: :dev_single_cell_local,
+  default_backend: :local_fapi_profile
+
+config :ran_config,
+  cell_groups: [
+    %{
+      id: "cg-001",
+      du: "du-001",
+      backend: :local_fapi_profile,
+      failover_targets: [:stub_fapi_profile],
+      scheduler: :cpu_scheduler
+    }
+  ]

@@ -1,0 +1,13 @@
+[Unit]
+Description=Open RAN Agent Target Host Preflight
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/open-ran-agent/current
+EnvironmentFile=-/etc/open-ran-agent/ran-host-preflight.env
+ExecStart=/opt/open-ran-agent/current/ops/deploy/preflight.sh
+
+[Install]
+WantedBy=multi-user.target

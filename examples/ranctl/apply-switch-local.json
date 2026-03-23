@@ -1,0 +1,23 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-20260320-001",
+  "incident_id": null,
+  "dry_run": false,
+  "ttl": "15m",
+  "approval": {
+    "approved": true,
+    "approved_by": "operator.local-switch",
+    "approved_at": "2026-03-21T06:45:00Z",
+    "ticket_ref": "CHG-SWITCH-LOCAL-001",
+    "source": "lab-operator"
+  },
+  "reason": "apply controlled switch to local backend",
+  "idempotency_key": "cg-001-switch-local-001",
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy", "cell_group_attached", "ue_ping_ok"]
+  },
+  "max_blast_radius": "single_cell_group"
+}

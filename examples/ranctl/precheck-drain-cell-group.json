@@ -1,0 +1,16 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": null,
+  "change_id": "chg-20260320-010",
+  "incident_id": null,
+  "dry_run": false,
+  "ttl": "10m",
+  "reason": "precheck for controlled drain",
+  "idempotency_key": "cg-001-drain-001",
+  "verify_window": {
+    "duration": "20s",
+    "checks": ["gateway_healthy", "attach_freeze_active"]
+  },
+  "max_blast_radius": "single_cell_group"
+}

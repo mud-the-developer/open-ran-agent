@@ -1,0 +1,45 @@
+uicc0 = {
+  imsi = "001010000000001";
+  key = "00112233445566778899aabbccddeeff";
+  opc = "0102030405060708090a0b0c0d0e0f10";
+  pdu_sessions = ({ dnn = "oai"; nssai_sst = 1; });
+}
+
+position0 = {
+  x = 0.0;
+  y = 0.0;
+  z = 6377900.0;
+}
+
+thread-pool = "-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1"
+
+rfsimulator = (
+  {
+    serveraddr = "127.0.0.1";
+  }
+);
+
+channelmod = {
+  max_chan = 10;
+  modellist = "modellist_rfsimu_1";
+  modellist_rfsimu_1 = (
+    {
+      model_name     = "rfsimu_channel_enB0"
+      type           = "AWGN";
+      ploss_dB       = 20;
+      noise_power_dB = -4;
+      forgetfact     = 0;
+      offset         = 0;
+      ds_tdl         = 0;
+    },
+    {
+      model_name     = "rfsimu_channel_ue0"
+      type           = "AWGN";
+      ploss_dB       = 20;
+      noise_power_dB = -2;
+      forgetfact     = 0;
+      offset         = 0;
+      ds_tdl         = 0;
+    }
+  );
+};

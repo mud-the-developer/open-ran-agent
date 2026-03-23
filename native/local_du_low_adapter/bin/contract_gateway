@@ -1,0 +1,4 @@
+#!/usr/bin/env elixir
+
+Code.require_file("../src/contract_gateway.exs", __DIR__)
+LocalDuLowAdapter.ContractGateway.main()

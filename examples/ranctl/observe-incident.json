@@ -1,0 +1,16 @@
+{
+  "scope": "incident",
+  "cell_group": "cg-001",
+  "target_backend": null,
+  "change_id": null,
+  "incident_id": "inc-20260320-001",
+  "dry_run": true,
+  "ttl": "5m",
+  "reason": "collect runtime state for incident triage",
+  "idempotency_key": "inc-20260320-001-observe",
+  "verify_window": {
+    "duration": "0s",
+    "checks": []
+  },
+  "max_blast_radius": "read_only"
+}

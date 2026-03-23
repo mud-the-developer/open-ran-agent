@@ -1,0 +1,16 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "aerial_fapi_profile",
+  "change_id": "chg-20260320-099",
+  "incident_id": null,
+  "dry_run": false,
+  "ttl": "15m",
+  "reason": "attempt switch to a non-preprovisioned target in a restricted profile",
+  "idempotency_key": "cg-001-switch-denied-001",
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy"]
+  },
+  "max_blast_radius": "single_cell_group"
+}

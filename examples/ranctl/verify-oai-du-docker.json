@@ -1,0 +1,22 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-oai-du-001",
+  "reason": "verify OAI DU docker runtime",
+  "idempotency_key": "chg-oai-du-001",
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy"]
+  },
+  "metadata": {
+    "oai_runtime": {
+      "repo_root": "/opt/openairinterface5g",
+      "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
+      "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
+      "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf",
+      "project_name": "ran-oai-du-cg-001",
+      "pull_images": true
+    }
+  }
+}

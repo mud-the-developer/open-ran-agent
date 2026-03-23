@@ -1,0 +1,28 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "current_backend": "stub_fapi_profile",
+  "change_id": "chg-target-host-001",
+  "reason": "precheck target host deployment",
+  "idempotency_key": "chg-target-host-001-key",
+  "ttl": "15m",
+  "dry_run": false,
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy"]
+  },
+  "max_blast_radius": "single_cell_group",
+  "metadata": {
+    "native_probe": {
+      "backend_profile": "local_fapi_profile",
+      "session_payload": {
+        "fronthaul_session": "fh-prod-001",
+        "host_interface": "sync0",
+        "device_path": "/dev/fh0",
+        "pci_bdf": "0000:17:00.3",
+        "strict_host_probe": true
+      }
+    }
+  }
+}

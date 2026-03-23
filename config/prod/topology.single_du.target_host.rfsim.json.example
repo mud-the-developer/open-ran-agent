@@ -1,0 +1,23 @@
+{
+  "repo_profile": "prod_target_host_rfsim",
+  "default_backend": "local_fapi_profile",
+  "scheduler_adapter": "cpu_scheduler",
+  "cell_groups": [
+    {
+      "id": "cg-001",
+      "du": "du-prod-001",
+      "backend": "local_fapi_profile",
+      "failover_targets": ["aerial_fapi_profile"],
+      "scheduler": "cpu_scheduler",
+      "oai_runtime": {
+        "mode": "docker_compose_rfsim_f1",
+        "repo_root": "/opt/openairinterface5g",
+        "du_conf_path": "/etc/open-ran-agent/oai/gnb-du.conf",
+        "cucp_conf_path": "/etc/open-ran-agent/oai/gnb-cucp.conf",
+        "cuup_conf_path": "/etc/open-ran-agent/oai/gnb-cuup.conf",
+        "project_name": "ran-oai-du-cg-001",
+        "pull_images": false
+      }
+    }
+  ]
+}

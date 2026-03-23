@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+MIX_ENV="${MIX_ENV:-dev}"
+STAMP="${REPO_ROOT}/_build/${MIX_ENV}/.ran_dashboard_compile_stamp"
+
+cd "${REPO_ROOT}"
+
+needs_compile() {
+  if [[ ! -f "${STAMP}" ]]; then
+    return 0
+  fi
+
+  local path
+  for path in "${REPO_ROOT}/mix.exs" "${REPO_ROOT}/config" "${REPO_ROOT}/apps"; do
+    if [[ -e "${path}" ]] && find "${path}" -newer "${STAMP}" -print -quit | grep -q .; then
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+if needs_compile; then
+  mix compile --no-archives-check --no-deps-check >/dev/null
+  mkdir -p "$(dirname "${STAMP}")"
+  touch "${STAMP}"
+fi
+
+shopt -s nullglob
+ELIXIR_ARGS=()
+
+for path in "${REPO_ROOT}/_build/${MIX_ENV}/lib"/*/ebin; do
+  ELIXIR_ARGS+=("-pa" "$path")
+done
+
+exec elixir "${ELIXIR_ARGS[@]}" \
+  -e 'RanObservability.Dashboard.serve(); Process.sleep(:infinity)' -- "$@"

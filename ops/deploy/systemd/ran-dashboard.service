@@ -1,0 +1,16 @@
+[Unit]
+Description=Open RAN Agent Dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/open-ran-agent/current
+EnvironmentFile=-/etc/open-ran-agent/ran-dashboard.env
+ExecStart=/opt/open-ran-agent/current/bin/ran-dashboard
+Restart=on-failure
+RestartSec=2
+LimitNOFILE=65536
+
+[Install]
+WantedBy=multi-user.target

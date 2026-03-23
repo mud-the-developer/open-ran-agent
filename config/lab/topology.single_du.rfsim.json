@@ -1,0 +1,21 @@
+{
+  "repo_profile": "lab_single_du_rfsim",
+  "default_backend": "stub_fapi_profile",
+  "scheduler_adapter": "cpu_scheduler",
+  "cell_groups": [
+    {
+      "id": "cg-001",
+      "du": "du-bootstrap-001",
+      "backend": "stub_fapi_profile",
+      "failover_targets": ["local_fapi_profile", "aerial_fapi_profile"],
+      "scheduler": "cpu_scheduler",
+      "oai_runtime": {
+        "mode": "docker_compose_rfsim_f1",
+        "repo_root": "/opt/openairinterface5g",
+        "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
+        "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
+        "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf"
+      }
+    }
+  ]
+}

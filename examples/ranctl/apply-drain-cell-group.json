@@ -1,0 +1,27 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "current_backend": "stub_fapi_profile",
+  "change_id": "chg-drain-001",
+  "reason": "start a controlled drain before backend maintenance",
+  "idempotency_key": "chg-drain-001",
+  "approval": {
+    "approved": true,
+    "approved_by": "operator.drain",
+    "approved_at": "2026-03-21T07:05:00Z",
+    "ticket_ref": "CHG-DRAIN-001",
+    "source": "example"
+  },
+  "verify_window": {
+    "duration": "20s",
+    "checks": ["attach_freeze_active", "drain_active"]
+  },
+  "max_blast_radius": "single_cell_group",
+  "metadata": {
+    "control": {
+      "attach_freeze": "activate",
+      "drain": "start"
+    }
+  }
+}

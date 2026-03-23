@@ -1,0 +1,29 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-oai-du-local-001",
+  "reason": "bring up OAI DU docker runtime from local conf set",
+  "idempotency_key": "chg-oai-du-local-001",
+  "approval": {
+    "approved": true,
+    "approved_by": "operator.oai-runtime",
+    "approved_at": "2026-03-21T07:15:00Z",
+    "ticket_ref": "CHG-OAI-DU-LOCAL-001",
+    "source": "template"
+  },
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy"]
+  },
+  "metadata": {
+    "oai_runtime": {
+      "repo_root": "/opt/openairinterface5g",
+      "du_conf_path": "/absolute/path/to/gnb-du.conf",
+      "cucp_conf_path": "/absolute/path/to/gnb-cucp.conf",
+      "cuup_conf_path": "/absolute/path/to/gnb-cuup.conf",
+      "project_name": "ran-oai-du-local",
+      "pull_images": true
+    }
+  }
+}

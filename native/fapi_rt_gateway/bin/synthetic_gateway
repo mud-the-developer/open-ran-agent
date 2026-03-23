@@ -1,0 +1,167 @@
+#!/usr/bin/env elixir
+
+defmodule SyntheticGateway do
+  def main do
+    loop(%{
+      session_ref: nil,
+      cell_group_id: nil,
+      submitted_slots: 0,
+      uplink_indications: 0,
+      last_uplink_kind: nil,
+      state: "healthy",
+      restart_count: 0,
+      session_status: "idle"
+    })
+  end
+
+  defp loop(state) do
+    case IO.binread(:stdio, 4) do
+      :eof ->
+        :ok
+
+      {:error, _reason} ->
+        :ok
+
+      <<length::unsigned-big-32>> ->
+        payload = IO.binread(:stdio, length)
+        {:ok, message} = JSON.decode(payload)
+        {reply, next_state, halt?} = handle(message, state)
+        encoded = JSON.encode!(reply)
+        IO.binwrite(<<byte_size(encoded)::unsigned-big-32, encoded::binary>>)
+
+        unless halt? do
+          loop(next_state)
+        end
+    end
+  end
+
+  defp handle(%{"message_type" => "open_session"} = message, state) do
+    payload = %{
+      "session_ref" => message["session_ref"],
+      "accepted_profile" => get_in(message, ["payload", "profile"])
+    }
+
+    {ok_reply(message, payload),
+     %{
+       state
+       | session_ref: message["session_ref"],
+         cell_group_id: message["cell_group_id"],
+         session_status: "idle"
+     }, false}
+  end
+
+  defp handle(%{"message_type" => "activate_cell"} = message, state) do
+    {ok_reply(message, %{"cell_group_id" => message["cell_group_id"]}),
+     %{state | cell_group_id: message["cell_group_id"], session_status: "active"}, false}
+  end
+
+  defp handle(%{"message_type" => "submit_slot_batch"} = message, state) do
+    cond do
+      state.session_status == "quiesced" ->
+        {error_reply(message, "session_quiesced"), state, false}
+
+      state.session_status != "active" ->
+        {error_reply(message, "session_not_active"), state, false}
+
+      true ->
+        ir = get_in(message, ["payload", "ir"]) || %{}
+
+        payload = %{
+          "submitted_slots" => state.submitted_slots + 1,
+          "last_slot_ref" => %{"frame" => ir["frame"], "slot" => ir["slot"]}
+        }
+
+        {ok_reply(message, payload), %{state | submitted_slots: state.submitted_slots + 1}, false}
+    end
+  end
+
+  defp handle(%{"message_type" => "health_check"} = message, state) do
+    payload = %{
+      "health" => %{
+        "state" => state.state,
+        "reason" => nil,
+        "session_status" => state.session_status,
+        "restart_count" => state.restart_count,
+        "checks" => %{
+          "submitted_slots" => state.submitted_slots,
+          "uplink_indications" => state.uplink_indications,
+          "last_uplink_kind" => state.last_uplink_kind
+        }
+      }
+    }
+
+    {ok_reply(message, payload), state, false}
+  end
+
+  defp handle(%{"message_type" => "uplink_indication"} = message, state) do
+    if state.session_status in ["active", "quiesced"] do
+      uplink = get_in(message, ["payload", "indication"]) || %{}
+      kind = uplink["kind"]
+
+      payload = %{
+        "uplink_indications" => state.uplink_indications + 1,
+        "last_uplink_kind" => kind
+      }
+
+      {ok_reply(message, payload),
+       %{
+         state
+         | uplink_indications: state.uplink_indications + 1,
+           last_uplink_kind: kind
+       }, false}
+    else
+      {error_reply(message, "session_not_active"), state, false}
+    end
+  end
+
+  defp handle(%{"message_type" => "quiesce"} = message, state) do
+    payload = %{"state" => "draining", "reason" => get_in(message, ["payload", "reason"])}
+    {ok_reply(message, payload),
+     %{state | state: "draining", session_status: "quiesced"}, false}
+  end
+
+  defp handle(%{"message_type" => "resume"} = message, state) do
+    {ok_reply(message, %{"state" => "healthy"}),
+     %{state | state: "healthy", session_status: "active"}, false}
+  end
+
+  defp handle(%{"message_type" => "terminate"} = message, state) do
+    {ok_reply(message, %{"terminated" => true}), state, true}
+  end
+
+  defp handle(message, state) do
+    reply = %{
+      "status" => "error",
+      "message_type" => message["message_type"],
+      "session_ref" => message["session_ref"],
+      "trace_id" => message["trace_id"],
+      "error" => "unsupported_message_type"
+    }
+
+    {reply, state, false}
+  end
+
+  defp ok_reply(message, payload) do
+    %{
+      "status" => "ok",
+      "message_type" => message["message_type"],
+      "protocol_version" => message["protocol_version"],
+      "session_ref" => message["session_ref"],
+      "trace_id" => message["trace_id"],
+      "payload" => payload
+    }
+  end
+
+  defp error_reply(message, error) do
+    %{
+      "status" => "error",
+      "message_type" => message["message_type"],
+      "protocol_version" => message["protocol_version"],
+      "session_ref" => message["session_ref"],
+      "trace_id" => message["trace_id"],
+      "error" => error
+    }
+  end
+end
+
+SyntheticGateway.main()
