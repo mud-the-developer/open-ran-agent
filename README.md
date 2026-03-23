@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/assets/logo/open-ran-agent-32.svg" alt="Open RAN Agent logo" width="112" />
+</p>
+
 # Open RAN Agent
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
@@ -137,7 +141,7 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 | `apps/` | BEAM umbrella applications for core control, CU/DU layers, config, observability, and test support |
 | `native/` | RT-sensitive gateway and backend adapter boundaries |
 | `docs/architecture/` | System walkthroughs and design documents |
-| `docs/assets/` | README figures, infographic source, and preview render assets |
+| `docs/assets/` | README figures, logo assets, infographic source, and preview render assets |
 | `docs/adr/` | Architectural decision records |
 | `config/` | Runtime config, environment profiles, and example topologies |
 | `ops/` | Deploy scripts, skills, and Symphony-facing integration assets |
