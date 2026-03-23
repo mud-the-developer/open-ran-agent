@@ -17,6 +17,7 @@
 /yarn-error.log*
 /pnpm-debug.log*
 /CODEX_RAN_BOOTSTRAP.md
+/README_reworked.md
 /OAI_config_WE_flexric.conf
 /srsran_config.yml
 /examples/oai/OAI_config_WE_flexric_rfsim_local.conf

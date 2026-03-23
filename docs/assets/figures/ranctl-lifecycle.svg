@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 560" role="img" aria-labelledby="title desc">
+  <title id="title">ranctl lifecycle figure</title>
+  <desc id="desc">The ranctl lifecycle moves from precheck to plan, approval, apply, and verify, then either settles into steady state or captures evidence and rolls back.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f8fafc"/>
+      <stop offset="100%" stop-color="#fff7ed"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#334155"/>
+    </marker>
+    <style>
+      .title { font: 800 32px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .subtitle { font: 500 16px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .small { font: 700 12px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; letter-spacing: 0.08em; text-transform: uppercase; fill: #475569; }
+      .label { font: 800 18px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #0f172a; }
+      .body { font: 500 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="560" fill="url(#bg)"/>
+  <rect x="40" y="28" width="1200" height="504" rx="30" fill="#fffdf8" stroke="#d6d3d1"/>
+
+  <text x="76" y="88" class="title">ranctl lifecycle</text>
+  <text x="76" y="118" class="subtitle">Every mutating operation follows one path, produces auditable artifacts, and has an explicit failure branch.</text>
+
+  <text x="76" y="164" class="small">Control path</text>
+
+  <g filter="url(#shadow)">
+    <rect x="76" y="186" width="160" height="96" rx="22" fill="#ecfdf5" stroke="#86efac"/>
+    <rect x="264" y="186" width="160" height="96" rx="22" fill="#eff6ff" stroke="#93c5fd"/>
+    <rect x="452" y="186" width="160" height="96" rx="22" fill="#fef3c7" stroke="#fcd34d"/>
+    <rect x="640" y="186" width="160" height="96" rx="22" fill="#ffedd5" stroke="#fdba74"/>
+    <rect x="828" y="186" width="160" height="96" rx="22" fill="#ede9fe" stroke="#c4b5fd"/>
+    <rect x="1016" y="186" width="168" height="96" rx="22" fill="#e0f2fe" stroke="#7dd3fc"/>
+  </g>
+
+  <text x="96" y="222" class="label">precheck</text>
+  <text x="96" y="246" class="body">config validation</text>
+  <text x="96" y="266" class="body">host and policy checks</text>
+
+  <text x="284" y="222" class="label">plan</text>
+  <text x="284" y="246" class="body">render changes</text>
+  <text x="284" y="266" class="body">compute rollback target</text>
+
+  <text x="472" y="222" class="label">approval</text>
+  <text x="472" y="246" class="body">explicit operator gate</text>
+  <text x="472" y="266" class="body">approval ref stored</text>
+
+  <text x="660" y="222" class="label">apply</text>
+  <text x="660" y="246" class="body">mutate runtime</text>
+  <text x="660" y="266" class="body">persist change state</text>
+
+  <text x="848" y="222" class="label">verify</text>
+  <text x="848" y="246" class="body">health and signatures</text>
+  <text x="848" y="266" class="body">pass or branch</text>
+
+  <text x="1036" y="222" class="label">observe</text>
+  <text x="1036" y="246" class="body">steady-state snapshot</text>
+  <text x="1036" y="266" class="body">dashboard ready</text>
+
+  <path d="M236 234 H264" fill="none" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M424 234 H452" fill="none" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M612 234 H640" fill="none" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M800 234 H828" fill="none" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M988 234 H1016" fill="none" stroke="#334155" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="76" y="336" class="small">Failure branch</text>
+  <g filter="url(#shadow)">
+    <rect x="816" y="358" width="184" height="86" rx="20" fill="#fff7ed" stroke="#fdba74"/>
+    <rect x="1030" y="358" width="154" height="86" rx="20" fill="#fef2f2" stroke="#fca5a5"/>
+  </g>
+  <text x="838" y="392" class="label">capture-artifacts</text>
+  <text x="838" y="416" class="body">logs, config, evidence bundle</text>
+  <text x="1050" y="392" class="label">rollback</text>
+  <text x="1050" y="416" class="body">restore target and verify again</text>
+
+  <path d="M908 282 V338" fill="none" stroke="#c2410c" stroke-width="3" marker-end="url(#arrow)"/>
+  <path d="M1000 401 H1030" fill="none" stroke="#c2410c" stroke-width="3" marker-end="url(#arrow)"/>
+
+  <text x="76" y="336" opacity="0">hidden</text>
+  <text x="76" y="476" class="small">Artifact band</text>
+  <rect x="76" y="490" width="1108" height="28" rx="14" fill="#0f172a"/>
+  <circle cx="126" cy="504" r="6" fill="#86efac"/>
+  <text x="142" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">precheck report</text>
+  <circle cx="332" cy="504" r="6" fill="#93c5fd"/>
+  <text x="348" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">plan json</text>
+  <circle cx="478" cy="504" r="6" fill="#fcd34d"/>
+  <text x="494" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">approval evidence</text>
+  <circle cx="690" cy="504" r="6" fill="#fdba74"/>
+  <text x="706" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">change state</text>
+  <circle cx="864" cy="504" r="6" fill="#c4b5fd"/>
+  <text x="880" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">verify report</text>
+  <circle cx="1040" cy="504" r="6" fill="#fca5a5"/>
+  <text x="1056" y="509" font-family="ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" font-size="13" fill="#e2e8f0">capture bundle</text>
+</svg>
+

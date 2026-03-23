@@ -1,0 +1,15 @@
+infographic sequence-steps-simple
+data
+  title ranctl Lifecycle
+  desc Precheck to verify with explicit approval and rollback evidence
+  sequences
+    - label precheck
+    - label plan
+    - label approval
+    - label apply
+    - label verify
+    - label observe
+  order asc
+theme
+  palette #14532d #0f766e #1d4ed8 #ea580c
+

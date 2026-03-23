@@ -1,0 +1,15 @@
+infographic sequence-steps-simple
+data
+  title Target Host Deploy Loop
+  desc Preview locally then ship, preflight, run remotely, and fetch evidence back
+  sequences
+    - label package bundle
+    - label render preview
+    - label ship bundle
+    - label remote preflight
+    - label remote ranctl
+    - label fetch evidence
+  order asc
+theme
+  palette #7c2d12 #d97706 #0f766e #1d4ed8
+
