@@ -75,8 +75,10 @@ The package must eventually emit enough evidence for operators and agents to ans
 
 Expected evidence fields:
 
+- `core_endpoint`
 - `core_link_status`
 - `interface_status.ngap`
+- `ngap_procedure_trace`
 - `interface_status.gtp_u`
 - `attach_status`
 - `session_status`

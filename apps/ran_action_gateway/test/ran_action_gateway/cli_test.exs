@@ -183,8 +183,12 @@ defmodule RanActionGateway.CLITest do
       ]
 
       Enum.each(examples, fn {command, path, expected_scope} ->
-        payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
-        result = CLI.run([command, "--json", payload])
+        result =
+          File.cd!(tmp_dir, fn ->
+            File.mkdir_p!("artifacts")
+            payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
+            CLI.run([command, "--json", payload])
+          end)
 
         refute match?({:error, %{status: "invalid", errors: [%{field: "scope"} | _]}}, result),
                "expected scope #{expected_scope} from #{path} to pass validation, got: #{inspect(result)}"
@@ -871,8 +875,12 @@ defmodule RanActionGateway.CLITest do
                &(&1["name"] == "native_probe_activation_gate_clear" and &1["status"] == "failed")
              )
 
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", payload])
+
+      File.cd!(tmp_dir)
 
       assert {:ok, %{status: "failed", native_probe: verify_probe, checks: verify_checks}} =
                CLI.run(["verify", "--json", payload])
