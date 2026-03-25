@@ -11,6 +11,12 @@ Expected first examples:
 - replacement cutover plan
 - rollback after failed attach evidence
 
+Runbook alignment:
+
+- keep the examples aligned with `notes/12-standards-evidence-and-acceptance-gates.md`
+- use `notes/13-milestone-1-acceptance-runbook.md` as the operator sequence reference
+- keep all example payloads sanitized and profile-specific
+
 Current draft files:
 
 - [precheck-target-host-open5gs-n79.json](precheck-target-host-open5gs-n79.json)

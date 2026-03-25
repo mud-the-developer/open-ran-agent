@@ -45,7 +45,9 @@ The immediate work here is not runtime code. The immediate work is:
 - [notes/10-f1-c-and-e1ap-procedure-support-matrix.md](notes/10-f1-c-and-e1ap-procedure-support-matrix.md)
 - [notes/11-f1-u-and-gtpu-procedure-support-matrix.md](notes/11-f1-u-and-gtpu-procedure-support-matrix.md)
 - [notes/12-standards-evidence-and-acceptance-gates.md](notes/12-standards-evidence-and-acceptance-gates.md)
+- [notes/13-milestone-1-acceptance-runbook.md](notes/13-milestone-1-acceptance-runbook.md)
 - [notes/README.md](notes/README.md)
+- [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/incidents/README.md](examples/incidents/README.md)
 

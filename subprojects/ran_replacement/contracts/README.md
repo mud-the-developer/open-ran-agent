@@ -19,4 +19,5 @@ Current draft files:
 
 - [ranctl-ran-replacement-request-v1.schema.json](ranctl-ran-replacement-request-v1.schema.json)
 - [ranctl-ran-replacement-status-v1.schema.json](ranctl-ran-replacement-status-v1.schema.json)
+- [n79-single-ru-target-profile-v1.schema.json](n79-single-ru-target-profile-v1.schema.json)
 - [open5gs-core-link-profile-v1.schema.json](open5gs-core-link-profile-v1.schema.json)

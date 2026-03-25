@@ -17,6 +17,7 @@ Current notes:
 - [10-f1-c-and-e1ap-procedure-support-matrix.md](10-f1-c-and-e1ap-procedure-support-matrix.md)
 - [11-f1-u-and-gtpu-procedure-support-matrix.md](11-f1-u-and-gtpu-procedure-support-matrix.md)
 - [12-standards-evidence-and-acceptance-gates.md](12-standards-evidence-and-acceptance-gates.md)
+- [13-milestone-1-acceptance-runbook.md](13-milestone-1-acceptance-runbook.md)
 
 Reading order:
 
@@ -28,3 +29,5 @@ Reading order:
 6. OAI function and standards baseline
 7. per-interface standards subsets
 8. procedure support matrices
+9. standards evidence gates
+10. milestone-1 acceptance runbook

@@ -75,6 +75,7 @@ This effort is only considered successful when all of the following hold for the
 - `docs/adr/0004-ranctl-as-single-action-entrypoint.md`
 - `docs/adr/0007-ran-functions-as-agent-friendly-cli-surface.md`
 - `docs/adr/0008-oai-cu-du-function-and-standards-baseline.md`
+- `subprojects/ran_replacement/contracts/n79-single-ru-target-profile-v1.schema.json`
 - `subprojects/ran_replacement/notes/04-open5gs-core-and-s-m-c-u-plane-scope.md`
 - `subprojects/ran_replacement/notes/05-oai-function-and-standards-baseline.md`
 - `subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md`
@@ -84,6 +85,7 @@ This effort is only considered successful when all of the following hold for the
 - `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`
 - `subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md`
 - `subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md`
+- `subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md`
 
 ## Current Code Touchpoints
 
@@ -506,6 +508,6 @@ These stay out of scope until milestone 1 is complete:
 
 1. Tighten `contracts/ranctl-ran-replacement-request-v1.schema.json` per scope instead of leaving additive draft flexibility.
 2. Tighten `contracts/ranctl-ran-replacement-status-v1.schema.json` with scope-specific evidence fields for RU, registration, PDU session, and ping.
-3. Add a `n79-single-ru-target-profile-v1.schema.json` once the real lab owner freezes exact RF and RU assumptions.
+3. Add a sanitized instance example for `contracts/n79-single-ru-target-profile-v1.schema.json` once the real lab owner freezes exact RF and RU assumptions.
 4. Add sanitized `observe` and `capture-artifacts` request examples that line up with the incident notes for failed RU sync, failed registration, failed ping, and failed cutover rollback.
-5. Add a milestone-1 acceptance runbook that ties `precheck`, `plan`, `apply`, `verify`, and `capture-artifacts` to the real RU and real Open5GS lane.
+5. Add interface-specific compare-report and rollback-evidence templates so `verify` and `capture-artifacts` can point to deterministic artifact shapes.
