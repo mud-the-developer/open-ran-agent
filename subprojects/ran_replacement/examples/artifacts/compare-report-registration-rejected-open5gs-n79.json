@@ -1,0 +1,36 @@
+{
+  "report_id": "cmp-ran-repl-registration-001",
+  "change_id": "chg-ran-repl-verify-001",
+  "incident_id": "inc-ran-repl-registration-001",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "comparison_scope": "registration",
+  "expected_state": {
+    "ngap": "NG Setup is established with the real Open5GS core and registration can progress to UE context setup.",
+    "subscriber": "sanitized-imsi-001 is accepted by the declared Open5GS profile.",
+    "plmn": "45040",
+    "tac": 100,
+    "dnn": "internet"
+  },
+  "observed_state": {
+    "ngap": "NG Setup completed, but registration was rejected by the real Open5GS core.",
+    "subscriber": "The observed subscriber or profile was not accepted as declared.",
+    "plmn": "45040",
+    "tac": 100,
+    "dnn": "internet"
+  },
+  "gate_class": "degraded",
+  "diff_summary": [
+    "NGAP transport is reachable.",
+    "Registration does not progress past the core acceptance step.",
+    "The failure is procedural or profile-related rather than a total transport outage."
+  ],
+  "evidence_refs": [
+    "subprojects/ran_replacement/examples/status/observe-registration-rejected-open5gs-n79.status.json",
+    "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json",
+    "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
+  ],
+  "rollback_target": "oai_reference",
+  "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane."
+}

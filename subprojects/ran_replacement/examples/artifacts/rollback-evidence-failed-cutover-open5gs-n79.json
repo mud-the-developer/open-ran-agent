@@ -1,0 +1,35 @@
+{
+  "rollback_id": "rbk-ran-repl-cutover-001",
+  "change_id": "chg-ran-repl-capture-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "rollback_target": "oai_reference",
+  "rollback_reason": "The failed cutover left the replacement lane in a state that was less explainable than the known-good OAI reference lane.",
+  "triggering_gate": "blocked",
+  "pre_rollback_state": {
+    "compare_report_ref": "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
+    "gate_class": "degraded",
+    "cutover_state": "replacement_primary",
+    "observed_problem": "The lane could not prove attach-plus-ping against the declared target profile after cutover."
+  },
+  "post_rollback_state": {
+    "rollback_target": "oai_reference",
+    "cutover_state": "rolled_back",
+    "repair_state": "reference lane restored and ready for a corrected next attempt"
+  },
+  "recovery_check": {
+    "status": "ok",
+    "checks": [
+      "rollback_target_restored",
+      "reference_lane_reachable",
+      "no_unsafe_cutover_state_remaining"
+    ]
+  },
+  "evidence_refs": [
+    "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json",
+    "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md",
+    "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
+  ],
+  "operator_notes": "Rollback was preferred because leaving the lane up would hide the unresolved user-plane failure behind a cutover state. The rollback target is explicit and the restored state is auditable."
+}

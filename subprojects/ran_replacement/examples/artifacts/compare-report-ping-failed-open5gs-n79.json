@@ -1,0 +1,33 @@
+{
+  "report_id": "cmp-ran-repl-ping-001",
+  "change_id": "chg-ran-repl-verify-001",
+  "incident_id": "inc-ran-repl-ping-001",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "comparison_scope": "ping",
+  "expected_state": {
+    "pdu_session": "The UE holds a declared IPv4 session on the internet DNN.",
+    "gtpu": "The tunnel and route are bound to the declared UE session.",
+    "ping_target": "8.8.8.8"
+  },
+  "observed_state": {
+    "pdu_session": "The UE established a PDU session.",
+    "gtpu": "The tunnel exists, but user-plane reachability does not complete end to end.",
+    "ping_target": "8.8.8.8"
+  },
+  "gate_class": "degraded",
+  "diff_summary": [
+    "Control-plane registration is already past the acceptance threshold.",
+    "PDU session exists, but user-plane forwarding does not produce a successful ping.",
+    "The failure is isolated to the declared user-plane path until proven otherwise."
+  ],
+  "evidence_refs": [
+    "subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json",
+    "subprojects/ran_replacement/examples/ranctl/observe-ping-failed-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/ranctl/capture-artifacts-ping-failed-open5gs-n79.json",
+    "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
+    "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
+  ],
+  "rollback_target": "oai_reference",
+  "operator_next_step": "Inspect the user-plane route, tunnel binding, and forwarding evidence before retrying the same attach path."
+}
