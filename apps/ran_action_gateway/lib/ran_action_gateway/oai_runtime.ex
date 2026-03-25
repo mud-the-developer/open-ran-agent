@@ -262,6 +262,19 @@ defmodule RanActionGateway.OaiRuntime do
     end
   end
 
+  @spec contract_snapshot(String.t() | nil, map()) :: {:ok, map()} | {:error, map()}
+  def contract_snapshot(cell_group_id, metadata) do
+    with {:ok, spec} <- resolve(cell_group_id, metadata) do
+      public_spec = public_spec(spec)
+
+      {:ok,
+       %{
+         runtime_mode: runtime_mode(spec),
+         runtime_digest: runtime_digest(public_spec)
+       }}
+    end
+  end
+
   defp validate_spec(spec) do
     required_fields = [
       "repo_root",

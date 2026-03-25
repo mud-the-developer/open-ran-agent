@@ -389,6 +389,31 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "runtime-enabled commands fail clearly when runtime_contract metadata is missing", %{
+    tmp_dir: tmp_dir
+  } do
+    runtime_fixture = build_runtime_fixture(tmp_dir)
+
+    payload =
+      base_payload(%{
+        "approval" => approval_payload(),
+        "metadata" => %{
+          "oai_runtime" => oai_runtime_payload(runtime_fixture)
+        }
+      })
+      |> JSON.encode!()
+
+    File.cd!(tmp_dir, fn ->
+      assert {:error, %{status: "invalid", command: "precheck", errors: errors}} =
+               CLI.run(["precheck", "--json", payload])
+
+      assert %{field: "runtime_contract", message: message} =
+               Enum.find(errors, &(&1.field == "runtime_contract"))
+
+      assert message =~ "metadata.runtime_contract"
+    end)
+  end
+
   @tag :runtime_contract
   test "oai runtime path generates compose assets and executes docker lifecycle", %{
     tmp_dir: tmp_dir
@@ -450,6 +475,12 @@ defmodule RanActionGateway.CLITest do
 
       assert Enum.any?(errors, &String.contains?(&1, "runtime_digest"))
       assert plan["runtime_mode"] == "docker_compose_rfsim_f1"
+      assert plan["runtime_contract"]["version"] == "ranctl.runtime.v1"
+      assert plan["runtime_contract"]["release_unit"] == "bootstrap_source_bundle"
+      assert plan["runtime_contract"]["release_ref"] == "source-checkout@cli-test"
+      assert plan["runtime_contract"]["entrypoint"] == "bin/ranctl"
+      assert plan["runtime_contract"]["runtime_mode"] == "docker_compose_rfsim_f1"
+      assert is_binary(plan["runtime_contract"]["runtime_digest"])
       assert File.exists?(plan["runtime_plan"].compose_path)
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_du_conf_path"])
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_cucp_conf_path"])
@@ -467,7 +498,14 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, apply} = CLI.run(["apply", "--json", payload])
       assert apply["runtime_result"].project_name == "test-oai-du"
 
+      assert apply["runtime_contract"]["runtime_digest"] ==
+               plan["runtime_contract"]["runtime_digest"]
+
+      assert {:ok, approval_artifact} = Store.read_json(apply.approval_ref)
+      assert approval_artifact["runtime_contract"]["release_ref"] == "source-checkout@cli-test"
+
       assert {:ok, verify} = CLI.run(["verify", "--json", payload])
+      assert verify["runtime_contract"]["runtime_mode"] == "docker_compose_rfsim_f1"
 
       assert Enum.any?(
                verify.checks,
@@ -497,6 +535,7 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, rollback} = CLI.run(["rollback", "--json", payload])
       assert rollback["runtime_result"].project_name == "test-oai-du"
+      assert rollback["runtime_contract"]["release_unit"] == "bootstrap_source_bundle"
 
       assert Enum.any?(RanActionGateway.MockDockerRunner.calls(), fn
                {"docker", ["compose", "-p", "test-oai-du", "-f", _, "up", "-d"]} -> true
@@ -511,6 +550,59 @@ defmodule RanActionGateway.CLITest do
                _ ->
                  false
              end)
+    end)
+  end
+
+  test "apply rejects runtime drift when current runtime metadata no longer matches the plan", %{
+    tmp_dir: tmp_dir
+  } do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    runtime_fixture = build_runtime_fixture(tmp_dir)
+
+    request =
+      %{
+        "approval" => approval_payload(),
+        "metadata" => %{
+          "oai_runtime" =>
+            oai_runtime_payload(runtime_fixture, %{"project_name" => "test-oai-du"}),
+          "runtime_contract" => runtime_contract_payload()
+        }
+      }
+      |> then(&base_payload(&1))
+
+    File.cd!(tmp_dir, fn ->
+      payload = JSON.encode!(request)
+
+      assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+
+      drifted_payload =
+        request
+        |> put_in(["metadata", "oai_runtime", "project_name"], "test-oai-du-drift")
+        |> JSON.encode!()
+
+      assert {:error, %{status: "runtime_contract_mismatch", command: "apply", errors: errors}} =
+               CLI.run(["apply", "--json", drifted_payload])
+
+      assert Enum.any?(errors, &String.contains?(&1, "runtime_digest"))
     end)
   end
 
@@ -559,6 +651,11 @@ defmodule RanActionGateway.CLITest do
       assert observe.incident_summary.severity == "warning"
       assert "attach freeze is active" in observe.incident_summary.reasons
       assert "cell group drain workflow is active" in observe.incident_summary.reasons
+      assert observe.incident_summary.suggested_next == [
+               "release attach freeze after the maintenance window",
+               "complete verify and clear drain when the cell group is stable"
+             ]
+
       assert observe.config.release_readiness.status == :ok
       assert get_in(observe.control_state, ["drain", "status"]) == "draining"
 
@@ -568,6 +665,23 @@ defmodule RanActionGateway.CLITest do
         |> JSON.encode!()
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.artifacts == [Store.capture_path("inc-control-001")]
+      assert capture.bundle.manifest.ref == "inc-control-001"
+      assert capture.bundle.manifest.change_id == "chg-test-001"
+      assert capture.bundle.manifest.artifact_root == Store.artifact_root()
+      assert capture.bundle.workflow.plan == Store.plan_path("chg-test-001")
+      assert capture.bundle.workflow.change_state == Store.change_state_path("chg-test-001")
+      assert capture.bundle.workflow.verify == Store.verify_path("chg-test-001")
+      assert capture.bundle.workflow.rollback_plan == Store.rollback_plan_path("chg-test-001")
+      assert capture.bundle.workflow.capture == Store.capture_path("inc-control-001")
+
+      assert capture.bundle.workflow.approvals == [
+               Store.approval_path("chg-test-001", "apply")
+             ]
+
+      assert capture.bundle.workflow.config_snapshot == Store.config_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.control_snapshot == Store.control_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.probe_snapshot == nil
       assert File.exists?(capture.bundle.workflow.config_snapshot)
       assert File.exists?(capture.bundle.workflow.control_snapshot)
       assert get_in(capture.bundle.control_state, ["attach_freeze", "status"]) == "active"
