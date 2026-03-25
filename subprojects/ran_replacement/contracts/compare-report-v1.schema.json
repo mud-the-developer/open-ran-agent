@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/compare-report-v1.schema.json",
+  "title": "RAN Replacement Compare Report v1",
+  "description": "Draft schema for replacement-track compare-report artifacts. The report summarizes expected versus observed state for a declared milestone-1 scope and must stay readable without SSH access.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_id",
+    "change_id",
+    "incident_id",
+    "target_profile",
+    "core_profile",
+    "comparison_scope",
+    "expected_state",
+    "observed_state",
+    "gate_class",
+    "diff_summary",
+    "evidence_refs",
+    "rollback_target",
+    "operator_next_step"
+  ],
+  "properties": {
+    "report_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "change_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "incident_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "core_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "comparison_scope": {
+      "type": "string",
+      "enum": [
+        "ngap",
+        "f1_c",
+        "e1ap",
+        "f1_u",
+        "gtpu",
+        "ru_sync",
+        "registration",
+        "pdu_session",
+        "ping",
+        "cutover"
+      ]
+    },
+    "expected_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "observed_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "gate_class": {
+      "type": "string",
+      "enum": [
+        "blocked",
+        "degraded",
+        "pass"
+      ]
+    },
+    "diff_summary": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "rollback_target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "operator_next_step": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

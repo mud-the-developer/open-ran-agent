@@ -33,7 +33,21 @@ npx --yes ajv-cli validate \
   -s "$SUBPROJECT_DIR/contracts/ranctl-ran-replacement-status-v1.schema.json" \
   -d "$SUBPROJECT_DIR/examples/status/*.json"
 
-echo "[4/4] Validating target-profile example"
+echo "[4/5] Validating artifact fixtures"
+npx --yes ajv-cli validate \
+  --spec=draft2020 \
+  --strict=false \
+  --validate-formats=false \
+  -s "$SUBPROJECT_DIR/contracts/compare-report-v1.schema.json" \
+  -d "$SUBPROJECT_DIR/examples/artifacts/compare-report-*.json"
+npx --yes ajv-cli validate \
+  --spec=draft2020 \
+  --strict=false \
+  --validate-formats=false \
+  -s "$SUBPROJECT_DIR/contracts/rollback-evidence-v1.schema.json" \
+  -d "$SUBPROJECT_DIR/examples/artifacts/rollback-evidence-*.json"
+
+echo "[5/5] Validating target-profile example"
 npx --yes ajv-cli validate \
   --spec=draft2020 \
   --strict=false \

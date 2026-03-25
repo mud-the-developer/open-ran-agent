@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/rollback-evidence-v1.schema.json",
+  "title": "RAN Replacement Rollback Evidence v1",
+  "description": "Draft schema for replacement-track rollback evidence artifacts. The artifact captures why rollback was safer than leaving a failed milestone-1 lane up and what state was observed after recovery.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "rollback_id",
+    "change_id",
+    "incident_id",
+    "target_profile",
+    "rollback_target",
+    "rollback_reason",
+    "triggering_gate",
+    "pre_rollback_state",
+    "post_rollback_state",
+    "recovery_check",
+    "evidence_refs",
+    "operator_notes"
+  ],
+  "properties": {
+    "rollback_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "change_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "incident_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_profile": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rollback_target": {
+      "type": "string",
+      "minLength": 1
+    },
+    "rollback_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "triggering_gate": {
+      "type": "string",
+      "enum": [
+        "blocked",
+        "degraded",
+        "pass"
+      ]
+    },
+    "pre_rollback_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "post_rollback_state": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "recovery_check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "checks"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "blocked",
+            "degraded"
+          ]
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "operator_notes": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
