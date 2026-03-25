@@ -15,6 +15,38 @@ This package owns the declared `NGAP` edge of the milestone-1 replacement lane:
 
 It does not own RU timing, scheduler decisions, or user-plane forwarding.
 
+## Runtime Owner
+
+Primary runtime owner for milestone 1: `ran_cu_cp`.
+
+Supporting ownership boundaries:
+
+- `ran_cu_cp` owns the replacement-side NGAP session and attach-control state that this package will eventually surface.
+- the real `Open5GS` core remains the external owner of subscriber, registration, and session state beyond the NGAP peer boundary
+- `ran_action_gateway` and `bin/ranctl` remain the only mutation-capable control surface for any cutover or rollback that depends on this package
+
+No package-layer runtime code lands here until the contract, schema references, and evidence fields are explicit.
+
+## Cutover Owner
+
+`ran_action_gateway` via `bin/ranctl` owns NGAP-facing cutover planning, apply, and verify sequencing.
+
+The cutover lane may only trust this package when:
+
+- the target host and control-plane gates are explicit
+- the named core endpoint is present in plan and verify output
+- `ran_cu_cp` can surface the last observed NGAP procedure and the active rollback target
+
+## Rollback Owner
+
+`ran_action_gateway` via `bin/ranctl` owns rollback orchestration for this package.
+
+`ran_cu_cp` owns the rollback-visible replacement-side state:
+
+- the last observed NGAP procedure
+- `UE Context Release` cleanup state
+- evidence that control returned to the last safe pre-attach or pre-cutover target
+
 ## Boundary Inputs
 
 The package reads from existing replacement-track contracts rather than inventing a parallel control surface.

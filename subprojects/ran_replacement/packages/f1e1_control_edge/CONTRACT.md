@@ -16,6 +16,38 @@ This package owns the declared control-plane coordination edge for milestone 1:
 
 It does not own NGAP-facing core registration, user-plane forwarding, or RT scheduler behavior.
 
+## Runtime Owner
+
+Primary runtime owner for milestone 1: `ran_cu_cp`.
+
+Supporting runtime owners:
+
+- `ran_cu_up` for CU-UP peer state that `E1AP` coordination depends on
+- `ran_du_high` for DU-local association, cell, and UE-context state that `F1-C` depends on
+- `ran_action_gateway` and `bin/ranctl` as the only operator-facing mutation surface for cutover and rollback
+
+This package stays docs/contracts-first until those state boundaries are explicit in contract fields and evidence.
+
+## Cutover Owner
+
+`ran_action_gateway` via `bin/ranctl` owns cutover planning, apply, and verify sequencing for the control-plane lane.
+
+The cutover contract for this package requires:
+
+- explicit association and config state from `ran_cu_cp`
+- explicit peer-state visibility from `ran_cu_up` and `ran_du_high`
+- a named rollback target whenever a control-plane transition can diverge from the reference path
+
+## Rollback Owner
+
+`ran_action_gateway` via `bin/ranctl` owns rollback orchestration.
+
+The rollback-visible state remains owned by the participating runtimes:
+
+- `ran_cu_cp` exposes association, configuration, and release evidence
+- `ran_cu_up` exposes CU-UP coordination state that must return to the last safe target
+- `ran_du_high` exposes DU-local cleanup state that proves the control-plane lane is no longer half-open
+
 ## Boundary Inputs
 
 Required inputs for this package come from the existing replacement-track contracts:
