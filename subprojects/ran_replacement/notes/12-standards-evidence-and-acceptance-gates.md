@@ -159,6 +159,7 @@ It must surface, at minimum:
 - `gate_class`
 - `target_profile`
 - `core_profile`
+- `core_endpoint`
 - `ru_profile`
 - `ue_profile`
 - `rollback_target`
@@ -180,7 +181,11 @@ It must surface, at minimum:
 It must surface, at minimum:
 
 - the latest per-interface gate class
+- `core_endpoint`
+- `core_link_status`
+- `ngap_procedure_trace`
 - the last observed procedure or state transition per interface
+- `release_status`
 - whether attach progressed to registration
 - whether PDU session and ping evidence exist
 - whether the current state is safe to leave running or should be rolled back

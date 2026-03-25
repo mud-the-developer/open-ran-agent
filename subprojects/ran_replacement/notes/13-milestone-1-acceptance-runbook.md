@@ -47,6 +47,7 @@ What to inspect:
 - `gate_class`
 - `target_profile`
 - `core_profile`
+- `core_endpoint`
 - `ru_profile`
 - `ue_profile`
 - `rollback_target`
@@ -123,6 +124,10 @@ Purpose:
 What to inspect:
 
 - latest per-interface gate class
+- `core_endpoint`
+- `core_link_status`
+- `ngap_procedure_trace`
+- `release_status`
 - whether attach progressed to registration
 - whether PDU session evidence exists
 - whether ping evidence exists
@@ -246,6 +251,7 @@ Typical evidence:
 First artifacts:
 
 - `verify` output
+- compare report or NGAP procedure trace with the named core endpoint
 - core-facing logs or summaries
 - `NGAP` procedure evidence
 
