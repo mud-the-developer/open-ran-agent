@@ -4,9 +4,35 @@
   "incident_id": "inc-ran-repl-registration-001",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": "open5gs-sanitized-lab-release-1",
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "upf_host": "10.41.83.45",
+      "gtpu_port": 2152,
+      "dnn": "internet",
+      "slice": {
+        "sst": 1,
+        "sd": "000001"
+      }
+    }
+  },
   "comparison_scope": "registration",
   "expected_state": {
     "ngap": "NG Setup is established with the real Open5GS core and registration can progress to UE context setup.",
+    "ngap_procedures": {
+      "NG Setup": "accepted by the declared AMF endpoint",
+      "Initial UE Message": "reaches the declared Open5GS control-plane lane",
+      "Uplink NAS Transport": "carries the registration request to the AMF",
+      "Downlink NAS Transport": "returns registration progress toward the UE",
+      "UE Context Release": "completes cleanly after success or rollback-safe cleanup"
+    },
+    "release_state": "UE context release is clean and auditable for retry or rollback decisions",
     "subscriber": "sanitized-imsi-001 is accepted by the declared Open5GS profile.",
     "plmn": "45040",
     "tac": 100,
@@ -14,6 +40,14 @@
   },
   "observed_state": {
     "ngap": "NG Setup completed, but registration was rejected by the real Open5GS core.",
+    "ngap_procedures": {
+      "NG Setup": "completed against 10.41.83.45:38412",
+      "Initial UE Message": "reached the declared control-plane lane",
+      "Uplink NAS Transport": "carried the registration request to the real core",
+      "Downlink NAS Transport": "returned the registration rejection from the real Open5GS core",
+      "UE Context Release": "completed after rejection cleanup"
+    },
+    "release_state": "UE context release completed and the lane returned to a rollback-safe idle state",
     "subscriber": "The observed subscriber or profile was not accepted as declared.",
     "plmn": "45040",
     "tac": 100,
@@ -21,8 +55,8 @@
   },
   "gate_class": "degraded",
   "diff_summary": [
-    "NGAP transport is reachable.",
-    "Registration does not progress past the core acceptance step.",
+    "NGAP transport is reachable and the named Open5GS endpoint is explicit.",
+    "Registration does not progress past downlink NAS transport and the core acceptance step.",
     "The failure is procedural or profile-related rather than a total transport outage."
   ],
   "evidence_refs": [
