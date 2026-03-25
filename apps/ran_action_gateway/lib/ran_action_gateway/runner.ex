@@ -13,7 +13,7 @@ defmodule RanActionGateway.Runner do
 
   @phases [:precheck, :plan, :apply, :verify, :rollback, :observe, :capture_artifacts]
   @change_commands [:precheck, :plan, :apply, :verify, :rollback]
-  @scopes ~w(backend cell_group association incident)
+  @scopes ~w(backend cell_group association incident gnb target_host ue_session ru_link core_link replacement_cutover)
 
   @spec phases() :: [atom()]
   def phases, do: @phases
