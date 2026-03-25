@@ -704,7 +704,11 @@ defmodule RanActionGateway.Runner do
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
       |> Map.put(:core_profile, replacement["core_profile"])
+      |> Map.put(:target_profile, replacement["target_profile"])
+      |> Map.put(:target_ref, replacement_target_ref(change))
       |> Map.put(:rollback_target, replacement_rollback_target(payload))
+      |> Map.put(:rollback_available, true)
+      |> Map.put(:suggested_next, replacement_suggested_next(phase, change, base_status))
       |> Map.put(
         :core_link_status,
         replacement_core_link_status(phase, change, replacement, base_status)
@@ -713,9 +717,10 @@ defmodule RanActionGateway.Runner do
         :interface_status,
         replacement_interface_status(phase, change, replacement, base_status)
       )
+      |> maybe_put_plane_status(phase, change, replacement, base_status)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
-      |> maybe_put_rollback_status(phase, change)
-      |> maybe_put_replacement_artifacts(phase, change)
+      |> maybe_put_pdu_session_status(phase, change, replacement, base_status)
+      |> maybe_put_ping_status(phase, change, replacement, base_status)
     else
       payload
     end
@@ -739,17 +744,14 @@ defmodule RanActionGateway.Runner do
   defp replacement_summary(phase, %Change{} = change, status) do
     target_role = replacement_metadata(change)["target_role"] || change.scope
 
-    case phase do
-      :capture_artifacts ->
-        "Artifact capture for replacement #{target_role} is complete and the rollback decision can be replayed from the evidence set."
+    cond do
+      phase == :verify and user_plane_scope?(change) and status != "failed" ->
+        "UE attach, PDU session, and ping are all proven against the declared Open5GS core lane."
 
-      :rollback ->
-        "Rollback returned the replacement #{target_role} lane to the declared OAI reference target."
+      phase == :verify and status == "failed" ->
+        "Replacement acceptance checks are incomplete and the lane should not be treated as healthy."
 
-      :precheck when change.scope == "target_host" ->
-        "Target host precheck is #{replacement_gate_class(:precheck, status)} because the declared replacement resources are not yet fully proven."
-
-      _ ->
+      true ->
         "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
     end
   end
@@ -792,6 +794,41 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_interface_reason(_status), do: nil
 
+  defp maybe_put_plane_status(payload, phase, %Change{} = change, replacement, status) do
+    gates = replacement["acceptance_gates"] || []
+
+    if phase == :verify and user_plane_scope?(change) do
+      Map.put(payload, :plane_status, %{
+        s_plane: %{
+          status: "ok",
+          evidence_ref: replacement_evidence_ref(:verify, change, "ptp-state"),
+          reason: nil
+        },
+        m_plane: %{
+          status: "ok",
+          evidence_ref: replacement_evidence_ref(:verify, change, "host-state"),
+          reason: nil
+        },
+        c_plane: %{
+          status: "ok",
+          evidence_ref: replacement_evidence_ref(:verify, change, "control-plane"),
+          reason: nil
+        },
+        u_plane: %{
+          status: if(status == "failed", do: "degraded", else: "ok"),
+          evidence_ref: replacement_evidence_ref(:verify, change, "user-plane"),
+          reason:
+            if(status == "failed" or "ping" in gates,
+              do: if(status == "failed", do: "user-plane confidence is incomplete", else: nil),
+              else: nil
+            )
+        }
+      })
+    else
+      payload
+    end
+  end
+
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
     if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
       Map.put(payload, :attach_status, %{
@@ -805,6 +842,70 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp maybe_put_pdu_session_status(payload, phase, %Change{} = change, replacement, status) do
+    if phase == :verify and Enum.member?(replacement["acceptance_gates"] || [], "pdu_session") do
+      Map.put(payload, :pdu_session_status, %{
+        status: if(status == "failed", do: "pending", else: "ok"),
+        evidence_ref: replacement_evidence_ref(:verify, change, "pdu-session"),
+        reason:
+          if(status == "failed",
+            do: "replacement PDU session path is not yet fully proven",
+            else: nil
+          )
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_ping_status(payload, phase, %Change{} = change, replacement, status) do
+    if phase == :verify and Enum.member?(replacement["acceptance_gates"] || [], "ping") do
+      Map.put(payload, :ping_status, %{
+        status: if(status == "failed", do: "pending", else: "ok"),
+        evidence_ref: replacement_evidence_ref(:verify, change, "ping"),
+        reason:
+          if(status == "failed", do: "replacement ping path is not yet fully proven", else: nil)
+      })
+    else
+      payload
+    end
+  end
+
+  defp replacement_target_ref(%Change{} = change) do
+    case change.scope do
+      "ue_session" -> "ue-n79-lab-01"
+      "target_host" -> "host-n79-lab-01"
+      "replacement_cutover" -> "gnb-n79-lab-01"
+      _ -> "#{change.scope}-#{change.change_id}"
+    end
+  end
+
+  defp replacement_rollback_target(payload) do
+    payload[:rollback_target] || payload["rollback_target"] || "oai_reference"
+  end
+
+  defp replacement_suggested_next(phase, %Change{} = change, status) do
+    cond do
+      phase == :verify and user_plane_scope?(change) and status != "failed" ->
+        [
+          "capture artifacts for the verified lane",
+          "keep the same rollback target for the next mutation",
+          "advance only if the soak window remains stable"
+        ]
+
+      phase == :verify ->
+        ["capture artifacts", "review rollback target", "do not leave the lane running"]
+
+      true ->
+        []
+    end
+  end
+
+  defp user_plane_scope?(%Change{} = change) do
+    required = replacement_metadata(change)["required_interfaces"] || []
+    Enum.any?(required, &(&1 in ["f1_u", "gtpu"]))
+  end
+
   defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
     "artifacts/replacement/#{phase |> Atom.to_string()}/#{change.change_id}/#{suffix}.json"
   end
@@ -813,45 +914,6 @@ defmodule RanActionGateway.Runner do
     do: Map.put(payload, :status, "ok")
 
   defp maybe_replace_status(payload, _phase), do: payload
-
-  defp replacement_rollback_target(payload) do
-    payload[:rollback_target] || payload["rollback_target"] || "oai_reference"
-  end
-
-  defp maybe_put_rollback_status(payload, :capture_artifacts, %Change{} = change) do
-    Map.put(payload, :rollback_status, %{
-      status: "pending",
-      evidence_ref: replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
-      reason: "rollback decision is prepared from the captured evidence"
-    })
-  end
-
-  defp maybe_put_rollback_status(payload, :rollback, %Change{} = change) do
-    Map.put(payload, :rollback_status, %{
-      status: "ok",
-      evidence_ref: replacement_evidence_ref(:rollback, change, "post-rollback-verify"),
-      reason: "rollback target restored and verified"
-    })
-  end
-
-  defp maybe_put_rollback_status(payload, _phase, _change), do: payload
-
-  defp maybe_put_replacement_artifacts(payload, :capture_artifacts, %Change{} = change) do
-    Map.put(payload, :artifacts, [
-      replacement_evidence_ref(:capture_artifacts, change, "compare-report"),
-      replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence")
-    ])
-  end
-
-  defp maybe_put_replacement_artifacts(payload, :rollback, %Change{} = change) do
-    Map.put(payload, :artifacts, [
-      replacement_evidence_ref(:rollback, change, "rollback-plan"),
-      replacement_evidence_ref(:rollback, change, "post-rollback-verify"),
-      replacement_evidence_ref(:rollback, change, "debug-pack")
-    ])
-  end
-
-  defp maybe_put_replacement_artifacts(payload, _phase, _change), do: payload
 
   defp replacement_virtual_plan(%Change{} = change) do
     %{

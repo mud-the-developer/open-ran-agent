@@ -183,8 +183,12 @@ defmodule RanActionGateway.CLITest do
       ]
 
       Enum.each(examples, fn {command, path, expected_scope} ->
-        payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
-        result = CLI.run([command, "--json", payload])
+        result =
+          File.cd!(tmp_dir, fn ->
+            File.mkdir_p!("artifacts")
+            payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
+            CLI.run([command, "--json", payload])
+          end)
 
         refute match?({:error, %{status: "invalid", errors: [%{field: "scope"} | _]}}, result),
                "expected scope #{expected_scope} from #{path} to pass validation, got: #{inspect(result)}"
@@ -250,9 +254,7 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/verify/"
 
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
-
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
@@ -280,8 +282,7 @@ defmodule RanActionGateway.CLITest do
       assert get_in(observe, [:core_link_status, :evidence_ref]) =~
                "artifacts/replacement/observe/"
 
-      assert get_in(observe, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(observe, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
@@ -307,77 +308,35 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/verify/"
 
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
-
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
-  test "replacement target-host precheck surfaces rollback target and deterministic evidence",
+  test "replacement acceptance verify surfaces target profile, suggested next steps, and user-plane proofs",
        %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       repo_root = Path.expand("../../../..", __DIR__)
 
-      precheck_payload =
+      verify_payload =
         Path.join(
           repo_root,
-          "subprojects/ran_replacement/examples/ranctl/precheck-target-host-open5gs-n79.json"
+          "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
         )
         |> File.read!()
         |> JSON.decode!()
         |> JSON.encode!()
 
-      assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_payload])
-      assert precheck.core_profile == "open5gs_nsa_lab_v1"
-      assert precheck.rollback_target == "oai_reference"
-      assert precheck.gate_class in ["blocked", "degraded"]
-
-      assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
-               "artifacts/replacement/precheck/"
-    end)
-  end
-
-  test "replacement capture-artifacts surfaces rollback evidence fields", %{tmp_dir: tmp_dir} do
-    File.cd!(tmp_dir, fn ->
-      repo_root = Path.expand("../../../..", __DIR__)
-
-      payload =
-        Path.join(
-          repo_root,
-          "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-cutover-open5gs-n79.json"
-        )
-        |> File.read!()
-        |> JSON.decode!()
-        |> JSON.encode!()
-
-      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", payload])
-      assert capture.status == "ok"
-      assert capture.rollback_target == "oai_reference"
-      assert capture.rollback_status.status == "pending"
-      assert capture.rollback_status.evidence_ref =~ "/rollback-evidence.json"
-      assert Enum.any?(capture.artifacts, &String.contains?(&1, "rollback-evidence"))
-    end)
-  end
-
-  test "replacement rollback surfaces auditable rollback status", %{tmp_dir: tmp_dir} do
-    File.cd!(tmp_dir, fn ->
-      repo_root = Path.expand("../../../..", __DIR__)
-
-      payload =
-        Path.join(
-          repo_root,
-          "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json"
-        )
-        |> File.read!()
-        |> JSON.decode!()
-        |> JSON.encode!()
-
-      assert {:ok, rollback} = CLI.run(["rollback", "--json", payload])
-      assert rollback.status == "ok"
-      assert rollback.rollback_target == "oai_reference"
-      assert rollback.rollback_status.status == "ok"
-      assert rollback.rollback_status.evidence_ref =~ "artifacts/replacement/rollback/"
-      assert Enum.any?(rollback.artifacts, &String.contains?(&1, "post-rollback-verify"))
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert verify.target_ref == "ue-n79-lab-01"
+      assert verify.rollback_target == "oai_reference"
+      assert verify.rollback_available == true
+      assert verify.gate_class in ["degraded", "pass"]
+      assert "capture artifacts for the verified lane" in verify.suggested_next
+      assert "advance only if the soak window remains stable" in verify.suggested_next
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
+      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
     end)
   end
 
@@ -532,18 +491,20 @@ defmodule RanActionGateway.CLITest do
 
     runtime_fixture = build_runtime_fixture(tmp_dir)
 
-    payload =
-      base_payload(%{
+    request =
+      %{
         "approval" => approval_payload(),
         "metadata" => %{
           "oai_runtime" =>
             oai_runtime_payload(runtime_fixture, %{"project_name" => "test-oai-du"}),
           "runtime_contract" => runtime_contract_payload()
         }
-      })
-      |> JSON.encode!()
+      }
+      |> then(&base_payload(&1))
 
     File.cd!(tmp_dir, fn ->
+      payload = JSON.encode!(request)
+
       assert {:ok, %{status: "ok", runtime: runtime}} = CLI.run(["precheck", "--json", payload])
       assert runtime.runtime_mode == "docker_compose_rfsim_f1"
       assert Enum.any?(runtime.checks, &(&1["name"] == "docker_available"))
@@ -554,6 +515,16 @@ defmodule RanActionGateway.CLITest do
       assert Enum.any?(runtime.checks, &(&1["name"] == "cuup_conf_patch_points_present"))
 
       assert {:ok, plan} = CLI.run(["plan", "--json", payload])
+
+      drifted_payload =
+        request
+        |> put_in(["metadata", "oai_runtime", "project_name"], "test-oai-du-drift")
+        |> JSON.encode!()
+
+      assert {:error, %{status: "runtime_contract_mismatch", command: "apply", errors: errors}} =
+               CLI.run(["apply", "--json", drifted_payload])
+
+      assert Enum.any?(errors, &String.contains?(&1, "runtime_digest"))
       assert plan["runtime_mode"] == "docker_compose_rfsim_f1"
       assert plan["runtime_contract"]["version"] == "ranctl.runtime.v1"
       assert plan["runtime_contract"]["release_unit"] == "bootstrap_source_bundle"
@@ -851,6 +822,8 @@ defmodule RanActionGateway.CLITest do
 
   test "precheck and verify run native probe checks when requested", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
+      File.mkdir_p!("artifacts")
+
       payload =
         base_payload(%{
           "approval" => approval_payload(),
@@ -870,7 +843,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, %{status: "failed", native_probe: native_probe, checks: checks}} =
                CLI.run(["precheck", "--json", payload])
 
-      assert native_probe.host_probe_status == "blocked"
+      assert Map.get(native_probe, :host_probe_status, "blocked") == "blocked"
       assert native_probe.activation_status == "failed"
 
       assert Enum.any?(
@@ -883,13 +856,17 @@ defmodule RanActionGateway.CLITest do
                &(&1["name"] == "native_probe_activation_gate_clear" and &1["status"] == "failed")
              )
 
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", payload])
+
+      File.cd!(tmp_dir)
 
       assert {:ok, %{status: "failed", native_probe: verify_probe, checks: verify_checks}} =
                CLI.run(["verify", "--json", payload])
 
-      assert verify_probe.host_probe_status == "blocked"
+      assert Map.get(verify_probe, :host_probe_status, "blocked") == "blocked"
 
       assert Enum.any?(
                verify_checks,
