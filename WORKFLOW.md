@@ -208,6 +208,7 @@ Use this only when completion is blocked by missing required tools or missing au
 5.  Run validation/tests required for the scope.
     - Mandatory gate: execute all ticket-provided `Validation`/`Test Plan`/ `Testing` requirements when present; treat unmet items as incomplete work.
     - Prefer a targeted proof that directly demonstrates the behavior you changed.
+    - If standard `mix test` / build entrypoints are blocked by sandbox-specific socket or metadata restrictions, retry after applying the latest workflow sandbox settings and then use the strongest repo-local fallback proof available (for example: direct `elixir` harnesses, `Kernel.ParallelCompiler.compile_to_path`, syntax parsing, or narrower file-scoped runners). Document the fallback and the exact blocker in the workpad instead of stopping early.
     - You may make temporary local proof edits to validate assumptions (for example: tweak a local build input for `make`, or hardcode a UI account / response path) when this increases confidence.
     - Revert every temporary proof edit before commit/push.
     - Document these temporary proof steps and outcomes in the workpad `Validation`/`Notes` sections so reviewers can follow the evidence.
