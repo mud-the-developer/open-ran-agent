@@ -38,6 +38,16 @@ The immediate work here is not runtime code. The immediate work is:
 - [notes/03-target-host-readiness-and-lab-gates.md](notes/03-target-host-readiness-and-lab-gates.md)
 - [notes/04-open5gs-core-and-s-m-c-u-plane-scope.md](notes/04-open5gs-core-and-s-m-c-u-plane-scope.md)
 - [notes/05-oai-function-and-standards-baseline.md](notes/05-oai-function-and-standards-baseline.md)
+- [notes/06-ngap-and-registration-standards-subset.md](notes/06-ngap-and-registration-standards-subset.md)
+- [notes/07-f1-c-and-e1ap-standards-subset.md](notes/07-f1-c-and-e1ap-standards-subset.md)
+- [notes/08-f1-u-and-gtpu-standards-subset.md](notes/08-f1-u-and-gtpu-standards-subset.md)
+- [notes/09-ngap-procedure-support-matrix.md](notes/09-ngap-procedure-support-matrix.md)
+- [notes/10-f1-c-and-e1ap-procedure-support-matrix.md](notes/10-f1-c-and-e1ap-procedure-support-matrix.md)
+- [notes/11-f1-u-and-gtpu-procedure-support-matrix.md](notes/11-f1-u-and-gtpu-procedure-support-matrix.md)
+- [notes/12-standards-evidence-and-acceptance-gates.md](notes/12-standards-evidence-and-acceptance-gates.md)
+- [notes/README.md](notes/README.md)
+- [examples/ranctl/README.md](examples/ranctl/README.md)
+- [examples/incidents/README.md](examples/incidents/README.md)
 
 ## Immediate Non-Goals
 

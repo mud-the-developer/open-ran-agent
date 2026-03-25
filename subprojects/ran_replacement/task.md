@@ -77,6 +77,13 @@ This effort is only considered successful when all of the following hold for the
 - `docs/adr/0008-oai-cu-du-function-and-standards-baseline.md`
 - `subprojects/ran_replacement/notes/04-open5gs-core-and-s-m-c-u-plane-scope.md`
 - `subprojects/ran_replacement/notes/05-oai-function-and-standards-baseline.md`
+- `subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md`
+- `subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md`
+- `subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md`
+- `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md`
 
 ## Current Code Touchpoints
 
@@ -498,7 +505,7 @@ These stay out of scope until milestone 1 is complete:
 ## Immediate Next Contracts And Fixtures To Deepen
 
 1. Tighten `contracts/ranctl-ran-replacement-request-v1.schema.json` per scope instead of leaving additive draft flexibility.
-2. Tighten `contracts/ranctl-ran-replacement-status-v1.schema.json` with scope-specific evidence fields for RU, registration, and ping.
+2. Tighten `contracts/ranctl-ran-replacement-status-v1.schema.json` with scope-specific evidence fields for RU, registration, PDU session, and ping.
 3. Add a `n79-single-ru-target-profile-v1.schema.json` once the real lab owner freezes exact RF and RU assumptions.
-4. Add sanitized `observe` and `capture-artifacts` examples for failed RU sync and failed registration.
-5. Add interface-specific standards baseline notes for `NGAP`, `F1-C`, `F1-U`, `E1AP`, and `GTP-U`.
+4. Add sanitized `observe` and `capture-artifacts` request examples that line up with the incident notes for failed RU sync, failed registration, failed ping, and failed cutover rollback.
+5. Add a milestone-1 acceptance runbook that ties `precheck`, `plan`, `apply`, `verify`, and `capture-artifacts` to the real RU and real Open5GS lane.
