@@ -23,5 +23,11 @@ Current draft files:
 - [plan-gnb-bringup-open5gs-n79.json](plan-gnb-bringup-open5gs-n79.json)
 - [verify-attach-ping-open5gs-n79.json](verify-attach-ping-open5gs-n79.json)
 - [rollback-gnb-cutover-open5gs-n79.json](rollback-gnb-cutover-open5gs-n79.json)
+- [observe-failed-ru-sync-open5gs-n79.json](observe-failed-ru-sync-open5gs-n79.json)
+- [capture-artifacts-failed-ru-sync-open5gs-n79.json](capture-artifacts-failed-ru-sync-open5gs-n79.json)
+- [observe-registration-rejected-open5gs-n79.json](observe-registration-rejected-open5gs-n79.json)
+- [capture-artifacts-registration-rejected-open5gs-n79.json](capture-artifacts-registration-rejected-open5gs-n79.json)
+- [observe-ping-failed-open5gs-n79.json](observe-ping-failed-open5gs-n79.json)
+- [capture-artifacts-ping-failed-open5gs-n79.json](capture-artifacts-ping-failed-open5gs-n79.json)
 
 Use only sanitized topology and metadata here.

@@ -8,7 +8,8 @@
   "required": [
     "status",
     "command",
-    "scope"
+    "scope",
+    "summary"
   ],
   "properties": {
     "status": {
@@ -77,6 +78,18 @@
       "type": [
         "string",
         "null"
+      ]
+    },
+    "gate_class": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "blocked",
+        "degraded",
+        "pass",
+        null
       ]
     },
     "summary": {
@@ -165,6 +178,33 @@
         }
       }
     },
+    "interface_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "ngap": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "f1_c": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "e1ap": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "f1_u": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "gtpu": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "ru_fronthaul": {
+          "$ref": "#/$defs/component_summary"
+        },
+        "ptp": {
+          "$ref": "#/$defs/component_summary"
+        }
+      }
+    },
     "ru_status": {
       "$ref": "#/$defs/component_summary"
     },
@@ -174,7 +214,13 @@
     "attach_status": {
       "$ref": "#/$defs/component_summary"
     },
+    "pdu_session_status": {
+      "$ref": "#/$defs/component_summary"
+    },
     "ping_status": {
+      "$ref": "#/$defs/component_summary"
+    },
+    "rollback_status": {
       "$ref": "#/$defs/component_summary"
     }
   },
@@ -240,6 +286,97 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "verify"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      },
+      "then": {
+        "required": [
+          "gate_class",
+          "interface_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "capture-artifacts"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      },
+      "then": {
+        "required": [
+          "artifacts"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "ue_session"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "required": [
+          "interface_status",
+          "attach_status",
+          "pdu_session_status",
+          "ping_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "target_host"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "required": [
+          "ru_status",
+          "core_link_status"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "command": {
+            "const": "rollback"
+          }
+        },
+        "required": [
+          "command"
+        ]
+      },
+      "then": {
+        "required": [
+          "rollback_status"
+        ]
+      }
+    }
+  ]
 }
-

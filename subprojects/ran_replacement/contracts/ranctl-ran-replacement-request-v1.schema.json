@@ -7,10 +7,14 @@
   "additionalProperties": false,
   "required": [
     "scope",
+    "target_ref",
+    "target_backend",
     "change_id",
     "reason",
     "idempotency_key",
+    "ttl",
     "verify_window",
+    "max_blast_radius",
     "metadata"
   ],
   "properties": {
@@ -216,6 +220,7 @@
               "type": "string",
               "enum": [
                 "precheck",
+                "observe",
                 "bring_up",
                 "tear_down",
                 "freeze_attaches",
@@ -375,6 +380,211 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "destructive": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "destructive"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "approval",
+          "current_backend",
+          "rollback_target"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "switch_runtime",
+                      "cutover",
+                      "rollback",
+                      "tear_down"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "current_backend",
+          "rollback_target"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "action": {
+                    "const": "capture_artifacts"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "incident_id"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "target_host"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "required": [
+                  "native_probe"
+                ],
+                "properties": {
+                  "target_role": {
+                    "const": "target_host"
+                  },
+                  "action": {
+                    "const": "precheck"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "ue_session"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "target_role": {
+                    "const": "ue_session"
+                  },
+                  "acceptance_gates": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "registration"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "pdu_session"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "ping"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "replacement_cutover"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "target_role": {
+                    "const": "gnb"
+                  },
+                  "action": {
+                    "enum": [
+                      "cutover",
+                      "rollback"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
 }
-
