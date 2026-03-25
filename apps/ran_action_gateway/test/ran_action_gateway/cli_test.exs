@@ -818,6 +818,8 @@ defmodule RanActionGateway.CLITest do
 
   test "precheck and verify run native probe checks when requested", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
+      File.mkdir_p!("artifacts")
+
       payload =
         base_payload(%{
           "approval" => approval_payload(),
