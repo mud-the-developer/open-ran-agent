@@ -640,8 +640,14 @@ defmodule RanActionGateway.Runner do
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
       |> Map.put(:core_profile, replacement["core_profile"])
-      |> Map.put(:core_link_status, replacement_core_link_status(phase, change, replacement, base_status))
-      |> Map.put(:interface_status, replacement_interface_status(phase, change, replacement, base_status))
+      |> Map.put(
+        :core_link_status,
+        replacement_core_link_status(phase, change, replacement, base_status)
+      )
+      |> Map.put(
+        :interface_status,
+        replacement_interface_status(phase, change, replacement, base_status)
+      )
       |> maybe_put_attach_status(phase, change, replacement, base_status)
     else
       payload
@@ -708,7 +714,8 @@ defmodule RanActionGateway.Runner do
       Map.put(payload, :attach_status, %{
         status: if(status == "failed", do: "pending", else: "ok"),
         evidence_ref: replacement_evidence_ref(phase, change, "attach"),
-        reason: if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
+        reason:
+          if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
       })
     else
       payload
