@@ -145,7 +145,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  margin-bottom: 1rem;
+  margin: 1.75rem 0 1rem;
   padding: 0.4rem 0.75rem;
   border-radius: 999px;
   font-size: 0.86rem;
@@ -161,4 +161,3 @@
     border-radius: 18px;
   }
 }
-
