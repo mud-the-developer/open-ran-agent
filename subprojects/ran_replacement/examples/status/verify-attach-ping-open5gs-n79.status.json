@@ -7,6 +7,24 @@
   "target_ref": "ue-n79-lab-01",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": "open5gs-sanitized-lab-release-1",
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "upf_host": "10.41.83.45",
+      "gtpu_port": 2152,
+      "dnn": "internet",
+      "slice": {
+        "sst": 1,
+        "sd": "000001"
+      }
+    }
+  },
   "gate_class": "pass",
   "summary": "UE attach, PDU session, and ping are all proven against the declared Open5GS core lane.",
   "target_backend": "replacement_shadow",
@@ -16,7 +34,10 @@
   "artifacts": [
     "artifacts/replacement/verify/ue-n79-lab-01.json",
     "artifacts/replacement/verify/attach-log.txt",
-    "artifacts/replacement/verify/ping-result.txt"
+    "artifacts/replacement/verify/ping-result.txt",
+    "artifacts/replacement/verify/core-link.json",
+    "artifacts/replacement/verify/ngap-procedures.json",
+    "artifacts/replacement/verify/ue-context-release.json"
   ],
   "suggested_next": [
     "capture artifacts for the verified lane",
@@ -24,6 +45,31 @@
     "advance only if the soak window remains stable"
   ],
   "checks": [
+    {
+      "name": "NG Setup",
+      "status": "ok",
+      "detail": "NG setup completed against 10.41.83.45:38412 for profile open5gs_nsa_lab_v1"
+    },
+    {
+      "name": "Initial UE Message",
+      "status": "ok",
+      "detail": "the declared UE access attempt reached the real Open5GS control-plane lane"
+    },
+    {
+      "name": "Uplink NAS Transport",
+      "status": "ok",
+      "detail": "UE-originated NAS payloads were carried to the declared AMF endpoint"
+    },
+    {
+      "name": "Downlink NAS Transport",
+      "status": "ok",
+      "detail": "core-originated NAS payloads were returned to the UE lane during registration"
+    },
+    {
+      "name": "UE Context Release",
+      "status": "ok",
+      "detail": "clean release completed after the verify window and the UE context returned to the declared idle state"
+    },
     {
       "name": "registration_complete",
       "status": "ok",
@@ -99,6 +145,46 @@
       "reason": null
     }
   },
+  "core_link_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/verify/core-link.json",
+    "reason": null
+  },
+  "ngap_procedure_trace": {
+    "last_observed": "UE Context Release",
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/ngap-setup.json",
+        "detail": "the declared Open5GS AMF accepted the NG setup handshake"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the declared Open5GS core lane"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/uplink-nas-transport.json",
+        "detail": "uplink NAS transport stayed aligned with the declared subscriber profile"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/downlink-nas-transport.json",
+        "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/ue-context-release.json",
+        "detail": "the UE context was released cleanly after the declared soak window"
+      }
+    ]
+  },
   "attach_status": {
     "status": "ok",
     "evidence_ref": "artifacts/replacement/verify/attach.json",
@@ -112,6 +198,11 @@
   "ping_status": {
     "status": "ok",
     "evidence_ref": "artifacts/replacement/verify/ping.json",
+    "reason": null
+  },
+  "release_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/verify/ue-context-release.json",
     "reason": null
   }
 }

@@ -57,31 +57,40 @@ defmodule NativeContractGateway.Runtime do
       dispatch_mode = get_in(message, ["payload", "dispatch_mode"]) || state.dispatch_mode
       session_payload = get_in(message, ["payload", "session_payload"]) || %{}
 
-      {:ok, open_payload, next_state} =
-        handler(config).on_open_session(message, %{state | session_payload: session_payload})
+      case handler(config).on_open_session(message, %{state | session_payload: session_payload}) do
+        {:ok, open_payload, next_state} ->
+          payload =
+            Map.merge(
+              %{
+                "session_ref" => message["session_ref"],
+                "accepted_profile" => requested_profile,
+                "dispatch_mode" => dispatch_mode,
+                "worker_kind" => config.worker_kind
+              },
+              stringify_keys(open_payload)
+            )
 
-      payload =
-        Map.merge(
-          %{
-            "session_ref" => message["session_ref"],
-            "accepted_profile" => requested_profile,
-            "dispatch_mode" => dispatch_mode,
-            "worker_kind" => config.worker_kind
-          },
-          stringify_keys(open_payload)
-        )
+          {ok_reply(message, payload),
+           state
+           |> Map.merge(next_state)
+           |> Map.merge(%{
+             session_ref: message["session_ref"],
+             cell_group_id: message["cell_group_id"],
+             accepted_profile: requested_profile,
+             dispatch_mode: dispatch_mode,
+             session_payload: session_payload,
+             session_status: "idle"
+           }), false}
 
-      {ok_reply(message, payload),
-       state
-       |> Map.merge(next_state)
-       |> Map.merge(%{
-         session_ref: message["session_ref"],
-         cell_group_id: message["cell_group_id"],
-         accepted_profile: requested_profile,
-         dispatch_mode: dispatch_mode,
-         session_payload: session_payload,
-         session_status: "idle"
-       }), false}
+        {:error, reason, handler_state} ->
+          {error_reply(message, error_reason(reason)),
+           state
+           |> Map.merge(handler_state)
+           |> Map.put(:session_payload, session_payload), false}
+
+        {:error, reason} ->
+          {error_reply(message, error_reason(reason)), state, false}
+      end
     else
       {error_reply(message, "unsupported_profile"), state, false}
     end
@@ -107,6 +116,9 @@ defmodule NativeContractGateway.Runtime do
           )
 
         {ok_reply(message, payload), Map.merge(next_state, handler_state), false}
+
+      {:error, reason, handler_state} ->
+        {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
 
       {:error, reason} ->
         {error_reply(message, error_reason(reason)), state, false}
@@ -144,6 +156,9 @@ defmodule NativeContractGateway.Runtime do
               )
 
             {ok_reply(message, payload), Map.merge(next_state, handler_state), false}
+
+          {:error, reason, handler_state} ->
+            {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
 
           {:error, reason} ->
             {error_reply(message, error_reason(reason)), state, false}
@@ -202,6 +217,9 @@ defmodule NativeContractGateway.Runtime do
 
           {ok_reply(message, payload), Map.merge(next_state, handler_state), false}
 
+        {:error, reason, handler_state} ->
+          {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
+
         {:error, reason} ->
           {error_reply(message, error_reason(reason)), state, false}
       end
@@ -223,6 +241,9 @@ defmodule NativeContractGateway.Runtime do
 
         {ok_reply(message, payload), Map.merge(next_state, handler_state), false}
 
+      {:error, reason, handler_state} ->
+        {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
+
       {:error, reason} ->
         {error_reply(message, error_reason(reason)), state, false}
     end
@@ -236,6 +257,9 @@ defmodule NativeContractGateway.Runtime do
         payload = Map.merge(%{"state" => "healthy"}, stringify_keys(resume_payload))
         {ok_reply(message, payload), Map.merge(next_state, handler_state), false}
 
+      {:error, reason, handler_state} ->
+        {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
+
       {:error, reason} ->
         {error_reply(message, error_reason(reason)), state, false}
     end
@@ -246,6 +270,9 @@ defmodule NativeContractGateway.Runtime do
       {:ok, terminate_payload, handler_state} ->
         payload = Map.merge(%{"terminated" => true}, stringify_keys(terminate_payload))
         {ok_reply(message, payload), Map.merge(state, handler_state), true}
+
+      {:error, reason, handler_state} ->
+        {error_reply(message, error_reason(reason)), Map.merge(state, handler_state), false}
 
       {:error, reason} ->
         {error_reply(message, error_reason(reason)), state, false}
