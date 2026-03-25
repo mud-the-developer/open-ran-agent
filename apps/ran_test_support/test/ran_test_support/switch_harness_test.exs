@@ -1,7 +1,7 @@
 defmodule RanTestSupport.SwitchHarnessTest do
   use ExUnit.Case, async: false
 
-  alias RanActionGateway.ControlState
+  alias RanActionGateway.{ControlState, Store}
   alias RanTestSupport.SwitchHarness
 
   setup do
@@ -65,11 +65,41 @@ defmodule RanTestSupport.SwitchHarnessTest do
                ])
 
       assert results.verify.status == "failed"
+      assert results.verify.next == ["capture-artifacts", "rollback"]
       assert results.capture_artifacts.status == "captured"
       assert results.rollback.status == "rolled_back"
 
       refs = SwitchHarness.artifact_refs(payload["change_id"], payload["incident_id"])
+
+      assert results.capture_artifacts.artifacts == [refs.capture]
+      assert results.capture_artifacts.bundle.manifest.ref == payload["incident_id"]
+      assert results.capture_artifacts.bundle.manifest.change_id == payload["change_id"]
+      assert results.capture_artifacts.bundle.manifest.incident_id == payload["incident_id"]
+      assert results.capture_artifacts.bundle.manifest.artifact_root == Store.artifact_root()
+      assert results.capture_artifacts.bundle.workflow.plan == refs.plan
+      assert results.capture_artifacts.bundle.workflow.change_state == refs.change_state
+      assert results.capture_artifacts.bundle.workflow.verify == refs.verify
+      assert results.capture_artifacts.bundle.workflow.rollback_plan == refs.rollback_plan
+      assert results.capture_artifacts.bundle.workflow.capture == refs.capture
+
+      assert results.capture_artifacts.bundle.workflow.config_snapshot ==
+               Store.config_snapshot_path(payload["incident_id"])
+
+      assert results.capture_artifacts.bundle.workflow.control_snapshot ==
+               Store.control_snapshot_path(payload["incident_id"])
+
+      assert results.capture_artifacts.bundle.workflow.probe_snapshot == nil
+
+      assert results.capture_artifacts.bundle.workflow.approvals == [
+               Store.approval_path(payload["change_id"], "apply")
+             ]
+
+      assert results.capture_artifacts.bundle.runtime.compose_path == nil
+      assert results.capture_artifacts.bundle.runtime.logs == []
+      assert results.capture_artifacts.bundle.runtime.configs == []
       assert File.exists?(refs.capture)
+      assert File.exists?(results.capture_artifacts.bundle.workflow.config_snapshot)
+      assert File.exists?(results.capture_artifacts.bundle.workflow.control_snapshot)
     end)
   end
 
