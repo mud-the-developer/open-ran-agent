@@ -3,6 +3,7 @@
   "private": true,
   "description": "Cloudflare Pages-ready docs site for Open RAN Agent",
   "scripts": {
+    "contracts:ran-replacement": "subprojects/ran_replacement/scripts/validate_contracts.sh",
     "docs:dev": "vitepress dev docs --host 127.0.0.1 --port 4173",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs --host 127.0.0.1 --port 4173",

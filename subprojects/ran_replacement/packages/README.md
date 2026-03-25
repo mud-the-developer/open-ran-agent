@@ -12,6 +12,8 @@ Current package families:
 - `ngap_edge`: NGAP-facing control boundary for core attachment, registration, and session setup flows.
 - `f1e1_control_edge`: F1-C and E1AP control boundary for CU-CP, CU-UP, and DU coordination.
 - `user_plane_edge`: F1-U and GTP-U boundary for the declared user-plane forwarding path.
+- `target_host_edge`: host readiness and preflight boundary for the real lab deployment lane.
+- `core_link_edge`: real Open5GS core-link boundary for NGAP and session-level interop.
 
 Expected contents for each package:
 - `README.md` describing intended contract, ownership, and non-goals.

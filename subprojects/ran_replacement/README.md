@@ -27,6 +27,21 @@ The immediate work here is not runtime code. The immediate work is:
 - define `precheck -> plan -> apply -> verify -> rollback -> capture-artifacts` for replacement-track scopes
 - describe how a staged cutover can happen without hiding rollback or evidence
 
+## Quick Validation
+
+Use the same contract validator locally that the repo-visible workflow runs:
+
+```bash
+npm run contracts:ran-replacement
+```
+
+That target delegates to [scripts/validate_contracts.sh](scripts/validate_contracts.sh) and validates:
+
+- ranctl request fixtures
+- status fixtures
+- compare-report and rollback-evidence artifacts
+- target-profile and lab-owner overlay examples
+
 ## Current Deliverables
 
 - [task.md](task.md)
@@ -57,6 +72,8 @@ The immediate work here is not runtime code. The immediate work is:
 - [packages/ngap_edge/README.md](packages/ngap_edge/README.md)
 - [packages/f1e1_control_edge/README.md](packages/f1e1_control_edge/README.md)
 - [packages/user_plane_edge/README.md](packages/user_plane_edge/README.md)
+- [packages/target_host_edge/README.md](packages/target_host_edge/README.md)
+- [packages/core_link_edge/README.md](packages/core_link_edge/README.md)
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/status/README.md](examples/status/README.md)
 - [examples/artifacts/README.md](examples/artifacts/README.md)

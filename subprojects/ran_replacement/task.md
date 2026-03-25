@@ -509,6 +509,6 @@ These stay out of scope until milestone 1 is complete:
 
 1. Split the replacement request schema into scope-family helper schemas once the current `$defs` structure grows beyond a single target profile.
 2. Add a schema or typed note for sanitized lab-owner overlay extensions so inventory narrowing and redaction rules stay versioned as more labs appear.
-3. Add package-local contract notes and example fixtures for `ngap_edge`, `f1e1_control_edge`, and `user_plane_edge` before any implementation code lands there.
-4. Add the next docs-first boundary package for either `core_link` or `target_host` control surfaces so the control graph is explicit beyond NGAP/F1/GTP-U.
-5. Add a thin repo-visible local contract target that mirrors the replacement contract workflow result without pulling unrelated app tests into the lane.
+3. Add package-local contract notes and example fixtures for `ngap_edge`, `f1e1_control_edge`, `user_plane_edge`, `target_host_edge`, and `core_link_edge` before any implementation code lands there.
+4. Add the first schema-backed request or status examples that map one-to-one onto those package boundaries instead of only the broader replacement track fixtures.
+5. Keep the repo-visible local contract target aligned with the GitHub workflow as the fixture matrix expands, without pulling unrelated app tests into the lane.
