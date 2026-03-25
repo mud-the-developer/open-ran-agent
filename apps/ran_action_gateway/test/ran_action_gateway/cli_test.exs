@@ -183,8 +183,12 @@ defmodule RanActionGateway.CLITest do
       ]
 
       Enum.each(examples, fn {command, path, expected_scope} ->
-        payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
-        result = CLI.run([command, "--json", payload])
+        result =
+          File.cd!(tmp_dir, fn ->
+            File.mkdir_p!("artifacts")
+            payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
+            CLI.run([command, "--json", payload])
+          end)
 
         refute match?({:error, %{status: "invalid", errors: [%{field: "scope"} | _]}}, result),
                "expected scope #{expected_scope} from #{path} to pass validation, got: #{inspect(result)}"
@@ -282,6 +286,38 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(observe, [:attach_status, :evidence_ref]) =~
                "/attach.json"
+    end)
+  end
+
+  test "replacement control-plane observe surfaces f1-c/e1ap and rollback evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/packages/f1e1_control_edge/examples/observe-failed-cutover.request.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.core_profile == "open5gs_nsa_lab_v1"
+      assert observe.gate_class == "degraded"
+
+      assert get_in(observe, [:plane_status, :c_plane, :evidence_ref]) =~
+               "artifacts/replacement/observe/"
+
+      assert get_in(observe, [:interface_status, "f1_c", :evidence_ref]) =~
+               "artifacts/replacement/observe/"
+
+      assert get_in(observe, [:interface_status, "e1ap", :evidence_ref]) =~
+               "artifacts/replacement/observe/"
+
+      assert get_in(observe, [:rollback_status, :evidence_ref]) =~
+               "/rollback-evidence"
     end)
   end
 
@@ -817,8 +853,12 @@ defmodule RanActionGateway.CLITest do
                &(&1["name"] == "native_probe_activation_gate_clear" and &1["status"] == "failed")
              )
 
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", payload])
+
+      File.cd!(tmp_dir)
 
       assert {:ok, %{status: "failed", native_probe: verify_probe, checks: verify_checks}} =
                CLI.run(["verify", "--json", payload])
