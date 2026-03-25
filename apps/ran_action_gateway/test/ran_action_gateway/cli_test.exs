@@ -140,14 +140,46 @@ defmodule RanActionGateway.CLITest do
       repo_root = Path.expand("../../../..", __DIR__)
 
       examples = [
-        {"precheck", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/precheck-target-host-open5gs-n79.json"), "target_host"},
-        {"plan", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/plan-gnb-bringup-open5gs-n79.json"), "gnb"},
-        {"verify", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"), "ue_session"},
-        {"observe", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/observe-failed-ru-sync-open5gs-n79.json"), "ru_link"},
-        {"observe", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json"), "ue_session"},
-        {"observe", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/observe-failed-cutover-open5gs-n79.json"), "replacement_cutover"},
-        {"capture-artifacts", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-cutover-open5gs-n79.json"), "replacement_cutover"},
-        {"rollback", Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json"), "replacement_cutover"}
+        {"precheck",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/precheck-target-host-open5gs-n79.json"
+         ), "target_host"},
+        {"plan",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/plan-gnb-bringup-open5gs-n79.json"
+         ), "gnb"},
+        {"verify",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+         ), "ue_session"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-failed-ru-sync-open5gs-n79.json"
+         ), "ru_link"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json"
+         ), "ue_session"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-failed-cutover-open5gs-n79.json"
+         ), "replacement_cutover"},
+        {"capture-artifacts",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-cutover-open5gs-n79.json"
+         ), "replacement_cutover"},
+        {"rollback",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json"
+         ), "replacement_cutover"}
       ]
 
       Enum.each(examples, fn {command, path, expected_scope} ->
@@ -510,6 +542,7 @@ defmodule RanActionGateway.CLITest do
       assert observe.incident_summary.severity == "warning"
       assert "attach freeze is active" in observe.incident_summary.reasons
       assert "cell group drain workflow is active" in observe.incident_summary.reasons
+
       assert observe.incident_summary.suggested_next == [
                "release attach freeze after the maintenance window",
                "complete verify and clear drain when the cell group is stable"
@@ -538,8 +571,12 @@ defmodule RanActionGateway.CLITest do
                Store.approval_path("chg-test-001", "apply")
              ]
 
-      assert capture.bundle.workflow.config_snapshot == Store.config_snapshot_path("inc-control-001")
-      assert capture.bundle.workflow.control_snapshot == Store.control_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.config_snapshot ==
+               Store.config_snapshot_path("inc-control-001")
+
+      assert capture.bundle.workflow.control_snapshot ==
+               Store.control_snapshot_path("inc-control-001")
+
       assert capture.bundle.workflow.probe_snapshot == nil
       assert File.exists?(capture.bundle.workflow.config_snapshot)
       assert File.exists?(capture.bundle.workflow.control_snapshot)
