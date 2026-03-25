@@ -485,6 +485,11 @@ defmodule RanActionGateway.CLITest do
       assert observe.incident_summary.severity == "warning"
       assert "attach freeze is active" in observe.incident_summary.reasons
       assert "cell group drain workflow is active" in observe.incident_summary.reasons
+      assert observe.incident_summary.suggested_next == [
+               "release attach freeze after the maintenance window",
+               "complete verify and clear drain when the cell group is stable"
+             ]
+
       assert observe.config.release_readiness.status == :ok
       assert get_in(observe.control_state, ["drain", "status"]) == "draining"
 
@@ -494,6 +499,23 @@ defmodule RanActionGateway.CLITest do
         |> JSON.encode!()
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.artifacts == [Store.capture_path("inc-control-001")]
+      assert capture.bundle.manifest.ref == "inc-control-001"
+      assert capture.bundle.manifest.change_id == "chg-test-001"
+      assert capture.bundle.manifest.artifact_root == Store.artifact_root()
+      assert capture.bundle.workflow.plan == Store.plan_path("chg-test-001")
+      assert capture.bundle.workflow.change_state == Store.change_state_path("chg-test-001")
+      assert capture.bundle.workflow.verify == Store.verify_path("chg-test-001")
+      assert capture.bundle.workflow.rollback_plan == Store.rollback_plan_path("chg-test-001")
+      assert capture.bundle.workflow.capture == Store.capture_path("inc-control-001")
+
+      assert capture.bundle.workflow.approvals == [
+               Store.approval_path("chg-test-001", "apply")
+             ]
+
+      assert capture.bundle.workflow.config_snapshot == Store.config_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.control_snapshot == Store.control_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.probe_snapshot == nil
       assert File.exists?(capture.bundle.workflow.config_snapshot)
       assert File.exists?(capture.bundle.workflow.control_snapshot)
       assert get_in(capture.bundle.control_state, ["attach_freeze", "status"]) == "active"
