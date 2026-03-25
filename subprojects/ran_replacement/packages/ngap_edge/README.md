@@ -18,8 +18,14 @@ Boundary rule:
 - Keep this package as a docs/contracts-first shell until the NGAP contract, schema, and examples are explicit.
 - Any future implementation here should remain thin and should only adapt the established contract.
 
+Package-local contract and fixtures:
+- [CONTRACT.md](CONTRACT.md)
+- [examples/observe-registration-rejected.request.json](examples/observe-registration-rejected.request.json)
+- [examples/observe-registration-rejected.status.json](examples/observe-registration-rejected.status.json)
+
 References:
 - `subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md`
 - `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md`
+- `subprojects/ran_replacement/contracts/open5gs-core-link-profile-v1.schema.json`
 - `subprojects/ran_replacement/contracts/ranctl-ran-replacement-request-v1.schema.json`
 - `subprojects/ran_replacement/contracts/ranctl-ran-replacement-status-v1.schema.json`

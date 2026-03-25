@@ -11,7 +11,8 @@ for file in \
   "$SUBPROJECT_DIR"/examples/ranctl/*.json \
   "$SUBPROJECT_DIR"/examples/status/*.json \
   "$SUBPROJECT_DIR"/contracts/*.json \
-  "$SUBPROJECT_DIR"/contracts/examples/*.json
+  "$SUBPROJECT_DIR"/contracts/examples/*.json \
+  "$SUBPROJECT_DIR"/packages/*/examples/*.json
 do
   jq -e . "$file" >/dev/null
 done
@@ -23,7 +24,8 @@ npx --yes ajv-cli validate \
   --validate-formats=false \
   -s "$SUBPROJECT_DIR/contracts/ranctl-ran-replacement-request-v1.schema.json" \
   -r "$SUBPROJECT_DIR/contracts/open5gs-core-link-profile-v1.schema.json" \
-  -d "$SUBPROJECT_DIR/examples/ranctl/*.json"
+  -d "$SUBPROJECT_DIR/examples/ranctl/*.json" \
+  -d "$SUBPROJECT_DIR/packages/*/examples/*.request.json"
 
 echo "[3/4] Validating ranctl replacement status fixtures"
 npx --yes ajv-cli validate \
@@ -31,7 +33,8 @@ npx --yes ajv-cli validate \
   --strict=false \
   --validate-formats=false \
   -s "$SUBPROJECT_DIR/contracts/ranctl-ran-replacement-status-v1.schema.json" \
-  -d "$SUBPROJECT_DIR/examples/status/*.json"
+  -d "$SUBPROJECT_DIR/examples/status/*.json" \
+  -d "$SUBPROJECT_DIR/packages/*/examples/*.status.json"
 
 echo "[4/5] Validating artifact fixtures"
 npx --yes ajv-cli validate \

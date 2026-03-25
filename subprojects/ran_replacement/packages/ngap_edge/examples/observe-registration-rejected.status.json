@@ -1,0 +1,102 @@
+{
+  "status": "degraded",
+  "command": "observe",
+  "scope": "ue_session",
+  "change_id": "chg-ran-repl-observe-registration-001",
+  "incident_id": "inc-ran-repl-registration-001",
+  "target_ref": "ue-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "blocked",
+  "summary": "NGAP-edge observe confirms that registration is blocked by a real Open5GS rejection on the declared lane.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/observe/registration-rejected/ngap.json",
+    "artifacts/replacement/observe/registration-rejected/core.log",
+    "artifacts/replacement/observe/registration-rejected/attach.json"
+  ],
+  "suggested_next": [
+    "capture artifacts for the registration rejection",
+    "compare subscriber and NGAP identity against the declared core profile",
+    "retry only after the core-side mismatch is explained"
+  ],
+  "checks": [
+    {
+      "name": "ngap_registration_rejected",
+      "status": "failed",
+      "detail": "real Open5GS rejected the registration attempt after initial UE access"
+    },
+    {
+      "name": "last_ngap_procedure_known",
+      "status": "ok",
+      "detail": "downlink nas transport carried the rejection toward the UE lane"
+    },
+    {
+      "name": "rollback_target_known",
+      "status": "ok",
+      "detail": "oai_reference remains available as the safe recovery lane"
+    }
+  ],
+  "plane_status": {
+    "c_plane": {
+      "status": "failed",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap.json",
+      "reason": "registration did not progress to acceptance on the NGAP-facing edge"
+    },
+    "u_plane": {
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/gtpu.json",
+      "reason": "user-plane was not reached after the control-plane rejection"
+    }
+  },
+  "interface_status": {
+    "ngap": {
+      "status": "failed",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap.json",
+      "reason": "the last observed NGAP procedure ended in registration rejection"
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/f1-c.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/e1ap.json",
+      "reason": null
+    },
+    "f1_u": {
+      "status": "pending",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/f1-u.json",
+      "reason": "user-plane was not exercised"
+    },
+    "gtpu": {
+      "status": "pending",
+      "evidence_ref": "artifacts/replacement/observe/registration-rejected/gtpu.json",
+      "reason": "session establishment and ping were not reached"
+    }
+  },
+  "core_link_status": {
+    "status": "failed",
+    "evidence_ref": "artifacts/replacement/observe/registration-rejected/core.log",
+    "reason": "the real Open5GS core rejected the declared subscriber or identity context"
+  },
+  "attach_status": {
+    "status": "failed",
+    "evidence_ref": "artifacts/replacement/observe/registration-rejected/attach.json",
+    "reason": "attach did not progress beyond the NGAP registration stage"
+  },
+  "pdu_session_status": {
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/observe/registration-rejected/pdu-session.json",
+    "reason": "session setup not reached after the NGAP rejection"
+  },
+  "ping_status": {
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/observe/registration-rejected/ping.json",
+    "reason": "ping not attempted after the attach failure"
+  }
+}

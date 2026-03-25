@@ -41,6 +41,7 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - status fixtures
 - compare-report and rollback-evidence artifacts
 - target-profile and lab-owner overlay examples
+- package-local request/status fixtures
 
 ## Current Deliverables
 
@@ -70,6 +71,7 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - [contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
 - [packages/README.md](packages/README.md)
 - [packages/ngap_edge/README.md](packages/ngap_edge/README.md)
+- [packages/ngap_edge/CONTRACT.md](packages/ngap_edge/CONTRACT.md)
 - [packages/f1e1_control_edge/README.md](packages/f1e1_control_edge/README.md)
 - [packages/user_plane_edge/README.md](packages/user_plane_edge/README.md)
 - [packages/target_host_edge/README.md](packages/target_host_edge/README.md)
