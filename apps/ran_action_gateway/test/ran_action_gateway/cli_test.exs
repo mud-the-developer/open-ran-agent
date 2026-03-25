@@ -135,6 +135,63 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement-track example scopes pass runner validation", %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      examples = [
+        {"precheck",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/precheck-target-host-open5gs-n79.json"
+         ), "target_host"},
+        {"plan",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/plan-gnb-bringup-open5gs-n79.json"
+         ), "gnb"},
+        {"verify",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+         ), "ue_session"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-failed-ru-sync-open5gs-n79.json"
+         ), "ru_link"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json"
+         ), "ue_session"},
+        {"observe",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/observe-failed-cutover-open5gs-n79.json"
+         ), "replacement_cutover"},
+        {"capture-artifacts",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-cutover-open5gs-n79.json"
+         ), "replacement_cutover"},
+        {"rollback",
+         Path.join(
+           repo_root,
+           "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json"
+         ), "replacement_cutover"}
+      ]
+
+      Enum.each(examples, fn {command, path, expected_scope} ->
+        payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
+        result = CLI.run([command, "--json", payload])
+
+        refute match?({:error, %{status: "invalid", errors: [%{field: "scope"} | _]}}, result),
+               "expected scope #{expected_scope} from #{path} to pass validation, got: #{inspect(result)}"
+      end)
+    end)
+  end
+
   test "precheck includes config validation and cell-group existence", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       payload = JSON.encode!(base_payload())
