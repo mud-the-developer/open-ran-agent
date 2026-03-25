@@ -261,6 +261,34 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement acceptance verify surfaces target profile, suggested next steps, and user-plane proofs",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      verify_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert verify.target_ref == "ue-n79-lab-01"
+      assert verify.rollback_target == "oai_reference"
+      assert verify.rollback_available == true
+      assert verify.gate_class in ["degraded", "pass"]
+      assert "capture artifacts for the verified lane" in verify.suggested_next
+      assert "advance only if the soak window remains stable" in verify.suggested_next
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "artifacts/replacement/verify/user-plane"
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "artifacts/replacement/verify/pdu-session"
+      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "artifacts/replacement/verify/ping"
+    end)
+  end
+
   test "precheck includes config validation and cell-group existence", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       payload = JSON.encode!(base_payload())
