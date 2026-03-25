@@ -215,6 +215,52 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement observe surfaces deterministic ngap/core-link artifact fields",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.core_profile == "open5gs_nsa_lab_v1"
+      assert observe.gate_class == "degraded"
+      assert get_in(observe, [:interface_status, :ngap, :evidence_ref]) =~ "artifacts/replacement/observe/"
+      assert get_in(observe, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/observe/"
+      assert get_in(observe, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/observe/attach.json"
+    end)
+  end
+
+  test "replacement verify can use virtual replacement state when generic change artifacts are absent",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      verify_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.core_profile == "open5gs_nsa_lab_v1"
+      assert verify.gate_class in ["degraded", "pass"]
+      assert get_in(verify, [:interface_status, :ngap, :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
+    end)
+  end
+
   test "precheck includes config validation and cell-group existence", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       payload = JSON.encode!(base_payload())
