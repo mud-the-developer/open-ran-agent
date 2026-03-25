@@ -28,7 +28,7 @@ The bridge now has a similar split to the native contract gateways: shared runti
 
 ## Request Model
 
-Runtime orchestration is opt-in through `metadata.oai_runtime`.
+Runtime orchestration is opt-in through `metadata.oai_runtime`, and runtime-enabled lifecycle commands must also carry `metadata.runtime_contract`.
 
 ```json
 {
@@ -49,6 +49,13 @@ Runtime orchestration is opt-in through `metadata.oai_runtime`.
     "checks": ["gateway_healthy"]
   },
   "metadata": {
+    "runtime_contract": {
+      "version": "ranctl.runtime.v1",
+      "release_unit": "bootstrap_source_bundle",
+      "release_ref": "source-checkout@cg-001",
+      "entrypoint": "bin/ranctl",
+      "runtime_mode": "docker_compose_rfsim_f1"
+    },
     "oai_runtime": {
       "repo_root": "/opt/openairinterface5g",
       "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
@@ -71,6 +78,8 @@ For a runtime-enabled change, `plan` now materializes:
 - `artifacts/runtime/<change_id>/conf/cucp.conf`
 - `artifacts/runtime/<change_id>/conf/cuup.conf`
 
+The plan artifact also persists a `runtime_contract` snapshot with the requested contract fields, the resolved runtime mode, a deterministic runtime digest, and the current release-readiness snapshot. `apply`, `verify`, and `rollback` compare the current request against that planned snapshot before they touch runtime actions.
+
 `verify` and `capture-artifacts` also write:
 
 - `artifacts/runtime/<change_id>/logs/<container>.log`
@@ -81,6 +90,7 @@ The generated Compose asset uses absolute host paths for these overlay confs so 
 
 `precheck` adds runtime checks for:
 
+- presence and compatibility of `metadata.runtime_contract`
 - docker CLI availability
 - docker daemon reachability
 - OAI repo root presence
