@@ -213,7 +213,7 @@ defmodule RanActionGateway.CLITest do
       assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
                "artifacts/replacement/precheck/"
 
-      assert get_in(precheck, [:interface_status, :ngap, :evidence_ref]) =~
+      assert get_in(precheck, ["interface_status", "ngap", :evidence_ref]) =~
                "artifacts/replacement/precheck/"
 
       verify_request =
@@ -246,7 +246,7 @@ defmodule RanActionGateway.CLITest do
       assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
 
-      assert get_in(verify, [:interface_status, :ngap, :evidence_ref]) =~
+      assert get_in(verify, ["interface_status", "ngap", :evidence_ref]) =~
                "artifacts/replacement/verify/"
 
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
