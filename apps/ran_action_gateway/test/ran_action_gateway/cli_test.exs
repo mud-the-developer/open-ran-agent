@@ -235,6 +235,31 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "runtime-enabled commands fail clearly when runtime_contract metadata is missing", %{
+    tmp_dir: tmp_dir
+  } do
+    runtime_fixture = build_runtime_fixture(tmp_dir)
+
+    payload =
+      base_payload(%{
+        "approval" => approval_payload(),
+        "metadata" => %{
+          "oai_runtime" => oai_runtime_payload(runtime_fixture)
+        }
+      })
+      |> JSON.encode!()
+
+    File.cd!(tmp_dir, fn ->
+      assert {:error, %{status: "invalid", command: "precheck", errors: errors}} =
+               CLI.run(["precheck", "--json", payload])
+
+      assert %{field: "runtime_contract", message: message} =
+               Enum.find(errors, &(&1.field == "runtime_contract"))
+
+      assert message =~ "metadata.runtime_contract"
+    end)
+  end
+
   @tag :runtime_contract
   test "oai runtime path generates compose assets and executes docker lifecycle", %{
     tmp_dir: tmp_dir
@@ -265,14 +290,9 @@ defmodule RanActionGateway.CLITest do
       base_payload(%{
         "approval" => approval_payload(),
         "metadata" => %{
-          "oai_runtime" => %{
-            "repo_root" => runtime_fixture.repo_root,
-            "du_conf_path" => runtime_fixture.du_conf_path,
-            "cucp_conf_path" => runtime_fixture.cucp_conf_path,
-            "cuup_conf_path" => runtime_fixture.cuup_conf_path,
-            "project_name" => "test-oai-du",
-            "pull_images" => false
-          }
+          "oai_runtime" =>
+            oai_runtime_payload(runtime_fixture, %{"project_name" => "test-oai-du"}),
+          "runtime_contract" => runtime_contract_payload()
         }
       })
       |> JSON.encode!()
@@ -289,6 +309,12 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, plan} = CLI.run(["plan", "--json", payload])
       assert plan["runtime_mode"] == "docker_compose_rfsim_f1"
+      assert plan["runtime_contract"]["version"] == "ranctl.runtime.v1"
+      assert plan["runtime_contract"]["release_unit"] == "bootstrap_source_bundle"
+      assert plan["runtime_contract"]["release_ref"] == "source-checkout@cli-test"
+      assert plan["runtime_contract"]["entrypoint"] == "bin/ranctl"
+      assert plan["runtime_contract"]["runtime_mode"] == "docker_compose_rfsim_f1"
+      assert is_binary(plan["runtime_contract"]["runtime_digest"])
       assert File.exists?(plan["runtime_plan"].compose_path)
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_du_conf_path"])
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_cucp_conf_path"])
@@ -306,7 +332,14 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, apply} = CLI.run(["apply", "--json", payload])
       assert apply["runtime_result"].project_name == "test-oai-du"
 
+      assert apply["runtime_contract"]["runtime_digest"] ==
+               plan["runtime_contract"]["runtime_digest"]
+
+      assert {:ok, approval_artifact} = Store.read_json(apply.approval_ref)
+      assert approval_artifact["runtime_contract"]["release_ref"] == "source-checkout@cli-test"
+
       assert {:ok, verify} = CLI.run(["verify", "--json", payload])
+      assert verify["runtime_contract"]["runtime_mode"] == "docker_compose_rfsim_f1"
 
       assert Enum.any?(
                verify.checks,
@@ -336,6 +369,7 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, rollback} = CLI.run(["rollback", "--json", payload])
       assert rollback["runtime_result"].project_name == "test-oai-du"
+      assert rollback["runtime_contract"]["release_unit"] == "bootstrap_source_bundle"
 
       assert Enum.any?(RanActionGateway.MockDockerRunner.calls(), fn
                {"docker", ["compose", "-p", "test-oai-du", "-f", _, "up", "-d"]} -> true
@@ -350,6 +384,59 @@ defmodule RanActionGateway.CLITest do
                _ ->
                  false
              end)
+    end)
+  end
+
+  test "apply rejects runtime drift when current runtime metadata no longer matches the plan", %{
+    tmp_dir: tmp_dir
+  } do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    runtime_fixture = build_runtime_fixture(tmp_dir)
+
+    request =
+      %{
+        "approval" => approval_payload(),
+        "metadata" => %{
+          "oai_runtime" =>
+            oai_runtime_payload(runtime_fixture, %{"project_name" => "test-oai-du"}),
+          "runtime_contract" => runtime_contract_payload()
+        }
+      }
+      |> then(&base_payload(&1))
+
+    File.cd!(tmp_dir, fn ->
+      payload = JSON.encode!(request)
+
+      assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+
+      drifted_payload =
+        request
+        |> put_in(["metadata", "oai_runtime", "project_name"], "test-oai-du-drift")
+        |> JSON.encode!()
+
+      assert {:error, %{status: "runtime_contract_mismatch", command: "apply", errors: errors}} =
+               CLI.run(["apply", "--json", drifted_payload])
+
+      assert Enum.any?(errors, &String.contains?(&1, "runtime_digest"))
     end)
   end
 
@@ -566,6 +653,33 @@ defmodule RanActionGateway.CLITest do
       "source" => "cli-test",
       "evidence" => ["docs/architecture/05-ranctl-action-model.md"]
     }
+  end
+
+  defp runtime_contract_payload(overrides \\ %{}) do
+    Map.merge(
+      %{
+        "version" => "ranctl.runtime.v1",
+        "release_unit" => "bootstrap_source_bundle",
+        "release_ref" => "source-checkout@cli-test",
+        "entrypoint" => "bin/ranctl",
+        "runtime_mode" => "docker_compose_rfsim_f1"
+      },
+      overrides
+    )
+  end
+
+  defp oai_runtime_payload(runtime_fixture, overrides \\ %{}) do
+    Map.merge(
+      %{
+        "repo_root" => runtime_fixture.repo_root,
+        "du_conf_path" => runtime_fixture.du_conf_path,
+        "cucp_conf_path" => runtime_fixture.cucp_conf_path,
+        "cuup_conf_path" => runtime_fixture.cuup_conf_path,
+        "project_name" => "test-oai-du",
+        "pull_images" => false
+      },
+      overrides
+    )
   end
 
   defp build_runtime_fixture(tmp_dir) do

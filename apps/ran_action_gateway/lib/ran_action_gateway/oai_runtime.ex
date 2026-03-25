@@ -262,6 +262,19 @@ defmodule RanActionGateway.OaiRuntime do
     end
   end
 
+  @spec contract_snapshot(String.t() | nil, map()) :: {:ok, map()} | {:error, map()}
+  def contract_snapshot(cell_group_id, metadata) do
+    with {:ok, spec} <- resolve(cell_group_id, metadata) do
+      public_spec = public_spec(spec)
+
+      {:ok,
+       %{
+         runtime_mode: runtime_mode(spec),
+         runtime_digest: runtime_digest(public_spec)
+       }}
+    end
+  end
+
   defp validate_spec(spec) do
     required_fields = [
       "repo_root",
@@ -831,4 +844,21 @@ defmodule RanActionGateway.OaiRuntime do
 
   defp maybe_to_string(value) when is_atom(value), do: Atom.to_string(value)
   defp maybe_to_string(value), do: value
+
+  defp runtime_digest(spec) do
+    spec
+    |> canonicalize()
+    |> :erlang.term_to_binary()
+    |> then(&:crypto.hash(:sha256, &1))
+    |> Base.encode16(case: :lower)
+  end
+
+  defp canonicalize(value) when is_map(value) do
+    value
+    |> Enum.map(fn {key, nested} -> {to_string(key), canonicalize(nested)} end)
+    |> Enum.sort()
+  end
+
+  defp canonicalize(value) when is_list(value), do: Enum.map(value, &canonicalize/1)
+  defp canonicalize(value), do: value
 end
