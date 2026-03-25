@@ -24,7 +24,7 @@ Keep the timing-sensitive southbound runtime outside the VM in native sidecars r
 
 The native contract gateway is now split into:
 
-- a shared runtime under [native/common/contract_gateway](../../native/common/contract_gateway/README.md)
+- a shared runtime under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md)
 - adapter-local handlers under the adapter-specific `src/` trees, where transport/session timing and drain/resume policy live
 
 ## App Boundaries

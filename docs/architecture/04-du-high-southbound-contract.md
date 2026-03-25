@@ -156,10 +156,10 @@ The dispatcher still supports the original short-lived bootstrap path, but the s
 
 `local_fapi_profile` and `aerial_fapi_profile` now share the same Port-backed bootstrap contract path as `stub_fapi_profile`, implemented through a common native runtime plus adapter-local transport/session timing scaffolds. They remain non-RT adapters, but they are no longer empty placeholders.
 
-The shared native runtime lives under [native/common/contract_gateway](../../native/common/contract_gateway/README.md). Adapter-local state machines live under:
+The shared native runtime lives under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md). Adapter-local state machines live under:
 
-- [native/local_du_low_adapter/src](../../native/local_du_low_adapter/src/README.md)
-- [native/aerial_adapter/src](../../native/aerial_adapter/src/README.md)
+- [native/local_du_low_adapter/src](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/local_du_low_adapter/src/README.md)
+- [native/aerial_adapter/src](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/aerial_adapter/src/README.md)
 
 For the bootstrap Port sidecar, the session status contract is now explicit and is driven by adapter-local transport/session timing signals across the Port boundary:
 

@@ -101,7 +101,7 @@ If any required patch point is missing, `plan` fails with `runtime_conf_patch_fa
 
 To run against a local OAI conf set, point `metadata.oai_runtime.du_conf_path`, `cucp_conf_path`, and `cuup_conf_path` at your files.
 
-Use [examples/ranctl/apply-oai-du-docker-template.json](../../examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
+Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 
 - read your source confs as-is
 - validate the required split markers and patch points during `precheck`
