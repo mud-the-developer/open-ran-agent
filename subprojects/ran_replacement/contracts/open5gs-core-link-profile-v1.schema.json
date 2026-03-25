@@ -17,6 +17,12 @@
       "type": "string",
       "minLength": 1
     },
+    "release_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "n2": {
       "type": "object",
       "additionalProperties": false,
@@ -125,4 +131,3 @@
     }
   }
 }
-

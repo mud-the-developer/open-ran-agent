@@ -4,13 +4,35 @@
   "incident_id": "inc-ran-repl-ping-001",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": "open5gs-sanitized-lab-release-1",
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "upf_host": "10.41.83.45",
+      "gtpu_port": 2152,
+      "dnn": "internet",
+      "slice": {
+        "sst": 1,
+        "sd": "000001"
+      }
+    }
+  },
   "comparison_scope": "ping",
   "expected_state": {
+    "ngap": "NG Setup, Initial UE Message, and uplink/downlink NAS transport remain healthy against the declared Open5GS endpoint.",
+    "release_state": "UE context release remains clean and auditable after the verify window.",
     "pdu_session": "The UE holds a declared IPv4 session on the internet DNN.",
     "gtpu": "The tunnel and route are bound to the declared UE session.",
     "ping_target": "8.8.8.8"
   },
   "observed_state": {
+    "ngap": "Registration completed against the declared Open5GS endpoint before the user-plane failure.",
+    "release_state": "UE context release completed after the failed ping verification window.",
     "pdu_session": "The UE established a PDU session.",
     "gtpu": "The tunnel exists, but user-plane reachability does not complete end to end.",
     "ping_target": "8.8.8.8"

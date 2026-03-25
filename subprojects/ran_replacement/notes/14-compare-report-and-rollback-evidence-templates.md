@@ -48,6 +48,7 @@ Minimum sections:
 - `incident_id`
 - `target_profile`
 - `core_profile`
+- `core_endpoint`
 - `comparison_scope`
 - `expected_state`
 - `observed_state`
@@ -60,6 +61,7 @@ Minimum sections:
 ### Compare Report Rules
 
 - The report must name the declared profile, not a local-only alias.
+- The report must name the declared core endpoint and profile, not just a generic core label.
 - The report must say which interface family is being compared.
 - The report must distinguish `expected` from `observed`.
 - The report must call out whether a mismatch is functional, procedural, or
@@ -107,6 +109,7 @@ Compare:
 
 - setup state against the real `Open5GS` core
 - registration progression versus expected attach path
+- named NGAP procedure checkpoints from `NG Setup` through `UE Context Release`
 - release state versus expected cleanup state
 
 Rollback:
