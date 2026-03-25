@@ -18,6 +18,11 @@ Boundary rule:
 - Keep this package as a docs/contracts-first shell until the F1-C and E1AP contract, schema, and examples are explicit.
 - Any future implementation here should remain thin and should only adapt the established contract.
 
+Package-local contract and fixtures:
+- [CONTRACT.md](CONTRACT.md)
+- [examples/observe-failed-cutover.request.json](examples/observe-failed-cutover.request.json)
+- [examples/observe-failed-cutover.status.json](examples/observe-failed-cutover.status.json)
+
 References:
 - `subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md`
 - `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`

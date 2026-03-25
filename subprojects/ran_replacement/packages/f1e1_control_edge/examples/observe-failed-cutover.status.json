@@ -1,0 +1,66 @@
+{
+  "status": "degraded",
+  "command": "observe",
+  "scope": "replacement_cutover",
+  "change_id": "chg-ran-repl-observe-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "target_ref": "gnb-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "summary": "F1E1-control-edge observe confirms that control-plane association diverged from the planned cutover lane.",
+  "target_backend": "replacement_primary",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/observe/f1-c-cutover.json",
+    "artifacts/replacement/observe/e1ap-cutover.json",
+    "artifacts/replacement/observe/cutover-control-plane.json"
+  ],
+  "suggested_next": [
+    "capture artifacts for the failed cutover",
+    "review f1-c and e1ap association state against the compare report",
+    "prepare rollback if the divergence persists"
+  ],
+  "checks": [
+    {
+      "name": "control_plane_cutover_attempt_detected",
+      "status": "ok",
+      "detail": "replacement lane became active for the declared control-plane ownership"
+    },
+    {
+      "name": "rollback_target_known",
+      "status": "ok",
+      "detail": "oai_reference is still available"
+    },
+    {
+      "name": "f1e1_divergence_explained",
+      "status": "degraded",
+      "detail": "control-plane association and bearer coordination no longer match the expected compare report"
+    }
+  ],
+  "plane_status": {
+    "c_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/cutover-control-plane.json",
+      "reason": "control-plane state is only partially healthy after cutover"
+    }
+  },
+  "interface_status": {
+    "f1_c": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/f1-c-cutover.json",
+      "reason": "association or configuration state diverged from the planned lane"
+    },
+    "e1ap": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/e1ap-cutover.json",
+      "reason": "bearer or activity-state coordination diverged from the compare report"
+    }
+  },
+  "rollback_status": {
+    "status": "pending",
+    "evidence_ref": "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "reason": "rollback is available but not yet executed"
+  }
+}
