@@ -120,7 +120,8 @@ defmodule RanActionGateway.Runner do
        runtime_contract: runtime_contract,
        runtime: runtime_payload(runtime_precheck),
        next: if(failed?, do: ["observe"], else: ["plan"])
-     }}
+     }
+     |> maybe_put_replacement_status(:precheck, change, checks)}
   end
 
   defp do_execute(:plan, change) do
@@ -241,6 +242,7 @@ defmodule RanActionGateway.Runner do
         }
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_verify)
+        |> maybe_put_replacement_status(:verify, change, checks)
 
       Store.write_json(Store.verify_path(change.change_id), result)
       {:ok, result}
@@ -627,6 +629,101 @@ defmodule RanActionGateway.Runner do
     else
       "passed"
     end
+  end
+
+  defp maybe_put_replacement_status(payload, phase, %Change{} = change, _checks) do
+    if replacement_scope?(change.scope) do
+      replacement = replacement_metadata(change)
+      base_status = payload[:status] || payload["status"]
+
+      payload
+      |> Map.put(:summary, replacement_summary(phase, change, base_status))
+      |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
+      |> Map.put(:core_profile, replacement["core_profile"])
+      |> Map.put(
+        :core_link_status,
+        replacement_core_link_status(phase, change, replacement, base_status)
+      )
+      |> Map.put(
+        :interface_status,
+        replacement_interface_status(phase, change, replacement, base_status)
+      )
+      |> maybe_put_attach_status(phase, change, replacement, base_status)
+    else
+      payload
+    end
+  end
+
+  defp replacement_scope?(scope),
+    do: scope in ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+
+  defp replacement_metadata(%Change{metadata: metadata}) do
+    metadata[:replacement] || metadata["replacement"] || %{}
+  end
+
+  defp replacement_gate_class(:precheck, "failed"), do: "blocked"
+  defp replacement_gate_class(:precheck, _status), do: "degraded"
+  defp replacement_gate_class(:verify, "failed"), do: "degraded"
+  defp replacement_gate_class(:verify, _status), do: "pass"
+
+  defp replacement_summary(phase, %Change{} = change, status) do
+    target_role = replacement_metadata(change)["target_role"] || change.scope
+    "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
+  end
+
+  defp replacement_core_link_status(phase, %Change{} = change, replacement, status) do
+    core = replacement["open5gs_core"] || %{}
+    profile = core["profile"] || replacement["core_profile"]
+
+    %{
+      status: if(status == "failed", do: "failed", else: "ok"),
+      evidence_ref: replacement_evidence_ref(phase, change, "core-link"),
+      reason:
+        if(status == "failed",
+          do: "replacement control surface has not yet proven the real Open5GS core path",
+          else: nil
+        ),
+      profile: profile
+    }
+  end
+
+  defp replacement_interface_status(phase, %Change{} = change, replacement, status) do
+    replacement
+    |> Map.get("required_interfaces", [])
+    |> Enum.map(fn interface ->
+      {interface,
+       %{
+         status: replacement_interface_state(status),
+         evidence_ref: replacement_evidence_ref(phase, change, interface),
+         reason: replacement_interface_reason(status)
+       }}
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp replacement_interface_state("failed"), do: "pending"
+  defp replacement_interface_state(_status), do: "ok"
+
+  defp replacement_interface_reason("failed"),
+    do: "replacement evidence for this interface is not yet fully surfaced by the control surface"
+
+  defp replacement_interface_reason(_status), do: nil
+
+  defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
+    if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
+      Map.put(payload, :attach_status, %{
+        status: if(status == "failed", do: "pending", else: "ok"),
+        evidence_ref: replacement_evidence_ref(phase, change, "attach"),
+        reason:
+          if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
+      })
+    else
+      payload
+    end
+  end
+
+  defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
+    "artifacts/replacement/#{phase |> Atom.to_string()}/#{change.change_id}/#{suffix}.json"
   end
 
   defp maybe_to_string(nil), do: nil

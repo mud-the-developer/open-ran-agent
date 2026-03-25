@@ -192,6 +192,70 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement precheck and verify surface deterministic ngap/core-link artifact fields",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      precheck_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/precheck-target-host-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_payload])
+      assert precheck.core_profile == "open5gs_nsa_lab_v1"
+      assert precheck.gate_class in ["blocked", "degraded"]
+
+      assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
+               "artifacts/replacement/precheck/"
+
+      assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) =~
+               "artifacts/replacement/precheck/"
+
+      verify_request =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+
+      plan = %{
+        "change_id" => verify_request["change_id"],
+        "target_backend" => "replacement_shadow",
+        "rollback_target" => "oai_reference",
+        "runtime_contract" => nil,
+        "verify_window" => verify_request["verify_window"]
+      }
+
+      state = %{
+        "status" => "applied",
+        "change_id" => verify_request["change_id"],
+        "scope" => verify_request["scope"]
+      }
+
+      Store.write_json(Store.plan_path(verify_request["change_id"]), plan)
+      Store.write_json(Store.change_state_path(verify_request["change_id"]), state)
+
+      verify_payload = JSON.encode!(verify_request)
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.core_profile == "open5gs_nsa_lab_v1"
+      assert verify.gate_class in ["degraded", "pass"]
+
+      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~
+               "artifacts/replacement/verify/"
+
+      assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
+
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~
+               "/attach.json"
+    end)
+  end
+
   test "precheck includes config validation and cell-group existence", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       payload = JSON.encode!(base_payload())
