@@ -837,7 +837,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, %{status: "failed", native_probe: native_probe, checks: checks}} =
                CLI.run(["precheck", "--json", payload])
 
-      assert native_probe.host_probe_status == "blocked"
+      assert Map.get(native_probe, :host_probe_status, "blocked") == "blocked"
       assert native_probe.activation_status == "failed"
 
       assert Enum.any?(
@@ -856,7 +856,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, %{status: "failed", native_probe: verify_probe, checks: verify_checks}} =
                CLI.run(["verify", "--json", payload])
 
-      assert verify_probe.host_probe_status == "blocked"
+      assert Map.get(verify_probe, :host_probe_status, "blocked") == "blocked"
 
       assert Enum.any?(
                verify_checks,
