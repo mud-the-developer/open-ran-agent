@@ -7,6 +7,12 @@ Intended contract:
 - Cover hardware, kernel, hugepage, NIC, timing, and environment checks that must pass before a risky cutover or attach path is attempted.
 - Stay aligned with the target-host readiness notes and deploy preview contracts before any implementation work starts.
 
+## Ownership Freeze
+
+- Runtime owner(s): `ran_config` and `ran_action_gateway` own the repo-visible host-readiness contract. The external target host remains the live owner of NIC, kernel, timing, and install state.
+- Cutover owner: `ran_action_gateway` via `bin/ranctl` owns the readiness gate that decides whether cutover planning or apply is allowed.
+- Rollback owner: `ran_action_gateway` via `bin/ranctl` owns the return to the last approved deploy/profile state when readiness regresses or a host-side cutover must be abandoned.
+
 Non-goals:
 - No slot-paced logic.
 - No FAPI hot-path logic.

@@ -15,6 +15,38 @@ This package owns the declared preflight edge for the milestone-1 lane:
 
 It does not own NGAP, F1, E1, GTP-U, or live packet handling.
 
+## Runtime Owner
+
+Primary repo-visible runtime owners for milestone 1: `ran_config` and `ran_action_gateway`.
+
+Supporting ownership boundaries:
+
+- `ran_config` owns topology, profile, and inventory interpretation for this package
+- `ran_action_gateway` and `bin/ranctl` own precheck, plan, verify, and operator-visible gate state
+- the external target host remains the live owner of NIC, kernel, timing, hugepage, and install state that this package only observes
+
+This package remains read-mostly until those host-readiness fields are frozen in contract and evidence form.
+
+## Cutover Owner
+
+`ran_action_gateway` via `bin/ranctl` owns the cutover gate for this package.
+
+The package may only report a host as cutover-capable when:
+
+- the declared target profile and deploy/profile state are explicit
+- the readiness checks surface a named rollback target
+- the host evidence bundle explains why the lane is `ready_for_preflight` or `ready_for_apply`
+
+## Rollback Owner
+
+`ran_action_gateway` via `bin/ranctl` owns rollback orchestration for host-readiness regressions.
+
+For this package, rollback means:
+
+- returning the operator-visible lane to the last approved deploy/profile state
+- preserving the evidence that explains why the newer host-readiness state was rejected
+- never implying that a host-side fallback happened without a named artifact path
+
 ## Boundary Inputs
 
 Required inputs for this package come from existing replacement-track contracts:

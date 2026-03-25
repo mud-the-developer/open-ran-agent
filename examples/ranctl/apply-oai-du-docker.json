@@ -17,6 +17,13 @@
     "checks": ["gateway_healthy"]
   },
   "metadata": {
+    "runtime_contract": {
+      "version": "ranctl.runtime.v1",
+      "release_unit": "bootstrap_source_bundle",
+      "release_ref": "source-checkout@cg-001",
+      "entrypoint": "bin/ranctl",
+      "runtime_mode": "docker_compose_rfsim_f1"
+    },
     "oai_runtime": {
       "repo_root": "/opt/openairinterface5g",
       "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",

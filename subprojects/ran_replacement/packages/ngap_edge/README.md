@@ -7,6 +7,12 @@ Intended contract:
 - Cover registration, context setup, UE attachment, and session control flows that sit at the boundary.
 - Stay aligned with the standards subset documented in the replacement notes before any implementation work starts.
 
+## Ownership Freeze
+
+- Runtime owner(s): `ran_cu_cp` owns the replacement-side NGAP control/session state. The real `Open5GS` core remains the external peer runtime for subscriber and registration state.
+- Cutover owner: `ran_action_gateway` via `bin/ranctl` owns any NGAP-facing cutover sequencing. The package only exposes contract state and evidence.
+- Rollback owner: `ran_action_gateway` via `bin/ranctl` owns rollback orchestration. `ran_cu_cp` must expose the cleanup and `UE Context Release` evidence needed to prove the rollback target was restored.
+
 Non-goals:
 - No slot-paced logic.
 - No FAPI hot-path logic.

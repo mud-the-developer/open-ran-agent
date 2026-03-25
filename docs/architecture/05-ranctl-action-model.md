@@ -23,6 +23,7 @@
 - `idempotency_key`: deduplicates repeat submissions.
 - `verify_window`: time budget and checks for post-apply verification.
 - `max_blast_radius`: upper bound on service impact.
+- `metadata.runtime_contract`: versioned release/runtime expectations for runtime-enabled lifecycle commands.
 
 ## Supported Commands
 
@@ -95,6 +96,16 @@ Bootstrap `ranctl` persists deterministic outputs under `artifacts/`:
 - `artifacts/config_snapshots/<incident_id-or-change_id>.json`
 - `artifacts/control_snapshots/<incident_id-or-change_id>.json`
 
+For runtime-enabled changes, the plan, state, verify, and approval artifacts also carry a persisted `runtime_contract` snapshot with:
+
+- `version`
+- `release_unit`
+- `release_ref`
+- `entrypoint`
+- resolved `runtime_mode`
+- resolved `runtime_digest`
+- `release_readiness`
+
 ## Execution Rules
 
 - `precheck` must validate target existence, health, drain readiness, and config completeness.
@@ -117,11 +128,20 @@ In the current bootstrap implementation, `precheck` also returns:
 
 `ranctl` can now orchestrate an external OpenAirInterface DU stack without moving runtime hot paths into the BEAM. This path is enabled through `metadata.oai_runtime`.
 
+Runtime-enabled lifecycle commands now also require `metadata.runtime_contract` so the release unit, entrypoint, release reference, and expected runtime mode are explicit on the control surface.
+
 Example:
 
 ```json
 {
   "metadata": {
+    "runtime_contract": {
+      "version": "ranctl.runtime.v1",
+      "release_unit": "bootstrap_source_bundle",
+      "release_ref": "source-checkout@cg-001",
+      "entrypoint": "bin/ranctl",
+      "runtime_mode": "docker_compose_rfsim_f1"
+    },
     "oai_runtime": {
       "repo_root": "/opt/openairinterface5g",
       "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
@@ -136,6 +156,9 @@ Example:
 
 With this metadata:
 
+- `precheck` and `plan` reject requests that omit `runtime_contract.version`, `release_unit`, `release_ref`, `entrypoint`, or `runtime_mode`
+- `plan` persists a `runtime_contract` snapshot with the resolved runtime mode, runtime digest, and release-readiness snapshot
+- `apply`, `verify`, and `rollback` reject runtime contract drift before touching runtime actions
 - `plan` writes a generated Compose asset under `artifacts/runtime/<change_id>/docker-compose.yml`
 - `plan` also writes patched overlay confs under `artifacts/runtime/<change_id>/conf/`
 - source conf files remain untouched and are only used as overlay inputs

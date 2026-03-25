@@ -7,6 +7,12 @@ Intended contract:
 - Cover core attachment, registration, session establishment, subscriber handling, and the control/data path signals needed for ping acceptance.
 - Stay aligned with the Open5GS scope notes and the NGAP and procedure matrices before any implementation work starts.
 
+## Ownership Freeze
+
+- Runtime owner(s): `ran_cu_cp` owns replacement-side N2/NGAP control state. `ran_cu_up` owns replacement-side N3 and session tunnel state. The real `Open5GS` core remains the external owner of subscriber and core session state.
+- Cutover owner: `ran_action_gateway` via `bin/ranctl` owns any core-link cutover sequencing once the named core profile and interface gates are explicit.
+- Rollback owner: `ran_action_gateway` via `bin/ranctl` owns rollback orchestration. `ran_cu_cp` and `ran_cu_up` must expose enough state to restore the replacement-side view of the last safe core-linked state.
+
 Non-goals:
 - No slot-paced logic.
 - No FAPI hot-path logic.
@@ -17,6 +23,9 @@ Non-goals:
 Boundary rule:
 - Keep this package as a docs/contracts-first shell until the core-link contract, schema, and examples are explicit.
 - Any future implementation here should remain thin and should only adapt the established contract.
+
+Package-local contract and fixtures:
+- [CONTRACT.md](CONTRACT.md)
 
 References:
 - `subprojects/ran_replacement/notes/04-open5gs-core-and-s-m-c-u-plane-scope.md`

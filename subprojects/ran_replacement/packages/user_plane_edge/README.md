@@ -7,6 +7,12 @@ Intended contract:
 - Cover tunnel establishment, TEID association, forwarding state, and ping-relevant user-plane evidence.
 - Stay aligned with the standards subset and procedure matrices before any implementation work starts.
 
+## Ownership Freeze
+
+- Runtime owner(s): `ran_cu_up` owns tunnel and session lifecycle state. `ran_du_high` owns DU-local forwarding orchestration. Native contract gateways own the timing-sensitive forwarding and drain/resume behavior beneath the package boundary.
+- Cutover owner: `ran_action_gateway` via `bin/ranctl` owns user-plane cutover sequencing once the target-host and control-plane gates are explicit.
+- Rollback owner: `ran_action_gateway` via `bin/ranctl` owns rollback orchestration. `ran_cu_up`, `ran_du_high`, and the active native gateway must expose enough state to restore or clear the forwarding path cleanly.
+
 Non-goals:
 - No slot-paced logic.
 - No FAPI hot-path logic.
@@ -17,6 +23,9 @@ Non-goals:
 Boundary rule:
 - Keep this package as a docs/contracts-first shell until the F1-U and GTP-U contract, schema, and examples are explicit.
 - Any future implementation here should remain thin and should only adapt the established contract.
+
+Package-local contract and fixtures:
+- [CONTRACT.md](CONTRACT.md)
 
 References:
 - `subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md`
