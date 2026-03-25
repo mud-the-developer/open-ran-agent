@@ -1,0 +1,192 @@
+{
+  "profile": "n79_single_ru_single_ue_lab_v1",
+  "scope": {
+    "band": "n79",
+    "real_ru_required": true,
+    "real_ue_required": true,
+    "real_open5gs_required": true,
+    "target_host_ref": "host-n79-lab-01"
+  },
+  "rf_profile": {
+    "band": "n79",
+    "channel_bandwidth_mhz": 100,
+    "numerology": 2,
+    "subcarrier_spacing_khz": 30,
+    "tdd_pattern": "DDDSU",
+    "prb_count": 273,
+    "antenna_count": 4,
+    "pci": 358,
+    "tac": 100,
+    "plmn": "45040"
+  },
+  "ru_boundary": {
+    "vendor_or_class": "sanitized-n79-lab-ru",
+    "fronthaul_mode": "eCPRI",
+    "sync_source": "ptp-gm-lab",
+    "device_mapping": [
+      "0000:17:00.3"
+    ],
+    "timing_dependencies": [
+      "ptp",
+      "sync0"
+    ],
+    "healthy_indicators": [
+      "ru_sync_locked",
+      "ssb_visible",
+      "rach_success"
+    ],
+    "readiness_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ru-readiness.json"
+  },
+  "ue_boundary": {
+    "device_class": "n79_lab_ue",
+    "sim_profile": "sanitized-lab-sim-v1",
+    "subscriber_ref": "sanitized-imsi-001",
+    "logging_path": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ue-logs/",
+    "attach_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "ping_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+  },
+  "core_boundary": {
+    "open5gs_profile": "open5gs_nsa_lab_v1",
+    "release_ref": "open5gs-sanitized-lab-release-1",
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "upf_host": "10.41.83.45",
+      "gtpu_port": 2152,
+      "dnn": "internet",
+      "slice": {
+        "sst": 1,
+        "sd": "000001"
+      }
+    },
+    "subscriber_profile": {
+      "imsi_ref": "sanitized-imsi-001",
+      "ue_class": "n79_lab_ue"
+    },
+    "session_profile": {
+      "pdu_type": "ipv4",
+      "expect_ping_target": "8.8.8.8"
+    },
+    "registration_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "pdu_session_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+  },
+  "host_boundary": {
+    "os": "ubuntu-22.04-lts",
+    "kernel": "5.15-lts-sanitized",
+    "hugepages": "1024x2M",
+    "cpu_isolation": "isolcpus=2-7 nohz_full=2-7 rcu_nocbs=2-7",
+    "ptp_or_gps": "ptp-gm-lab",
+    "nic_timestamping": "enabled",
+    "deployment_layout": "single-host-du-cucp-cuup-lab",
+    "preflight_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/preflight.json"
+  },
+  "standards_subset": {
+    "ngap": {
+      "required_procedures": [
+        "NG Setup",
+        "Initial UE Message",
+        "Uplink NAS Transport",
+        "Downlink NAS Transport",
+        "UE Context Release"
+      ],
+      "optional_procedures": [
+        "Paging",
+        "Handover Preparation",
+        "Path Switch"
+      ],
+      "evidence_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+    },
+    "f1_c": {
+      "required_procedures": [
+        "F1 Setup",
+        "UE Context Setup",
+        "UE Context Release"
+      ],
+      "optional_procedures": [
+        "UE Context Modification",
+        "Reset"
+      ],
+      "evidence_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md"
+    },
+    "f1_u": {
+      "required_procedures": [
+        "F1-U tunnel establishment",
+        "UE traffic forwarding",
+        "Tunnel release"
+      ],
+      "optional_procedures": [
+        "Tunnel update"
+      ],
+      "evidence_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md"
+    },
+    "e1ap": {
+      "required_procedures": [
+        "E1 Setup",
+        "Bearer Context Setup",
+        "Bearer Context Release"
+      ],
+      "optional_procedures": [
+        "Bearer Context Modification"
+      ],
+      "evidence_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md"
+    },
+    "gtpu": {
+      "required_procedures": [
+        "Tunnel Create",
+        "Tunnel Bind",
+        "Tunnel Forwarding",
+        "Tunnel Release"
+      ],
+      "optional_procedures": [
+        "Tunnel Rebind"
+      ],
+      "evidence_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md"
+    }
+  },
+  "acceptance_chain": [
+    {
+      "step": "host preflight",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/preflight.json",
+      "pass_criteria": "required host resources and timing dependencies are present",
+      "rollback_trigger": "host readiness blocked"
+    },
+    {
+      "step": "ru readiness",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ru-readiness.json",
+      "pass_criteria": "real RU sync is locked and stable",
+      "rollback_trigger": "ru sync lost or unstable"
+    },
+    {
+      "step": "attach",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+      "pass_criteria": "UE registration reaches the real Open5GS core",
+      "rollback_trigger": "registration rejected or incomplete"
+    },
+    {
+      "step": "pdu session",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+      "pass_criteria": "PDU session is established on the declared DNN and slice",
+      "rollback_trigger": "session setup fails or binds incorrectly"
+    },
+    {
+      "step": "ping",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+      "pass_criteria": "user-plane ping reaches the declared route",
+      "rollback_trigger": "ping fails after a session is established"
+    }
+  ],
+  "evidence_paths": {
+    "host_preflight": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/preflight.json",
+    "ru_sync": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ru-readiness.json",
+    "gnb_runtime_health": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/gnb-health.json",
+    "registration_logs": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.log",
+    "pdu_session_logs": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.log",
+    "attach_logs": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.log",
+    "ping_result": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "rollback_target_ref": "oai_reference",
+    "rollback_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+  }
+}

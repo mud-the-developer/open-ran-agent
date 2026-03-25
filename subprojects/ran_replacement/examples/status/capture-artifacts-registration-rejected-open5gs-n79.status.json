@@ -1,0 +1,96 @@
+{
+  "status": "failed",
+  "command": "capture-artifacts",
+  "scope": "ue_session",
+  "change_id": "chg-ran-repl-capture-registration-001",
+  "incident_id": "inc-ran-repl-registration-001",
+  "target_ref": "ue-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "blocked",
+  "summary": "Capture preserved the evidence set for a registration rejection against the declared Open5GS core lane.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/capture/registration-rejected/request.json",
+    "artifacts/replacement/capture/registration-rejected/verify.json",
+    "artifacts/replacement/capture/registration-rejected/core.log",
+    "artifacts/replacement/capture/registration-rejected/debug-pack.txt"
+  ],
+  "suggested_next": [
+    "inspect the compare report for NGAP and subscriber mismatch",
+    "confirm whether the rejection is profile-driven or state-driven",
+    "retry only after the profile is corrected"
+  ],
+  "checks": [
+    {
+      "name": "registration_rejected",
+      "status": "failed",
+      "detail": "real Open5GS rejected registration for the declared subscriber"
+    },
+    {
+      "name": "core_log_reference",
+      "status": "ok",
+      "detail": "core log reference was captured"
+    },
+    {
+      "name": "rollback_target_known",
+      "status": "ok",
+      "detail": "rollback target remains the OAI reference lane"
+    }
+  ],
+  "interface_status": {
+    "ngap": {
+      "status": "failed",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/ngap.json",
+      "reason": "registration did not progress to attach completion"
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/f1-c.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/e1ap.json",
+      "reason": null
+    },
+    "f1_u": {
+      "status": "pending",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/f1-u.json",
+      "reason": "user-plane was not exercised"
+    },
+    "gtpu": {
+      "status": "pending",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/gtpu.json",
+      "reason": "ping was not reached"
+    },
+    "ru_fronthaul": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/ru-fronthaul.json",
+      "reason": null
+    },
+    "ptp": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/registration-rejected/ptp.json",
+      "reason": null
+    }
+  },
+  "attach_status": {
+    "status": "failed",
+    "evidence_ref": "artifacts/replacement/capture/registration-rejected/attach.json",
+    "reason": "registration rejected before attach completion"
+  },
+  "pdu_session_status": {
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/capture/registration-rejected/pdu-session.json",
+    "reason": "session setup not reached after rejection"
+  },
+  "ping_status": {
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/capture/registration-rejected/ping.json",
+    "reason": "ping not attempted after registration failure"
+  }
+}

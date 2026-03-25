@@ -507,8 +507,8 @@ These stay out of scope until milestone 1 is complete:
 
 ## Immediate Next Contracts And Fixtures To Deepen
 
-1. Tighten `contracts/ranctl-ran-replacement-request-v1.schema.json` per scope instead of leaving additive draft flexibility.
-2. Tighten `contracts/ranctl-ran-replacement-status-v1.schema.json` with scope-specific evidence fields for RU, registration, PDU session, and ping.
-3. Add a sanitized instance example for `contracts/n79-single-ru-target-profile-v1.schema.json` once the real lab owner freezes exact RF and RU assumptions.
-4. Add a failed-cutover `observe` and `capture-artifacts` example pair so the rollback incident has the same request coverage as RU sync, registration, and ping failures.
-5. Add schema-backed status fixture examples for `precheck`, `verify`, `observe`, `rollback`, and `capture-artifacts` so dashboard and remote runner surfaces can reuse deterministic mock evidence.
+1. Split the replacement request schema into scope-aware helper schemas or `$defs` so `target_host`, `ue_session`, `ru_link`, and `replacement_cutover` rules stay explicit as the fixture set grows.
+2. Add compare-report and rollback-evidence JSON fixture examples that align directly with `notes/14-compare-report-and-rollback-evidence-templates.md`.
+3. Add a sanitized lab-owner overlay example that shows how the target-profile example is narrowed into actual host, RU, and UE inventory without committing secrets.
+4. Add dashboard-facing fixture notes that map `examples/status/*.json` to mission cards, inspector views, and remote-run summaries.
+5. Add first contract tests or validation scripts for the replacement-track schemas so request, status, and target-profile fixtures can be checked together in CI.

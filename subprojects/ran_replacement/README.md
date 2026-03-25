@@ -48,8 +48,11 @@ The immediate work here is not runtime code. The immediate work is:
 - [notes/13-milestone-1-acceptance-runbook.md](notes/13-milestone-1-acceptance-runbook.md)
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
 - [notes/README.md](notes/README.md)
+- [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
+- [contracts/examples/n79-single-ru-target-profile-v1.example.json](contracts/examples/n79-single-ru-target-profile-v1.example.json)
 - [examples/ranctl/README.md](examples/ranctl/README.md)
+- [examples/status/README.md](examples/status/README.md)
 - [examples/incidents/README.md](examples/incidents/README.md)
 
 ## Immediate Non-Goals

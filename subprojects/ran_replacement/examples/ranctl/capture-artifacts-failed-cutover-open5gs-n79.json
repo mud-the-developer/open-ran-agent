@@ -1,0 +1,79 @@
+{
+  "scope": "replacement_cutover",
+  "target_ref": "gnb-n79-lab-01",
+  "target_backend": "replacement_primary",
+  "current_backend": "replacement_primary",
+  "rollback_target": "oai_reference",
+  "change_id": "chg-ran-repl-capture-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "reason": "capture artifacts after failed replacement cutover attempt",
+  "idempotency_key": "ran-repl-cutover-001-capture",
+  "dry_run": true,
+  "ttl": "10m",
+  "verify_window": {
+    "duration": "30s",
+    "checks": [
+      "cutover_attempt_detected",
+      "compare_report_ready",
+      "rollback_target_known"
+    ]
+  },
+  "max_blast_radius": "single_gnb",
+  "metadata": {
+    "replacement": {
+      "target_role": "gnb",
+      "action": "capture_artifacts",
+      "target_profile": "n79_single_ru_single_ue_lab_v1",
+      "core_profile": "open5gs_nsa_lab_v1",
+      "band": "n79",
+      "plane_scope": [
+        "m_plane",
+        "c_plane",
+        "u_plane"
+      ],
+      "desired_state": "present",
+      "cutover_mode": "rollback",
+      "allow_oai_fallback": true,
+      "destructive": false,
+      "real_ru_required": true,
+      "real_ue_required": true,
+      "required_interfaces": [
+        "ngap",
+        "f1_c",
+        "f1_u",
+        "e1ap",
+        "gtpu"
+      ],
+      "acceptance_gates": [
+        "registration",
+        "pdu_session",
+        "ping"
+      ],
+      "open5gs_core": {
+        "profile": "open5gs_nsa_lab_v1",
+        "n2": {
+          "amf_host": "10.41.83.45",
+          "amf_port": 38412,
+          "bind_host": "10.41.83.34"
+        },
+        "n3": {
+          "upf_host": "10.41.83.45",
+          "gtpu_port": 2152,
+          "dnn": "internet",
+          "slice": {
+            "sst": 1,
+            "sd": "000001"
+          }
+        },
+        "subscriber_profile": {
+          "imsi_ref": "sanitized-imsi-001",
+          "ue_class": "n79_lab_ue"
+        },
+        "session_profile": {
+          "pdu_type": "ipv4",
+          "expect_ping_target": "8.8.8.8"
+        }
+      }
+    }
+  }
+}

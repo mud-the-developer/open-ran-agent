@@ -29,5 +29,7 @@ Current draft files:
 - [capture-artifacts-registration-rejected-open5gs-n79.json](capture-artifacts-registration-rejected-open5gs-n79.json)
 - [observe-ping-failed-open5gs-n79.json](observe-ping-failed-open5gs-n79.json)
 - [capture-artifacts-ping-failed-open5gs-n79.json](capture-artifacts-ping-failed-open5gs-n79.json)
+- [observe-failed-cutover-open5gs-n79.json](observe-failed-cutover-open5gs-n79.json)
+- [capture-artifacts-failed-cutover-open5gs-n79.json](capture-artifacts-failed-cutover-open5gs-n79.json)
 
 Use only sanitized topology and metadata here.

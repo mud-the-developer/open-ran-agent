@@ -1,0 +1,74 @@
+{
+  "status": "blocked",
+  "command": "precheck",
+  "scope": "target_host",
+  "change_id": "chg-ran-repl-precheck-001",
+  "incident_id": null,
+  "target_ref": "host-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "blocked",
+  "summary": "Target host precheck is blocked because the declared timing and fronthaul resources are not yet fully proven.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/precheck/host-n79-lab-01.json",
+    "artifacts/replacement/precheck/ru-readiness.json"
+  ],
+  "suggested_next": [
+    "inspect host timing and RU link blockers",
+    "confirm rollback target remains known",
+    "rerun precheck after RF and sync assumptions are corrected"
+  ],
+  "checks": [
+    {
+      "name": "host_preflight",
+      "status": "blocked",
+      "detail": "sync0, /dev/fh0, and PCI ownership are not all proven"
+    },
+    {
+      "name": "ru_sync",
+      "status": "blocked",
+      "detail": "RU sync has not been demonstrated for the declared profile"
+    },
+    {
+      "name": "core_link_reachable",
+      "status": "ok",
+      "detail": "Open5GS N2 endpoint is declared and reachable from the target profile"
+    }
+  ],
+  "plane_status": {
+    "s_plane": {
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/precheck/ptp-state.json",
+      "reason": "timing source not yet stable enough"
+    },
+    "m_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/precheck/host-inventory.json",
+      "reason": null
+    },
+    "c_plane": {
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/precheck/core-link.json",
+      "reason": "cutover to the replacement lane is not yet allowed"
+    },
+    "u_plane": {
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/precheck/user-plane.json",
+      "reason": "user-plane path is not yet declared ready"
+    }
+  },
+  "ru_status": {
+    "status": "blocked",
+    "evidence_ref": "artifacts/replacement/precheck/ru-sync.json",
+    "reason": "RU sync has not been confirmed"
+  },
+  "core_link_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/precheck/open5gs-core-link.json",
+    "reason": null
+  }
+}

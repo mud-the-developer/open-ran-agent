@@ -1,0 +1,85 @@
+{
+  "status": "ok",
+  "command": "rollback",
+  "scope": "replacement_cutover",
+  "change_id": "chg-ran-repl-rollback-001",
+  "incident_id": "inc-ran-repl-rollback-001",
+  "target_ref": "gnb-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "pass",
+  "summary": "Rollback returned the lane to the declared OAI reference target after a failed cutover.",
+  "target_backend": "oai_reference",
+  "rollback_target": "oai_reference",
+  "approval_required": true,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/rollback/rollback-plan.json",
+    "artifacts/replacement/rollback/post-rollback-verify.json",
+    "artifacts/replacement/rollback/debug-pack.txt"
+  ],
+  "suggested_next": [
+    "review the compare report that triggered rollback",
+    "keep the lane shadowed until the first failure is corrected",
+    "rerun precheck after the rollback target is confirmed clean"
+  ],
+  "checks": [
+    {
+      "name": "rollback_target_known",
+      "status": "ok",
+      "detail": "declared rollback target is present and auditable"
+    },
+    {
+      "name": "approval_evidence_present",
+      "status": "ok",
+      "detail": "approval gate was captured before the cutover"
+    },
+    {
+      "name": "oai_reference_ready",
+      "status": "ok",
+      "detail": "reference backend was restored cleanly"
+    }
+  ],
+  "rollback_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/rollback/post-rollback-verify.json",
+    "reason": "rollback target restored and verified"
+  },
+  "interface_status": {
+    "ngap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/ngap.json",
+      "reason": null
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/f1-c.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/e1ap.json",
+      "reason": null
+    },
+    "f1_u": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/f1-u.json",
+      "reason": null
+    },
+    "gtpu": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/gtpu.json",
+      "reason": null
+    },
+    "ru_fronthaul": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/ru-fronthaul.json",
+      "reason": null
+    },
+    "ptp": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/ptp.json",
+      "reason": null
+    }
+  }
+}

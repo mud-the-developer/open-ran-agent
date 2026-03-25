@@ -575,6 +575,8 @@
                   },
                   "action": {
                     "enum": [
+                      "observe",
+                      "capture_artifacts",
                       "cutover",
                       "rollback"
                     ]

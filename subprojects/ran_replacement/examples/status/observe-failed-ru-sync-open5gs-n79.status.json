@@ -1,0 +1,74 @@
+{
+  "status": "degraded",
+  "command": "observe",
+  "scope": "ru_link",
+  "change_id": "chg-ran-repl-observe-ru-sync-001",
+  "incident_id": "inc-ran-repl-ru-sync-001",
+  "target_ref": "ru-link-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "degraded",
+  "summary": "RU sync is degraded; the lane is visible, but the declared sync target is not stable enough for attach.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/observe/ru-sync.json",
+    "artifacts/replacement/observe/host-preflight.json"
+  ],
+  "suggested_next": [
+    "inspect RU timing source and host-device mapping",
+    "keep the lane in shadow mode",
+    "capture artifacts before any attach attempt"
+  ],
+  "checks": [
+    {
+      "name": "host_preflight",
+      "status": "degraded",
+      "detail": "host inventory is present but not fully trusted for cutover"
+    },
+    {
+      "name": "ru_sync",
+      "status": "blocked",
+      "detail": "stable sync lock not yet proven"
+    },
+    {
+      "name": "core_link_reachable",
+      "status": "ok",
+      "detail": "core endpoint remains reachable"
+    }
+  ],
+  "plane_status": {
+    "s_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/ptp-state.json",
+      "reason": "timing source is visible but not stable"
+    },
+    "m_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/observe/host-state.json",
+      "reason": null
+    },
+    "c_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/control-plane.json",
+      "reason": "control-plane stays shadow-only"
+    },
+    "u_plane": {
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/observe/user-plane.json",
+      "reason": "user-plane must not be trusted before RU sync stabilizes"
+    }
+  },
+  "ru_status": {
+    "status": "blocked",
+    "evidence_ref": "artifacts/replacement/observe/ru-sync.json",
+    "reason": "sync lock is not stable"
+  },
+  "core_link_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/observe/open5gs-core-link.json",
+    "reason": null
+  }
+}

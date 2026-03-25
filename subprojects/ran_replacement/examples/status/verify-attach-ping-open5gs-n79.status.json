@@ -1,0 +1,117 @@
+{
+  "status": "ok",
+  "command": "verify",
+  "scope": "ue_session",
+  "change_id": "chg-ran-repl-verify-001",
+  "incident_id": "inc-ran-repl-verify-001",
+  "target_ref": "ue-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "pass",
+  "summary": "UE attach, PDU session, and ping are all proven against the declared Open5GS core lane.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/verify/ue-n79-lab-01.json",
+    "artifacts/replacement/verify/attach-log.txt",
+    "artifacts/replacement/verify/ping-result.txt"
+  ],
+  "suggested_next": [
+    "capture artifacts for the verified lane",
+    "keep the same rollback target for the next mutation",
+    "advance only if the soak window remains stable"
+  ],
+  "checks": [
+    {
+      "name": "registration_complete",
+      "status": "ok",
+      "detail": "real Open5GS registration completed"
+    },
+    {
+      "name": "pdu_session_established",
+      "status": "ok",
+      "detail": "UE obtained a declared IPv4 session"
+    },
+    {
+      "name": "ping_success",
+      "status": "ok",
+      "detail": "declared ping target answered"
+    }
+  ],
+  "plane_status": {
+    "s_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/ptp-state.json",
+      "reason": null
+    },
+    "m_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/host-state.json",
+      "reason": null
+    },
+    "c_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/control-plane.json",
+      "reason": null
+    },
+    "u_plane": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/user-plane.json",
+      "reason": null
+    }
+  },
+  "interface_status": {
+    "ngap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/ngap.json",
+      "reason": null
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/f1-c.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/e1ap.json",
+      "reason": null
+    },
+    "f1_u": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/f1-u.json",
+      "reason": null
+    },
+    "gtpu": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/gtpu.json",
+      "reason": null
+    },
+    "ru_fronthaul": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/ru-fronthaul.json",
+      "reason": null
+    },
+    "ptp": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/verify/ptp.json",
+      "reason": null
+    }
+  },
+  "attach_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/verify/attach.json",
+    "reason": null
+  },
+  "pdu_session_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/verify/pdu-session.json",
+    "reason": null
+  },
+  "ping_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/verify/ping.json",
+    "reason": null
+  }
+}
