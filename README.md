@@ -121,7 +121,13 @@ bin/ran-dashboard
 # exercise the control lifecycle
 bin/ranctl precheck --file examples/ranctl/precheck-oai-du-docker.json
 bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
+
+# exercise the core cutover control surface
+bin/ranctl precheck --file examples/ranctl/core/precheck-core-cutover-scp.json
+bin/ranctl plan --file examples/ranctl/core/plan-core-cutover-scp.json
 ```
+
+Core `ranctl` request examples now live under [examples/ranctl/core](/home/mud/repo/open_ran_agent/examples/ranctl/core) for the current `NRF` and `SCP` pilot lanes, gated `AMF` planning, and `NRF` shadow verification.
 
 ### 3) Know what the current bootstrap tests already cover
 
@@ -146,6 +152,7 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 | `config/` | Runtime config, environment profiles, and example topologies |
 | `ops/` | Deploy scripts, skills, and Symphony-facing integration assets |
 | `scripts/` | Regeneration helpers such as README figure export |
+| `subprojects/` | Design-first side workspaces such as the clean-room `elixir_core/` 5GC exploration track |
 | `examples/` | Example `ranctl` requests, incidents, and bootstrap references |
 | `AGENTS.md` | Persistent repository rules |
 
@@ -304,17 +311,21 @@ Use the shared local CI contract before pushing changes:
 mix contract_ci
 mix runtime_ci
 mix ci
+npm run docs:build
 ```
 
 - `mix contract_ci` is the fast design and contract gate
 - `mix runtime_ci` runs the tagged runtime smoke path and bootstrap packaging smoke
 - `mix ci` runs both
 - GitHub Actions mirrors the same split in `.github/workflows/ci.yml`
+- `npm run docs:build` builds the VitePress docs site intended for Cloudflare Pages
 
 GitHub Actions also uploads:
 
 - architecture docs and ADR snapshot from the contract job
 - `artifacts/releases/ci-smoke/**` plus runtime smoke artifacts from the runtime job
+
+Docs-site deployment is intentionally separate. The recommended production path is **Cloudflare Pages Git integration**, while GitHub Actions keeps a docs-only validation workflow in [`.github/workflows/docs-site.yml`](.github/workflows/docs-site.yml). Use `npm ci && npm run docs:build` as the Pages build command and `docs/.vitepress/dist` as the output directory.
 
 The repo ships a source-first bootstrap bundle for lab-host style distribution:
 

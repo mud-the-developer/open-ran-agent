@@ -16,8 +16,8 @@ hero:
       text: Read ADRs
       link: /adr/
     - theme: alt
-      text: Deploy this site
-      link: /cloudflare-pages
+      text: Review backlog
+      link: /backlog/
 
 features:
   - title: Architecture-first
@@ -25,7 +25,7 @@ features:
   - title: Evidence-first ops
     details: "ranctl, Deploy Studio, remote handoff, and debug packs all converge on deterministic artifacts and explicit evidence."
   - title: Pages-ready docs
-    details: "This docs tree builds into a static site that can be previewed locally and deployed directly to Cloudflare Pages."
+    details: "This docs tree builds into a static site that can be previewed locally and deployed through a simple Git-integrated Pages flow."
 ---
 
 <div class="doc-kicker">Documentation Hub</div>
@@ -68,10 +68,6 @@ The site groups the repo into three operator-friendly surfaces:
   <a class="doc-hub-card" href="/backlog/">
     <strong>Backlog</strong>
     <span>See the current implementation queue and how the bootstrap still needs to move toward real runtime and transport integration.</span>
-  </a>
-  <a class="doc-hub-card" href="/cloudflare-pages">
-    <strong>Cloudflare Pages</strong>
-    <span>Use the built-in VitePress and Wrangler setup to build, preview, and deploy this docs site as a static Pages project.</span>
   </a>
 </div>
 

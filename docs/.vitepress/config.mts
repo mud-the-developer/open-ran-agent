@@ -33,8 +33,7 @@ export default defineConfig({
       { text: "Home", link: "/" },
       { text: "Architecture", link: "/architecture/" },
       { text: "ADRs", link: "/adr/" },
-      { text: "Backlog", link: "/backlog/" },
-      { text: "Cloudflare Pages", link: "/cloudflare-pages" }
+      { text: "Backlog", link: "/backlog/" }
     ],
     sidebar: {
       "/architecture/": [
