@@ -75,6 +75,7 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - [packages/f1e1_control_edge/README.md](packages/f1e1_control_edge/README.md)
 - [packages/user_plane_edge/README.md](packages/user_plane_edge/README.md)
 - [packages/target_host_edge/README.md](packages/target_host_edge/README.md)
+- [packages/target_host_edge/CONTRACT.md](packages/target_host_edge/CONTRACT.md)
 - [packages/core_link_edge/README.md](packages/core_link_edge/README.md)
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/status/README.md](examples/status/README.md)

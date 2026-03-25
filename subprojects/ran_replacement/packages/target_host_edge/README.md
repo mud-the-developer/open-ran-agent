@@ -18,6 +18,11 @@ Boundary rule:
 - Keep this package as a docs/contracts-first shell until the target-host control contract, schema, and examples are explicit.
 - Any future implementation here should stay thin and should only adapt the established contract.
 
+Package-local contract and fixtures:
+- [CONTRACT.md](CONTRACT.md)
+- [examples/precheck-target-host.request.json](examples/precheck-target-host.request.json)
+- [examples/precheck-target-host.status.json](examples/precheck-target-host.status.json)
+
 References:
 - `subprojects/ran_replacement/notes/03-target-host-readiness-and-lab-gates.md`
 - `subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md`
