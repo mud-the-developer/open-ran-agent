@@ -7,6 +7,12 @@ Intended contract:
 - Cover setup, config exchange, cell control, UE context setup and release, and safe re-establishment flows.
 - Stay aligned with the standards subset and procedure matrices before any implementation work starts.
 
+## Ownership Freeze
+
+- Runtime owner(s): `ran_cu_cp` owns the primary `F1-C` and `E1AP` coordination surface. `ran_cu_up` and `ran_du_high` are explicit peer runtimes for CU-UP and DU state.
+- Cutover owner: `ran_action_gateway` via `bin/ranctl` owns cutover sequencing for control-plane association changes.
+- Rollback owner: `ran_action_gateway` via `bin/ranctl` owns rollback orchestration. `ran_cu_cp`, `ran_cu_up`, and `ran_du_high` must expose the release and cleanup state needed to prove a clean rollback.
+
 Non-goals:
 - No slot-paced logic.
 - No FAPI hot-path logic.
