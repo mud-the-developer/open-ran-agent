@@ -1,0 +1,245 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/ranctl-ran-replacement-status-v1.schema.json",
+  "title": "ranctl RAN Replacement Status v1",
+  "description": "Draft response schema for replacement-track RAN actions. The status surface is designed for agents, dashboard actions, and remote execution against a real Open5GS-based core.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "status",
+    "command",
+    "scope"
+  ],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "ok",
+        "failed",
+        "blocked",
+        "degraded"
+      ]
+    },
+    "command": {
+      "type": "string",
+      "enum": [
+        "precheck",
+        "plan",
+        "apply",
+        "verify",
+        "rollback",
+        "observe",
+        "capture-artifacts"
+      ]
+    },
+    "scope": {
+      "type": "string",
+      "enum": [
+        "gnb",
+        "cu_cp",
+        "cu_up",
+        "du",
+        "cell",
+        "ru",
+        "ru_link",
+        "ue_session",
+        "transport_profile",
+        "target_host",
+        "core_link",
+        "replacement_cutover"
+      ]
+    },
+    "change_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "incident_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "core_profile": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_backend": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rollback_target": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "approval_required": {
+      "type": "boolean"
+    },
+    "rollback_available": {
+      "type": "boolean"
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "suggested_next": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "failed",
+              "blocked",
+              "degraded"
+            ]
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "plane_status": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "s_plane": {
+          "$ref": "#/$defs/plane_summary"
+        },
+        "m_plane": {
+          "$ref": "#/$defs/plane_summary"
+        },
+        "c_plane": {
+          "$ref": "#/$defs/plane_summary"
+        },
+        "u_plane": {
+          "$ref": "#/$defs/plane_summary"
+        }
+      }
+    },
+    "ru_status": {
+      "$ref": "#/$defs/component_summary"
+    },
+    "core_link_status": {
+      "$ref": "#/$defs/component_summary"
+    },
+    "attach_status": {
+      "$ref": "#/$defs/component_summary"
+    },
+    "ping_status": {
+      "$ref": "#/$defs/component_summary"
+    }
+  },
+  "$defs": {
+    "plane_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "blocked",
+            "degraded"
+          ]
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "component_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "blocked",
+            "degraded",
+            "pending"
+          ]
+        },
+        "evidence_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
+

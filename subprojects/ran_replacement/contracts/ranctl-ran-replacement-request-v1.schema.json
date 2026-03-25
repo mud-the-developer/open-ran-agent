@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/ranctl-ran-replacement-request-v1.schema.json",
+  "title": "ranctl RAN Replacement Request v1",
+  "description": "Draft schema for replacement-track RAN mutations routed through bin/ranctl. This schema assumes a real Open5GS-based core and explicit S/M/C/U plane ownership for the declared target profile.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "scope",
+    "change_id",
+    "reason",
+    "idempotency_key",
+    "verify_window",
+    "metadata"
+  ],
+  "properties": {
+    "scope": {
+      "type": "string",
+      "enum": [
+        "gnb",
+        "cu_cp",
+        "cu_up",
+        "du",
+        "cell",
+        "ru",
+        "ru_link",
+        "ue_session",
+        "transport_profile",
+        "target_host",
+        "core_link",
+        "replacement_cutover"
+      ]
+    },
+    "change_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "incident_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "target_ref": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "target_backend": {
+      "type": "string",
+      "enum": [
+        "oai_reference",
+        "replacement_shadow",
+        "replacement_primary"
+      ]
+    },
+    "current_backend": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "oai_reference",
+        "replacement_shadow",
+        "replacement_primary",
+        null
+      ]
+    },
+    "rollback_target": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "oai_reference",
+        "replacement_shadow",
+        "replacement_primary",
+        null
+      ]
+    },
+    "dry_run": {
+      "type": "boolean",
+      "default": false
+    },
+    "ttl": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "idempotency_key": {
+      "type": "string",
+      "minLength": 1
+    },
+    "verify_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "duration",
+        "checks"
+      ],
+      "properties": {
+        "duration": {
+          "type": "string",
+          "minLength": 1
+        },
+        "checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "max_blast_radius": {
+      "type": "string",
+      "enum": [
+        "single_ue",
+        "single_ru",
+        "single_cell",
+        "single_gnb",
+        "single_lab"
+      ]
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "approved",
+        "approved_by",
+        "approved_at",
+        "source"
+      ],
+      "properties": {
+        "approved": {
+          "type": "boolean"
+        },
+        "approved_by": {
+          "type": "string",
+          "minLength": 1
+        },
+        "approved_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "ticket_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "replacement"
+      ],
+      "properties": {
+        "replacement": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "target_role",
+            "action",
+            "target_profile",
+            "core_profile",
+            "band",
+            "plane_scope",
+            "desired_state",
+            "cutover_mode",
+            "allow_oai_fallback",
+            "destructive",
+            "real_ru_required",
+            "real_ue_required",
+            "required_interfaces",
+            "acceptance_gates",
+            "open5gs_core"
+          ],
+          "properties": {
+            "target_role": {
+              "type": "string",
+              "enum": [
+                "gnb",
+                "cu_cp",
+                "cu_up",
+                "du",
+                "cell",
+                "ru",
+                "ru_link",
+                "ue_session",
+                "transport_profile",
+                "target_host",
+                "core_link"
+              ]
+            },
+            "action": {
+              "type": "string",
+              "enum": [
+                "precheck",
+                "bring_up",
+                "tear_down",
+                "freeze_attaches",
+                "unfreeze_attaches",
+                "switch_runtime",
+                "cutover",
+                "rollback",
+                "verify_attach_ping",
+                "capture_artifacts"
+              ]
+            },
+            "target_profile": {
+              "type": "string",
+              "minLength": 1
+            },
+            "core_profile": {
+              "type": "string",
+              "minLength": 1
+            },
+            "band": {
+              "type": "string",
+              "enum": [
+                "n79"
+              ]
+            },
+            "plane_scope": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "s_plane",
+                  "m_plane",
+                  "c_plane",
+                  "u_plane"
+                ]
+              }
+            },
+            "desired_state": {
+              "type": "string",
+              "enum": [
+                "present",
+                "shadow",
+                "active",
+                "drained",
+                "frozen",
+                "absent"
+              ]
+            },
+            "cutover_mode": {
+              "type": "string",
+              "enum": [
+                "none",
+                "shadow",
+                "direct_cutover",
+                "rollback"
+              ]
+            },
+            "allow_oai_fallback": {
+              "type": "boolean"
+            },
+            "destructive": {
+              "type": "boolean"
+            },
+            "real_ru_required": {
+              "type": "boolean"
+            },
+            "real_ue_required": {
+              "type": "boolean"
+            },
+            "required_interfaces": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "ngap",
+                  "f1_c",
+                  "f1_u",
+                  "e1ap",
+                  "gtpu",
+                  "ru_fronthaul",
+                  "ptp"
+                ]
+              }
+            },
+            "acceptance_gates": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "string",
+                "enum": [
+                  "host_preflight",
+                  "ru_sync",
+                  "registration",
+                  "pdu_session",
+                  "ping"
+                ]
+              }
+            },
+            "open5gs_core": {
+              "$ref": "open5gs-core-link-profile-v1.schema.json"
+            },
+            "management_surfaces": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "metrics": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "host": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    },
+                    "path": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "dashboard": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "host": {
+                      "type": "string"
+                    },
+                    "port": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "native_probe": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "strict_host_probe": {
+                  "type": "boolean"
+                },
+                "required_resources": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+

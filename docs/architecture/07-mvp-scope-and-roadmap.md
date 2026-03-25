@@ -18,6 +18,9 @@
 - add integration tests for drain, switch, verify, and rollback
 - model backend health and degraded states more concretely
 - deepen the `cumac_scheduler` contract host toward a real external scheduler worker
+- keep the core AMF SCTP edge bounded and explicit while it moves from flat JSON intent to a bounded NGAP-shaped JSON envelope for `NGSetup`, `InitialUEMessage`, `UplinkNASTransport`, `DownlinkNASTransport`, `PDUSessionResourceSetup`, and `UEContextRelease`
+- keep the core SMF and UPF-control PFCP edge bounded and explicit while it covers the implemented Create*/Modification subset and bounded Remove* grouped-IE handling before any broader PFCP parity claim
+- keep `subprojects/ran_replacement/` as a separate design-first track for an `OAI CU/DU` replacement targeting one `n79` real-RU and real-UE attach-plus-ping lane against a real `Open5GS` core, with an agent-friendly `ranctl` control surface before runtime cutover
 
 ## Later
 

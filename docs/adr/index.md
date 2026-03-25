@@ -29,5 +29,12 @@ These ADRs lock in the boundary and tooling decisions that the bootstrap rests o
     <strong>0006. Open5GS public surface compatibility baseline</strong>
     <span>The constraint line for the new Elixir core track under `subprojects/elixir_core/`.</span>
   </a>
+  <a class="doc-hub-card" href="/adr/0007-ran-functions-as-agent-friendly-cli-surface">
+    <strong>0007. RAN functions as agent-friendly CLI surface</strong>
+    <span>Why replacement-track RAN actions should expose a stable `resource + action` CLI through `ranctl`.</span>
+  </a>
+  <a class="doc-hub-card" href="/adr/0008-oai-cu-du-function-and-standards-baseline">
+    <strong>0008. OAI CU/DU function and standards baseline</strong>
+    <span>Why replacement means owning target-profile CU/DU behavior with standards-correct external interfaces, not just orchestration parity.</span>
+  </a>
 </div>
-

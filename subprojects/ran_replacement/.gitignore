@@ -1,0 +1,6 @@
+upstream/
+captures/
+tmp/
+.env
+.env.*
+

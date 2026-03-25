@@ -1,0 +1,84 @@
+{
+  "scope": "gnb",
+  "target_ref": "gnb-n79-lab-01",
+  "target_backend": "replacement_shadow",
+  "current_backend": "oai_reference",
+  "rollback_target": "oai_reference",
+  "change_id": "chg-ran-repl-bringup-001",
+  "reason": "plan replacement-track gnb bring-up against real open5gs core",
+  "idempotency_key": "ran-repl-bringup-plan-001",
+  "dry_run": false,
+  "ttl": "30m",
+  "verify_window": {
+    "duration": "60s",
+    "checks": [
+      "host_preflight",
+      "ru_sync",
+      "ngap_reachable",
+      "registration_path_ready"
+    ]
+  },
+  "max_blast_radius": "single_gnb",
+  "metadata": {
+    "replacement": {
+      "target_role": "gnb",
+      "action": "bring_up",
+      "target_profile": "n79_single_ru_single_ue_lab_v1",
+      "core_profile": "open5gs_nsa_lab_v1",
+      "band": "n79",
+      "plane_scope": [
+        "s_plane",
+        "m_plane",
+        "c_plane",
+        "u_plane"
+      ],
+      "desired_state": "shadow",
+      "cutover_mode": "shadow",
+      "allow_oai_fallback": true,
+      "destructive": false,
+      "real_ru_required": true,
+      "real_ue_required": true,
+      "required_interfaces": [
+        "ngap",
+        "f1_c",
+        "f1_u",
+        "gtpu",
+        "ru_fronthaul",
+        "ptp"
+      ],
+      "acceptance_gates": [
+        "host_preflight",
+        "ru_sync",
+        "registration",
+        "pdu_session",
+        "ping"
+      ],
+      "open5gs_core": {
+        "profile": "open5gs_nsa_lab_v1",
+        "n2": {
+          "amf_host": "10.41.83.45",
+          "amf_port": 38412,
+          "bind_host": "10.41.83.34"
+        },
+        "n3": {
+          "upf_host": "10.41.83.45",
+          "gtpu_port": 2152,
+          "dnn": "internet",
+          "slice": {
+            "sst": 1,
+            "sd": "000001"
+          }
+        },
+        "subscriber_profile": {
+          "imsi_ref": "sanitized-imsi-001",
+          "ue_class": "n79_lab_ue"
+        },
+        "session_profile": {
+          "pdu_type": "ipv4",
+          "expect_ping_target": "8.8.8.8"
+        }
+      }
+    }
+  }
+}
+
