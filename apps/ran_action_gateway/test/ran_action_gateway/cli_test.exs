@@ -485,6 +485,7 @@ defmodule RanActionGateway.CLITest do
       assert observe.incident_summary.severity == "warning"
       assert "attach freeze is active" in observe.incident_summary.reasons
       assert "cell group drain workflow is active" in observe.incident_summary.reasons
+
       assert observe.incident_summary.suggested_next == [
                "release attach freeze after the maintenance window",
                "complete verify and clear drain when the cell group is stable"
@@ -513,8 +514,12 @@ defmodule RanActionGateway.CLITest do
                Store.approval_path("chg-test-001", "apply")
              ]
 
-      assert capture.bundle.workflow.config_snapshot == Store.config_snapshot_path("inc-control-001")
-      assert capture.bundle.workflow.control_snapshot == Store.control_snapshot_path("inc-control-001")
+      assert capture.bundle.workflow.config_snapshot ==
+               Store.config_snapshot_path("inc-control-001")
+
+      assert capture.bundle.workflow.control_snapshot ==
+               Store.control_snapshot_path("inc-control-001")
+
       assert capture.bundle.workflow.probe_snapshot == nil
       assert File.exists?(capture.bundle.workflow.config_snapshot)
       assert File.exists?(capture.bundle.workflow.control_snapshot)
