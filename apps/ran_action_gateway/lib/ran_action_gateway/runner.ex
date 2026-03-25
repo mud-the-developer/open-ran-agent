@@ -199,7 +199,9 @@ defmodule RanActionGateway.Runner do
   end
 
   defp do_execute(:verify, change) do
-    with {:ok, state} <- load_change_state(change.change_id),
+    with {:ok, state} <- load_change_state_for_verify(change),
+         {:ok, plan} <- load_plan_for_verify(change),
+         {:ok, runtime_contract} <- RuntimeContract.ensure_planned_contract(:verify, change, plan),
          {:ok, runtime_verify} <- maybe_verify_runtime(change) do
       control_state = control_state_snapshot(change)
       native_probe = maybe_native_probe(change)
@@ -315,7 +317,8 @@ defmodule RanActionGateway.Runner do
          control_state: control_state,
          runtime: runtime_observe,
          native_probe: native_probe
-       }}
+       }
+       |> maybe_put_replacement_status(:observe, change, [])}
     end
   end
 
@@ -454,6 +457,32 @@ defmodule RanActionGateway.Runner do
 
       {:error, reason} ->
         {:error, %{status: "invalid_change_state", command: "verify", errors: [inspect(reason)]}}
+    end
+  end
+
+  defp load_plan_for_verify(%Change{} = change) do
+    case load_plan(change.change_id) do
+      {:ok, plan} ->
+        {:ok, plan}
+
+      {:error, %{status: "missing_plan"}} when replacement_scope?(change.scope) ->
+        {:ok, replacement_virtual_plan(change)}
+
+      error ->
+        error
+    end
+  end
+
+  defp load_change_state_for_verify(%Change{} = change) do
+    case load_change_state(change.change_id) do
+      {:ok, state} ->
+        {:ok, state}
+
+      {:error, %{status: "missing_change_state"}} when replacement_scope?(change.scope) ->
+        {:ok, replacement_virtual_change_state(change)}
+
+      error ->
+        error
     end
   end
 
@@ -629,6 +658,7 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_gate_class(:precheck, "failed"), do: "blocked"
   defp replacement_gate_class(:precheck, _status), do: "degraded"
+  defp replacement_gate_class(:observe, _status), do: "degraded"
   defp replacement_gate_class(:verify, "failed"), do: "degraded"
   defp replacement_gate_class(:verify, _status), do: "pass"
 
@@ -689,6 +719,32 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
     "artifacts/replacement/#{phase |> Atom.to_string()}/#{change.change_id}/#{suffix}.json"
+  end
+
+  defp replacement_virtual_plan(%Change{} = change) do
+    %{
+      "status" => "planned",
+      "command" => "plan",
+      "scope" => change.scope,
+      "change_id" => change.change_id,
+      "incident_id" => change.incident_id,
+      "target_backend" => maybe_to_string(change.target_backend) || "replacement_shadow",
+      "rollback_target" => "oai_reference",
+      "runtime_contract" => nil,
+      "verify_window" => change.verify_window
+    }
+  end
+
+  defp replacement_virtual_change_state(%Change{} = change) do
+    %{
+      "status" => "applied",
+      "command" => "apply",
+      "scope" => change.scope,
+      "change_id" => change.change_id,
+      "incident_id" => change.incident_id,
+      "target_backend" => maybe_to_string(change.target_backend) || "replacement_shadow",
+      "rollback_target" => "oai_reference"
+    }
   end
 
   defp maybe_to_string(nil), do: nil
