@@ -11,6 +11,7 @@
     "incident_id",
     "target_profile",
     "core_profile",
+    "core_endpoint",
     "comparison_scope",
     "expected_state",
     "observed_state",
@@ -40,6 +41,9 @@
     "core_profile": {
       "type": "string",
       "minLength": 1
+    },
+    "core_endpoint": {
+      "$ref": "#/$defs/core_endpoint"
     },
     "comparison_scope": {
       "type": "string",
@@ -95,6 +99,95 @@
     "operator_next_step": {
       "type": "string",
       "minLength": 1
+    }
+  },
+  "$defs": {
+    "core_endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "n2",
+        "n3"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "n2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "amf_host",
+            "amf_port"
+          ],
+          "properties": {
+            "amf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "amf_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "bind_host": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "n3": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upf_host",
+            "gtpu_port",
+            "dnn"
+          ],
+          "properties": {
+            "upf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gtpu_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "dnn": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slice": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sst": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "sd": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

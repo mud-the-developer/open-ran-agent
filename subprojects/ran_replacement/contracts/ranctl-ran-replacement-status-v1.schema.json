@@ -80,6 +80,9 @@
         "null"
       ]
     },
+    "core_endpoint": {
+      "$ref": "#/$defs/core_endpoint"
+    },
     "gate_class": {
       "type": [
         "string",
@@ -211,6 +214,9 @@
     "core_link_status": {
       "$ref": "#/$defs/component_summary"
     },
+    "ngap_procedure_trace": {
+      "$ref": "#/$defs/procedure_trace"
+    },
     "attach_status": {
       "$ref": "#/$defs/component_summary"
     },
@@ -218,6 +224,9 @@
       "$ref": "#/$defs/component_summary"
     },
     "ping_status": {
+      "$ref": "#/$defs/component_summary"
+    },
+    "release_status": {
       "$ref": "#/$defs/component_summary"
     },
     "rollback_status": {
@@ -255,6 +264,93 @@
         }
       }
     },
+    "core_endpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "n2",
+        "n3"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "n2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "amf_host",
+            "amf_port"
+          ],
+          "properties": {
+            "amf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "amf_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "bind_host": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "n3": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upf_host",
+            "gtpu_port",
+            "dnn"
+          ],
+          "properties": {
+            "upf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gtpu_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "dnn": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slice": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "sst": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "sd": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "component_summary": {
       "type": "object",
       "additionalProperties": false,
@@ -283,6 +379,62 @@
             "string",
             "null"
           ]
+        }
+      }
+    },
+    "procedure_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "evidence_ref"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "blocked",
+            "degraded",
+            "pending"
+          ]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "procedure_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "last_observed",
+        "procedures"
+      ],
+      "properties": {
+        "last_observed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "procedures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/procedure_summary"
+          }
         }
       }
     }
@@ -337,6 +489,10 @@
       "then": {
         "required": [
           "interface_status",
+          "core_endpoint",
+          "core_link_status",
+          "ngap_procedure_trace",
+          "release_status",
           "attach_status",
           "pdu_session_status",
           "ping_status"
@@ -357,7 +513,8 @@
       "then": {
         "required": [
           "ru_status",
-          "core_link_status"
+          "core_link_status",
+          "core_endpoint"
         ]
       }
     },
