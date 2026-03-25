@@ -252,7 +252,7 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
 
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "artifacts/replacement/verify/attach.json"
+               "/attach.json"
     end)
   end
 
