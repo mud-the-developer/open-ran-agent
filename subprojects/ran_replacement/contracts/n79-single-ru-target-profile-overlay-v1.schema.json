@@ -1,0 +1,374 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/n79-single-ru-target-profile-overlay-v1.schema.json",
+  "title": "n79 Single-RU Target Profile Overlay v1",
+  "description": "Sanitized lab-owner overlay for narrowing the canonical n79 single-RU target profile into one concrete host, RU, UE, and Open5GS inventory without shipping secrets.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "overlay_name",
+    "purpose",
+    "target_host",
+    "ru_inventory",
+    "ue_inventory",
+    "core_inventory",
+    "scope_alignment",
+    "notes_refs"
+  ],
+  "properties": {
+    "profile": {
+      "type": "string",
+      "const": "n79_single_ru_single_ue_lab_v1"
+    },
+    "overlay_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "purpose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_host": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "host_ref",
+        "os",
+        "kernel",
+        "hugepages",
+        "cpu_isolation",
+        "ptp_or_gps",
+        "nic_timestamping",
+        "deployment_layout"
+      ],
+      "properties": {
+        "host_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kernel": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hugepages": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpu_isolation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ptp_or_gps": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nic_timestamping": {
+          "type": "string",
+          "minLength": 1
+        },
+        "deployment_layout": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ru_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ru_ref",
+        "vendor_or_class",
+        "fronthaul_mode",
+        "sync_source",
+        "pci",
+        "device_mapping",
+        "healthy_indicators",
+        "readiness_artifacts"
+      ],
+      "properties": {
+        "ru_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "vendor_or_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "fronthaul_mode": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sync_source": {
+          "type": "string",
+          "minLength": 1
+        },
+        "pci": {
+          "type": "string",
+          "minLength": 1
+        },
+        "device_mapping": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "healthy_indicators": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "readiness_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "ue_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ue_ref",
+        "device_class",
+        "sim_profile",
+        "subscriber_ref",
+        "logging_path",
+        "attach_artifact",
+        "ping_artifact"
+      ],
+      "properties": {
+        "ue_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "device_class": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sim_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "subscriber_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "logging_path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attach_artifact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ping_artifact": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "core_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "core_ref",
+        "open5gs_profile",
+        "release_ref",
+        "n2",
+        "n3",
+        "subscriber_profile",
+        "session_profile",
+        "artifacts"
+      ],
+      "properties": {
+        "core_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "open5gs_profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "release_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "n2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "amf_host",
+            "amf_port",
+            "bind_host"
+          ],
+          "properties": {
+            "amf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "amf_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "bind_host": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "n3": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "upf_host",
+            "gtpu_port",
+            "dnn",
+            "slice"
+          ],
+          "properties": {
+            "upf_host": {
+              "type": "string",
+              "minLength": 1
+            },
+            "gtpu_port": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            },
+            "dnn": {
+              "type": "string",
+              "minLength": 1
+            },
+            "slice": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "sst",
+                "sd"
+              ],
+              "properties": {
+                "sst": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 255
+                },
+                "sd": {
+                  "type": "string",
+                  "pattern": "^[0-9A-Fa-f]{6}$"
+                }
+              }
+            }
+          }
+        },
+        "subscriber_profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "imsi_ref",
+            "ue_class"
+          ],
+          "properties": {
+            "imsi_ref": {
+              "type": "string",
+              "minLength": 1
+            },
+            "ue_class": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "session_profile": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "pdu_type",
+            "expect_ping_target"
+          ],
+          "properties": {
+            "pdu_type": {
+              "type": "string",
+              "minLength": 1
+            },
+            "expect_ping_target": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "scope_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "band",
+        "real_ru_required",
+        "real_ue_required",
+        "real_open5gs_required",
+        "target_profile_ref",
+        "acceptance_chain"
+      ],
+      "properties": {
+        "band": {
+          "type": "string",
+          "const": "n79"
+        },
+        "real_ru_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "real_ue_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "real_open5gs_required": {
+          "type": "boolean",
+          "const": true
+        },
+        "target_profile_ref": {
+          "type": "string",
+          "const": "n79_single_ru_single_ue_lab_v1"
+        },
+        "acceptance_chain": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "notes_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

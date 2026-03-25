@@ -507,8 +507,8 @@ These stay out of scope until milestone 1 is complete:
 
 ## Immediate Next Contracts And Fixtures To Deepen
 
-1. Split the replacement request schema into scope-aware helper schemas or `$defs` so `target_host`, `ue_session`, `ru_link`, and `replacement_cutover` rules stay explicit as the fixture set grows.
-2. Add a schema for the lab-owner overlay example so the inventory narrowing path is versioned and testable.
-3. Add status fixtures for the remaining registration and ping `capture-artifacts`/`observe` combinations if dashboard coverage needs one status file per incident command.
-4. Add a tiny fixture-oriented contract test path in repo CI so the workflow result is mirrored by a local scripted test target.
-5. Start the first implementation-facing boundary package for the replacement runtime, but keep it docs/contracts-first and out of slot-paced paths.
+1. Split the replacement request schema into scope-family helper schemas once the current `$defs` structure grows beyond a single target profile.
+2. Add a schema or typed note for sanitized lab-owner overlay extensions so inventory narrowing and redaction rules stay versioned as more labs appear.
+3. Add package-local contract notes and example fixtures for `ngap_edge`, `f1e1_control_edge`, and `user_plane_edge` before any implementation code lands there.
+4. Add the next docs-first boundary package for either `core_link` or `target_host` control surfaces so the control graph is explicit beyond NGAP/F1/GTP-U.
+5. Add a thin repo-visible local contract target that mirrors the replacement contract workflow result without pulling unrelated app tests into the lane.

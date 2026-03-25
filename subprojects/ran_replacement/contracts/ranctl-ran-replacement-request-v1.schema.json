@@ -3,6 +3,275 @@
   "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/ranctl-ran-replacement-request-v1.schema.json",
   "title": "ranctl RAN Replacement Request v1",
   "description": "Draft schema for replacement-track RAN mutations routed through bin/ranctl. This schema assumes a real Open5GS-based core and explicit S/M/C/U plane ownership for the declared target profile.",
+  "$defs": {
+    "destructiveApprovalRule": {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "destructive": {
+                    "const": true
+                  }
+                },
+                "required": [
+                  "destructive"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "approval",
+          "current_backend",
+          "rollback_target"
+        ]
+      }
+    },
+    "cutoverRollbackRule": {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "switch_runtime",
+                      "cutover",
+                      "rollback",
+                      "tear_down"
+                    ]
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "current_backend",
+          "rollback_target"
+        ]
+      }
+    },
+    "captureArtifactsIncidentRule": {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "action": {
+                    "const": "capture_artifacts"
+                  }
+                },
+                "required": [
+                  "action"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "incident_id"
+        ]
+      }
+    },
+    "targetHostScopeRule": {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "target_host"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "required": [
+                  "native_probe"
+                ],
+                "properties": {
+                  "target_role": {
+                    "const": "target_host"
+                  },
+                  "action": {
+                    "const": "precheck"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ueSessionScopeRule": {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "ue_session"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "target_role": {
+                    "const": "ue_session"
+                  },
+                  "acceptance_gates": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "registration"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "pdu_session"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "ping"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "ruLinkScopeRule": {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "ru_link"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "target_role": {
+                    "const": "ru_link"
+                  },
+                  "action": {
+                    "enum": [
+                      "observe",
+                      "capture_artifacts"
+                    ]
+                  },
+                  "required_interfaces": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "ru_fronthaul"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "ptp"
+                        }
+                      }
+                    ]
+                  },
+                  "acceptance_gates": {
+                    "allOf": [
+                      {
+                        "contains": {
+                          "const": "host_preflight"
+                        }
+                      },
+                      {
+                        "contains": {
+                          "const": "ru_sync"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "replacementCutoverScopeRule": {
+      "if": {
+        "properties": {
+          "scope": {
+            "const": "replacement_cutover"
+          }
+        },
+        "required": [
+          "scope"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "target_role": {
+                    "const": "gnb"
+                  },
+                  "action": {
+                    "enum": [
+                      "observe",
+                      "capture_artifacts",
+                      "cutover",
+                      "rollback"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -383,210 +652,25 @@
   },
   "allOf": [
     {
-      "if": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "properties": {
-                  "destructive": {
-                    "const": true
-                  }
-                },
-                "required": [
-                  "destructive"
-                ]
-              }
-            },
-            "required": [
-              "replacement"
-            ]
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "approval",
-          "current_backend",
-          "rollback_target"
-        ]
-      }
+      "$ref": "#/$defs/destructiveApprovalRule"
     },
     {
-      "if": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "properties": {
-                  "action": {
-                    "enum": [
-                      "switch_runtime",
-                      "cutover",
-                      "rollback",
-                      "tear_down"
-                    ]
-                  }
-                },
-                "required": [
-                  "action"
-                ]
-              }
-            },
-            "required": [
-              "replacement"
-            ]
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "current_backend",
-          "rollback_target"
-        ]
-      }
+      "$ref": "#/$defs/cutoverRollbackRule"
     },
     {
-      "if": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "properties": {
-                  "action": {
-                    "const": "capture_artifacts"
-                  }
-                },
-                "required": [
-                  "action"
-                ]
-              }
-            },
-            "required": [
-              "replacement"
-            ]
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "incident_id"
-        ]
-      }
+      "$ref": "#/$defs/captureArtifactsIncidentRule"
     },
     {
-      "if": {
-        "properties": {
-          "scope": {
-            "const": "target_host"
-          }
-        },
-        "required": [
-          "scope"
-        ]
-      },
-      "then": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "required": [
-                  "native_probe"
-                ],
-                "properties": {
-                  "target_role": {
-                    "const": "target_host"
-                  },
-                  "action": {
-                    "const": "precheck"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      "$ref": "#/$defs/targetHostScopeRule"
     },
     {
-      "if": {
-        "properties": {
-          "scope": {
-            "const": "ue_session"
-          }
-        },
-        "required": [
-          "scope"
-        ]
-      },
-      "then": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "properties": {
-                  "target_role": {
-                    "const": "ue_session"
-                  },
-                  "acceptance_gates": {
-                    "allOf": [
-                      {
-                        "contains": {
-                          "const": "registration"
-                        }
-                      },
-                      {
-                        "contains": {
-                          "const": "pdu_session"
-                        }
-                      },
-                      {
-                        "contains": {
-                          "const": "ping"
-                        }
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      "$ref": "#/$defs/ueSessionScopeRule"
     },
     {
-      "if": {
-        "properties": {
-          "scope": {
-            "const": "replacement_cutover"
-          }
-        },
-        "required": [
-          "scope"
-        ]
-      },
-      "then": {
-        "properties": {
-          "metadata": {
-            "properties": {
-              "replacement": {
-                "properties": {
-                  "target_role": {
-                    "const": "gnb"
-                  },
-                  "action": {
-                    "enum": [
-                      "observe",
-                      "capture_artifacts",
-                      "cutover",
-                      "rollback"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
+      "$ref": "#/$defs/ruLinkScopeRule"
+    },
+    {
+      "$ref": "#/$defs/replacementCutoverScopeRule"
     }
   ]
 }

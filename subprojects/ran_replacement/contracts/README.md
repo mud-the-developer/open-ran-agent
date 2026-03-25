@@ -7,6 +7,7 @@ Planned first contracts:
 - `ranctl-ran-replacement-request-v1.schema.json`
 - `ranctl-ran-replacement-status-v1.schema.json`
 - `n79-single-ru-target-profile-v1.schema.json`
+- `n79-single-ru-target-profile-overlay-v1.schema.json`
 - `compare-report-v1.schema.json`
 - `rollback-evidence-v1.schema.json`
 - `open5gs-core-link-profile-v1.schema.json`
@@ -22,6 +23,7 @@ Current draft files:
 - [ranctl-ran-replacement-request-v1.schema.json](ranctl-ran-replacement-request-v1.schema.json)
 - [ranctl-ran-replacement-status-v1.schema.json](ranctl-ran-replacement-status-v1.schema.json)
 - [n79-single-ru-target-profile-v1.schema.json](n79-single-ru-target-profile-v1.schema.json)
+- [n79-single-ru-target-profile-overlay-v1.schema.json](n79-single-ru-target-profile-overlay-v1.schema.json)
 - [examples/n79-single-ru-target-profile-v1.example.json](examples/n79-single-ru-target-profile-v1.example.json)
 - [examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
 - [compare-report-v1.schema.json](compare-report-v1.schema.json)
