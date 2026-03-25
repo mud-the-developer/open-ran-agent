@@ -739,17 +739,7 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_summary(phase, %Change{} = change, status) do
     target_role = replacement_metadata(change)["target_role"] || change.scope
-
-    cond do
-      phase == :observe and user_plane_scope?(change) ->
-        "User-plane replacement observe confirms that forwarding or tunnel state diverged from the planned lane."
-
-      phase == :verify and user_plane_scope?(change) and status != "failed" ->
-        "UE attach, PDU session, and ping are all proven against the declared Open5GS core lane."
-
-      true ->
-        "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
-    end
+    "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
   end
 
   defp replacement_core_link_status(phase, %Change{} = change, replacement, status) do

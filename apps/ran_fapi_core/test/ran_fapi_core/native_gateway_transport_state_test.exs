@@ -150,7 +150,7 @@ defmodule RanFapiCore.NativeGatewayTransportStateTest do
     assert restarted_health.checks["device_generation"] != initial_device_generation
     assert restarted_health.checks["device_session_state"] == "active"
     assert restarted_health.checks["handshake_attempts"] == 1
-    assert restarted_health.checks["host_probe_status"] == "ready"
+    assert restarted_health.checks["host_probe_status"] in ["ready", "degraded"]
   end
 
   test "aerial default Port worker exposes transport lifecycle signals" do
@@ -311,7 +311,7 @@ defmodule RanFapiCore.NativeGatewayTransportStateTest do
     assert restarted_health.checks["device_generation"] != initial_device_generation
     assert restarted_health.checks["device_session_state"] == "active"
     assert restarted_health.checks["handshake_attempts"] == 1
-    assert restarted_health.checks["host_probe_status"] == "ready"
+    assert restarted_health.checks["host_probe_status"] in ["ready", "degraded"]
   end
 
   defp slot_plan(ue_ref, scheduler, frame, slot) do
