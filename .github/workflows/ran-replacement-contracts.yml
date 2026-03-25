@@ -1,0 +1,44 @@
+name: RAN Replacement Contracts
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "subprojects/ran_replacement/**"
+      - ".github/workflows/ran-replacement-contracts.yml"
+  pull_request:
+    paths:
+      - "subprojects/ran_replacement/**"
+      - ".github/workflows/ran-replacement-contracts.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ran-replacement-contracts-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate replacement contracts and fixtures
+        run: subprojects/ran_replacement/scripts/validate_contracts.sh
+
+      - name: Upload replacement fixture bundle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ran-replacement-fixtures
+          path: |
+            subprojects/ran_replacement/contracts/**
+            subprojects/ran_replacement/examples/**
+            subprojects/ran_replacement/notes/**
+            subprojects/ran_replacement/scripts/**
+          if-no-files-found: error

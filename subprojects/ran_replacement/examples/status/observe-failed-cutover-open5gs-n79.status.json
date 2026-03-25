@@ -1,0 +1,90 @@
+{
+  "status": "degraded",
+  "command": "observe",
+  "scope": "replacement_cutover",
+  "change_id": "chg-ran-repl-observe-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "target_ref": "gnb-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "summary": "Replacement cutover diverged from the expected lane and requires artifact capture plus rollback review.",
+  "target_backend": "replacement_primary",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/replacement/observe/cutover-runtime.json",
+    "artifacts/replacement/observe/cutover-diff.json"
+  ],
+  "suggested_next": [
+    "capture artifacts for the failed cutover",
+    "review compare report against the rollback target",
+    "prepare rollback if the divergence persists"
+  ],
+  "checks": [
+    {
+      "name": "cutover_attempt_detected",
+      "status": "ok",
+      "detail": "replacement lane became active for the declared gNB"
+    },
+    {
+      "name": "rollback_target_known",
+      "status": "ok",
+      "detail": "oai_reference is still available"
+    },
+    {
+      "name": "cutover_divergence_explained",
+      "status": "degraded",
+      "detail": "the lane is active but does not match the expected compare report"
+    }
+  ],
+  "plane_status": {
+    "m_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/cutover-management.json",
+      "reason": "cutover state does not match the planned backend ownership"
+    },
+    "c_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/cutover-control-plane.json",
+      "reason": "control-plane state is partially healthy but not ready for leave-running"
+    },
+    "u_plane": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/cutover-user-plane.json",
+      "reason": "user-plane confidence is incomplete after the failed cutover"
+    }
+  },
+  "interface_status": {
+    "ngap": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/ngap-cutover.json",
+      "reason": "registration confidence regressed after cutover"
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/observe/f1-c-cutover.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/e1ap-cutover.json",
+      "reason": "bearer coordination does not match the expected compare report"
+    },
+    "f1_u": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/f1-u-cutover.json",
+      "reason": "forwarding state requires rollback review"
+    },
+    "gtpu": {
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/observe/gtpu-cutover.json",
+      "reason": "data-plane state is not yet trusted after cutover"
+    }
+  },
+  "rollback_status": {
+    "status": "pending",
+    "evidence_ref": "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "reason": "rollback is available but not yet executed"
+  }
+}

@@ -11,7 +11,9 @@ Fixture set:
 - [precheck-target-host-open5gs-n79.status.json](precheck-target-host-open5gs-n79.status.json)
 - [verify-attach-ping-open5gs-n79.status.json](verify-attach-ping-open5gs-n79.status.json)
 - [observe-failed-ru-sync-open5gs-n79.status.json](observe-failed-ru-sync-open5gs-n79.status.json)
+- [observe-failed-cutover-open5gs-n79.status.json](observe-failed-cutover-open5gs-n79.status.json)
 - [rollback-gnb-cutover-open5gs-n79.status.json](rollback-gnb-cutover-open5gs-n79.status.json)
+- [capture-artifacts-failed-cutover-open5gs-n79.status.json](capture-artifacts-failed-cutover-open5gs-n79.status.json)
 - [capture-artifacts-registration-rejected-open5gs-n79.status.json](capture-artifacts-registration-rejected-open5gs-n79.status.json)
 
 Use these as mock dashboard and runner responses only. They are sanitized and

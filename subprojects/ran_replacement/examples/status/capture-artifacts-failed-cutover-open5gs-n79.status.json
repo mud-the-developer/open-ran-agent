@@ -1,0 +1,47 @@
+{
+  "status": "ok",
+  "command": "capture-artifacts",
+  "scope": "replacement_cutover",
+  "change_id": "chg-ran-repl-capture-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "target_ref": "gnb-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "summary": "Artifact capture for the failed cutover is complete and the rollback decision can be replayed from the evidence set.",
+  "target_backend": "replacement_primary",
+  "rollback_target": "oai_reference",
+  "approval_required": false,
+  "rollback_available": true,
+  "artifacts": [
+    "subprojects/ran_replacement/examples/artifacts/compare-report-registration-rejected-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json"
+  ],
+  "suggested_next": [
+    "review rollback evidence",
+    "execute rollback if the lane remains degraded",
+    "preserve the compare report with the incident bundle"
+  ],
+  "checks": [
+    {
+      "name": "compare_report_ready",
+      "status": "ok",
+      "detail": "compare report fixtures are attached"
+    },
+    {
+      "name": "rollback_evidence_ready",
+      "status": "ok",
+      "detail": "rollback evidence fixture is attached"
+    },
+    {
+      "name": "incident_bundle_complete",
+      "status": "ok",
+      "detail": "the cutover incident can be replayed from artifacts"
+    }
+  ],
+  "rollback_status": {
+    "status": "pending",
+    "evidence_ref": "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "reason": "rollback decision is prepared from the captured evidence"
+  }
+}

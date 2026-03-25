@@ -508,7 +508,7 @@ These stay out of scope until milestone 1 is complete:
 ## Immediate Next Contracts And Fixtures To Deepen
 
 1. Split the replacement request schema into scope-aware helper schemas or `$defs` so `target_host`, `ue_session`, `ru_link`, and `replacement_cutover` rules stay explicit as the fixture set grows.
-2. Add JSON Schemas for compare-report and rollback-evidence artifact fixtures so `examples/artifacts/*.json` are validated, not just parsed.
-3. Add a schema for the lab-owner overlay example so the inventory narrowing path is versioned and testable.
-4. Wire `scripts/validate_contracts.sh` into a repo-visible CI path or docs-checked validation flow.
-5. Add one more status fixture for the failed-cutover observe/capture path so all four incident classes have matching request, artifact, and status coverage.
+2. Add a schema for the lab-owner overlay example so the inventory narrowing path is versioned and testable.
+3. Add status fixtures for the remaining registration and ping `capture-artifacts`/`observe` combinations if dashboard coverage needs one status file per incident command.
+4. Add a tiny fixture-oriented contract test path in repo CI so the workflow result is mirrored by a local scripted test target.
+5. Start the first implementation-facing boundary package for the replacement runtime, but keep it docs/contracts-first and out of slot-paced paths.
