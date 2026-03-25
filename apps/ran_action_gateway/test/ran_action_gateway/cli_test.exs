@@ -252,7 +252,7 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
 
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "artifacts/replacement/verify/attach.json"
+               "/attach.json"
     end)
   end
 
@@ -281,7 +281,7 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/observe/"
 
       assert get_in(observe, [:attach_status, :evidence_ref]) =~
-               "artifacts/replacement/observe/attach.json"
+               "/attach.json"
     end)
   end
 
@@ -309,7 +309,7 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
 
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "artifacts/replacement/verify/attach.json"
+               "/attach.json"
     end)
   end
 
@@ -354,7 +354,7 @@ defmodule RanActionGateway.CLITest do
       assert capture.status == "ok"
       assert capture.rollback_target == "oai_reference"
       assert capture.rollback_status.status == "pending"
-      assert capture.rollback_status.evidence_ref =~ "artifacts/replacement/capture-artifacts/"
+      assert capture.rollback_status.evidence_ref =~ "/rollback-evidence.json"
       assert Enum.any?(capture.artifacts, &String.contains?(&1, "rollback-evidence"))
     end)
   end
