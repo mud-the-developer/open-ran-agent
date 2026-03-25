@@ -465,8 +465,10 @@ defmodule RanActionGateway.Runner do
       {:ok, plan} ->
         {:ok, plan}
 
-      {:error, %{status: "missing_plan"}} when replacement_scope?(change.scope) ->
-        {:ok, replacement_virtual_plan(change)}
+      {:error, %{status: "missing_plan"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, replacement_virtual_plan(change)},
+          else: {:error, error}
 
       error ->
         error
@@ -478,8 +480,10 @@ defmodule RanActionGateway.Runner do
       {:ok, state} ->
         {:ok, state}
 
-      {:error, %{status: "missing_change_state"}} when replacement_scope?(change.scope) ->
-        {:ok, replacement_virtual_change_state(change)}
+      {:error, %{status: "missing_change_state"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, replacement_virtual_change_state(change)},
+          else: {:error, error}
 
       error ->
         error
@@ -641,8 +645,14 @@ defmodule RanActionGateway.Runner do
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
       |> Map.put(:core_profile, replacement["core_profile"])
-      |> Map.put(:core_link_status, replacement_core_link_status(phase, change, replacement, base_status))
-      |> Map.put(:interface_status, replacement_interface_status(phase, change, replacement, base_status))
+      |> Map.put(
+        :core_link_status,
+        replacement_core_link_status(phase, change, replacement, base_status)
+      )
+      |> Map.put(
+        :interface_status,
+        replacement_interface_status(phase, change, replacement, base_status)
+      )
       |> maybe_put_plane_status(phase, change, replacement, base_status)
       |> maybe_put_rollback_status(phase, change, base_status)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
@@ -727,7 +737,8 @@ defmodule RanActionGateway.Runner do
           evidence_ref: replacement_evidence_ref(phase, change, "user-plane"),
           reason:
             if(status == "failed",
-              do: "user-plane forwarding or tunnel state is not yet trusted for the replacement lane",
+              do:
+                "user-plane forwarding or tunnel state is not yet trusted for the replacement lane",
               else: nil
             )
         }
@@ -742,7 +753,8 @@ defmodule RanActionGateway.Runner do
       Map.put(payload, :rollback_status, %{
         status: if(status == "failed", do: "pending", else: "ok"),
         evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
-        reason: if(status == "failed", do: "rollback is available but not yet executed", else: nil)
+        reason:
+          if(status == "failed", do: "rollback is available but not yet executed", else: nil)
       })
     else
       payload
@@ -754,7 +766,8 @@ defmodule RanActionGateway.Runner do
       Map.put(payload, :attach_status, %{
         status: if(status == "failed", do: "pending", else: "ok"),
         evidence_ref: replacement_evidence_ref(phase, change, "attach"),
-        reason: if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
+        reason:
+          if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
       })
     else
       payload
@@ -766,7 +779,11 @@ defmodule RanActionGateway.Runner do
       Map.put(payload, :pdu_session_status, %{
         status: if(status == "failed", do: "pending", else: "ok"),
         evidence_ref: replacement_evidence_ref(phase, change, "pdu-session"),
-        reason: if(status == "failed", do: "replacement PDU session path is not yet fully proven", else: nil)
+        reason:
+          if(status == "failed",
+            do: "replacement PDU session path is not yet fully proven",
+            else: nil
+          )
       })
     else
       payload
@@ -778,7 +795,8 @@ defmodule RanActionGateway.Runner do
       Map.put(payload, :ping_status, %{
         status: if(status == "failed", do: "pending", else: "ok"),
         evidence_ref: replacement_evidence_ref(phase, change, "ping"),
-        reason: if(status == "failed", do: "replacement ping path is not yet fully proven", else: nil)
+        reason:
+          if(status == "failed", do: "replacement ping path is not yet fully proven", else: nil)
       })
     else
       payload
