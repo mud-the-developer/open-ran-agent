@@ -238,6 +238,30 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement user-plane observe surfaces forwarding and rollback evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/observe-ping-failed-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.core_profile == "open5gs_nsa_lab_v1"
+      assert observe.gate_class == "degraded"
+      assert get_in(observe, [:plane_status, :u_plane, :evidence_ref]) =~ "artifacts/replacement/observe/user-plane.json"
+      assert get_in(observe, [:interface_status, :f1_u, :evidence_ref]) =~ "artifacts/replacement/observe/f1_u.json"
+      assert get_in(observe, [:interface_status, :gtpu, :evidence_ref]) =~ "artifacts/replacement/observe/gtpu.json"
+      assert get_in(observe, [:rollback_status, :evidence_ref]) =~ "artifacts/replacement/observe/rollback-evidence.json"
+    end)
+  end
+
   test "replacement verify can use virtual replacement state when generic change artifacts are absent",
        %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
@@ -258,6 +282,29 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:interface_status, :ngap, :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
+    end)
+  end
+
+  test "replacement verify surfaces user-plane, pdu-session, and ping evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      verify_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/verify-attach-ping-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.core_profile == "open5gs_nsa_lab_v1"
+      assert verify.gate_class in ["degraded", "pass"]
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "artifacts/replacement/verify/user-plane.json"
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "artifacts/replacement/verify/pdu-session.json"
+      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "artifacts/replacement/verify/ping.json"
     end)
   end
 
