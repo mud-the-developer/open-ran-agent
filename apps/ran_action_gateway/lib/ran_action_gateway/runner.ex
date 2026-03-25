@@ -669,6 +669,8 @@ defmodule RanActionGateway.Runner do
       |> Map.put(:core_profile, replacement["core_profile"])
       |> Map.put(:core_link_status, replacement_core_link_status(phase, change, replacement, base_status))
       |> Map.put(:interface_status, replacement_interface_status(phase, change, replacement, base_status))
+      |> maybe_put_plane_status(phase, change, replacement, base_status)
+      |> maybe_put_rollback_status(phase, change, base_status)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
     else
       payload
@@ -690,7 +692,14 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_summary(phase, %Change{} = change, status) do
     target_role = replacement_metadata(change)["target_role"] || change.scope
-    "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
+
+    cond do
+      phase == :observe and control_plane_scope?(change) ->
+        "Control-plane replacement observe confirms that association state diverged from the planned cutover lane."
+
+      true ->
+        "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
+    end
   end
 
   defp replacement_core_link_status(phase, %Change{} = change, replacement, status) do
@@ -730,6 +739,45 @@ defmodule RanActionGateway.Runner do
     do: "replacement evidence for this interface is not yet fully surfaced by the control surface"
 
   defp replacement_interface_reason(_status), do: nil
+
+  defp maybe_put_plane_status(payload, phase, %Change{} = change, _replacement, status) do
+    if phase == :observe and control_plane_scope?(change) do
+      Map.put(payload, :plane_status, %{
+        c_plane: %{
+          status: if(status == "failed", do: "degraded", else: "ok"),
+          evidence_ref: replacement_evidence_ref(:observe, change, "cutover-control-plane"),
+          reason:
+            if(status == "failed",
+              do: "control-plane association or coordination diverged from the planned lane",
+              else: nil
+            )
+        }
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_rollback_status(payload, phase, %Change{} = change, status) do
+    if phase == :observe and control_plane_scope?(change) do
+      Map.put(payload, :rollback_status, %{
+        status: if(status == "failed", do: "pending", else: "ok"),
+        evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
+        reason:
+          if(status == "failed",
+            do: "rollback is available but not yet executed",
+            else: nil
+          )
+      })
+    else
+      payload
+    end
+  end
+
+  defp control_plane_scope?(%Change{} = change) do
+    required = replacement_metadata(change)["required_interfaces"] || []
+    Enum.any?(required, &(&1 in ["f1_c", "e1ap"]))
+  end
 
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
     if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
