@@ -1,0 +1,94 @@
+{
+  "profile": "n79_single_ru_single_ue_lab_v1",
+  "overlay_name": "lab-owner-inventory-overlay-v1",
+  "purpose": "narrow the canonical target profile into one real lab inventory without secrets",
+  "target_host": {
+    "host_ref": "host-n79-lab-01",
+    "os": "ubuntu-22.04-lts",
+    "kernel": "5.15-lts-sanitized",
+    "hugepages": "1024x2M",
+    "cpu_isolation": "isolcpus=2-7 nohz_full=2-7 rcu_nocbs=2-7",
+    "ptp_or_gps": "ptp-gm-lab",
+    "nic_timestamping": "enabled",
+    "deployment_layout": "single-host-du-cucp-cuup-lab"
+  },
+  "ru_inventory": {
+    "ru_ref": "ru-n79-lab-01",
+    "vendor_or_class": "sanitized-n79-lab-ru",
+    "fronthaul_mode": "eCPRI",
+    "sync_source": "ptp-gm-lab",
+    "pci": "0000:17:00.3",
+    "device_mapping": [
+      "0000:17:00.3"
+    ],
+    "healthy_indicators": [
+      "ru_sync_locked",
+      "ssb_visible",
+      "rach_success"
+    ],
+    "readiness_artifacts": [
+      "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ru-readiness.json",
+      "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ptp.json"
+    ]
+  },
+  "ue_inventory": {
+    "ue_ref": "ue-n79-lab-01",
+    "device_class": "n79_lab_ue",
+    "sim_profile": "sanitized-lab-sim-v1",
+    "subscriber_ref": "sanitized-imsi-001",
+    "logging_path": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ue-logs/",
+    "attach_artifact": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "ping_artifact": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+  },
+  "core_inventory": {
+    "core_ref": "open5gs-core-lab-01",
+    "open5gs_profile": "open5gs_nsa_lab_v1",
+    "release_ref": "open5gs-sanitized-lab-release-1",
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "upf_host": "10.41.83.45",
+      "gtpu_port": 2152,
+      "dnn": "internet",
+      "slice": {
+        "sst": 1,
+        "sd": "000001"
+      }
+    },
+    "subscriber_profile": {
+      "imsi_ref": "sanitized-imsi-001",
+      "ue_class": "n79_lab_ue"
+    },
+    "session_profile": {
+      "pdu_type": "ipv4",
+      "expect_ping_target": "8.8.8.8"
+    },
+    "artifacts": [
+      "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+      "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+    ]
+  },
+  "scope_alignment": {
+    "band": "n79",
+    "real_ru_required": true,
+    "real_ue_required": true,
+    "real_open5gs_required": true,
+    "target_profile_ref": "n79_single_ru_single_ue_lab_v1",
+    "acceptance_chain": [
+      "host preflight",
+      "ru readiness",
+      "attach",
+      "pdu session",
+      "ping"
+    ]
+  },
+  "notes_refs": [
+    "subprojects/ran_replacement/notes/00-target-profile-n79-lab.md",
+    "subprojects/ran_replacement/notes/03-target-host-readiness-and-lab-gates.md",
+    "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md",
+    "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
+  ]
+}

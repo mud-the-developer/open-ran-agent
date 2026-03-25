@@ -508,7 +508,7 @@ These stay out of scope until milestone 1 is complete:
 ## Immediate Next Contracts And Fixtures To Deepen
 
 1. Split the replacement request schema into scope-aware helper schemas or `$defs` so `target_host`, `ue_session`, `ru_link`, and `replacement_cutover` rules stay explicit as the fixture set grows.
-2. Add compare-report and rollback-evidence JSON fixture examples that align directly with `notes/14-compare-report-and-rollback-evidence-templates.md`.
-3. Add a sanitized lab-owner overlay example that shows how the target-profile example is narrowed into actual host, RU, and UE inventory without committing secrets.
-4. Add dashboard-facing fixture notes that map `examples/status/*.json` to mission cards, inspector views, and remote-run summaries.
-5. Add first contract tests or validation scripts for the replacement-track schemas so request, status, and target-profile fixtures can be checked together in CI.
+2. Add JSON Schemas for compare-report and rollback-evidence artifact fixtures so `examples/artifacts/*.json` are validated, not just parsed.
+3. Add a schema for the lab-owner overlay example so the inventory narrowing path is versioned and testable.
+4. Wire `scripts/validate_contracts.sh` into a repo-visible CI path or docs-checked validation flow.
+5. Add one more status fixture for the failed-cutover observe/capture path so all four incident classes have matching request, artifact, and status coverage.

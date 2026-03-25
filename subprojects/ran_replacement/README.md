@@ -51,9 +51,12 @@ The immediate work here is not runtime code. The immediate work is:
 - [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.example.json](contracts/examples/n79-single-ru-target-profile-v1.example.json)
+- [contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/status/README.md](examples/status/README.md)
+- [examples/artifacts/README.md](examples/artifacts/README.md)
 - [examples/incidents/README.md](examples/incidents/README.md)
+- [scripts/validate_contracts.sh](scripts/validate_contracts.sh)
 
 ## Immediate Non-Goals
 

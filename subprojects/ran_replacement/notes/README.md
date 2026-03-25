@@ -19,7 +19,7 @@ Current notes:
 - [12-standards-evidence-and-acceptance-gates.md](12-standards-evidence-and-acceptance-gates.md)
 - [13-milestone-1-acceptance-runbook.md](13-milestone-1-acceptance-runbook.md)
 - [14-compare-report-and-rollback-evidence-templates.md](14-compare-report-and-rollback-evidence-templates.md)
-- [14-compare-report-and-rollback-evidence-templates.md](14-compare-report-and-rollback-evidence-templates.md)
+- [15-dashboard-fixture-mapping.md](15-dashboard-fixture-mapping.md)
 
 Reading order:
 
@@ -34,4 +34,4 @@ Reading order:
 9. standards evidence gates
 10. milestone-1 acceptance runbook
 11. compare-report and rollback-evidence templates
-11. compare report and rollback evidence templates
+12. dashboard fixture mapping
