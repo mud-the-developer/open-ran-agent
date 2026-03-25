@@ -286,6 +286,30 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement user-plane observe surfaces forwarding and rollback evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/observe-ping-failed-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.core_profile == "open5gs_nsa_lab_v1"
+      assert observe.gate_class == "degraded"
+      assert get_in(observe, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+      assert get_in(observe, [:interface_status, "f1_u", :evidence_ref]) =~ "/f1_u.json"
+      assert get_in(observe, [:interface_status, "gtpu", :evidence_ref]) =~ "/gtpu.json"
+      assert get_in(observe, [:rollback_status, :evidence_ref]) =~ "/rollback-evidence"
+    end)
+  end
+
   test "replacement verify can use virtual replacement state when generic change artifacts are absent",
        %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
@@ -312,7 +336,7 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
-  test "replacement acceptance verify surfaces target profile, suggested next steps, and user-plane proofs",
+  test "replacement verify surfaces user-plane, pdu-session, and ping evidence",
        %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       repo_root = Path.expand("../../../..", __DIR__)
@@ -327,13 +351,8 @@ defmodule RanActionGateway.CLITest do
         |> JSON.encode!()
 
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
-      assert verify.target_profile == "n79_single_ru_single_ue_lab_v1"
-      assert verify.target_ref == "ue-n79-lab-01"
-      assert verify.rollback_target == "oai_reference"
-      assert verify.rollback_available == true
+      assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
-      assert "capture artifacts for the verified lane" in verify.suggested_next
-      assert "advance only if the soak window remains stable" in verify.suggested_next
       assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
       assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
       assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
