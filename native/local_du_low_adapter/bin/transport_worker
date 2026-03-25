@@ -1,0 +1,4 @@
+#!/usr/bin/env elixir
+
+Code.require_file("../src/transport_worker_runtime.exs", __DIR__)
+LocalDuLowAdapter.TransportWorkerRuntime.run()
