@@ -3,166 +3,81 @@ layout: home
 
 hero:
   name: Open RAN Agent
-  text: Control-plane docs for Open RAN operators
-  tagline: Architecture map, ranctl action path, target-host rollout, and failure evidence for the bootstrap stack.
+  text: Design-first Open RAN docs and operator workflows
+  tagline: Architecture, ADRs, target-host deployment, evidence loops, and Cloudflare-hosted documentation for the bootstrap repo.
   image:
     src: /assets/logo/open-ran-agent-32.svg
     alt: Open RAN Agent logo
   actions:
     - theme: brand
-      text: Open architecture
+      text: Start with architecture
       link: /architecture/
     - theme: alt
-      text: Read change flow
-      link: /architecture/05-ranctl-action-model
+      text: Read ADRs
+      link: /adr/
     - theme: alt
-      text: Target-host deploy
-      link: /architecture/12-target-host-deployment
+      text: Review backlog
+      link: /backlog/
+
+features:
+  - title: Architecture-first
+    details: "System boundaries, failure domains, southbound contracts, and operational semantics are documented before runtime expansion."
+  - title: Evidence-first ops
+    details: "ranctl, Deploy Studio, remote handoff, and debug packs all converge on deterministic artifacts and explicit evidence."
+  - title: Pages-ready docs
+    details: "This docs tree builds into a static site that can be previewed locally and deployed through a simple Git-integrated Pages flow."
 ---
 
-<div class="doc-kicker">Operator Guide</div>
+<div class="doc-kicker">Documentation Hub</div>
 
-<section class="landing-band">
-  <div class="landing-band-copy">
-    <p class="landing-band-label">Scope summary</p>
-    <h2>Read owner, flow, and evidence before touching runtime details.</h2>
-    <p>
-      This site is the working index for the repo. It is written for engineers who need quick
-      answers to three questions: who owns the boundary, how does the change run, and where do
-      artifacts land when the run fails.
-    </p>
-  </div>
-  <div class="landing-band-list">
-    <div class="landing-band-item">
-      <strong>Current scope</strong>
-      <span>1 DU / 1 cell / attach to ping target</span>
-    </div>
-    <div class="landing-band-item">
-      <strong>Mutation gate</strong>
-      <span><code>bin/ranctl</code> with approval on destructive paths</span>
-    </div>
-    <div class="landing-band-item">
-      <strong>Deploy loop</strong>
-      <span>preview -> preflight -> remote ranctl -> fetchback</span>
-    </div>
-    <div class="landing-band-item">
-      <strong>Evidence set</strong>
-      <span>plan, verify, capture, debug pack, remote run</span>
-    </div>
-  </div>
-</section>
+The site groups the repo into three operator-friendly surfaces:
 
-<section class="landing-split">
-  <article class="landing-panel landing-panel-xl">
-    <div class="landing-panel-head">
-      <span class="landing-chip">Primary diagram</span>
-      <h2>Start with the full ownership map before drilling into any single lane.</h2>
-      <p>
-        This is the shortest path to the current control model: BEAM ownership, native
-        southbound boundary, runtime bridge, and evidence outputs.
-      </p>
-    </div>
-    <a class="landing-figure-card" href="/architecture/00-system-overview">
-      <img src="/assets/figures/architecture-overview.svg" alt="Architecture overview figure">
-    </a>
-  </article>
+- **Architecture** for boundaries, contracts, and target-host workflows
+- **ADRs** for the decisions that lock those boundaries in place
+- **Backlog** for the next implementation cuts
 
-  <aside class="landing-rail">
-    <a class="landing-rail-card" href="/architecture/05-ranctl-action-model">
-      <span class="landing-rail-label">Change path</span>
-      <strong>Follow precheck, plan, apply, verify, rollback, and capture-artifacts.</strong>
-      <img src="/assets/figures/ranctl-lifecycle.svg" alt="ranctl lifecycle figure">
-    </a>
-    <a class="landing-rail-card" href="/architecture/12-target-host-deployment">
-      <span class="landing-rail-label">Target-host path</span>
-      <strong>See handoff, preflight, remote execution, and evidence fetchback in one loop.</strong>
-      <img src="/assets/figures/target-host-deploy.svg" alt="Target-host deployment figure">
-    </a>
-  </aside>
-</section>
-
-## Jump by job
-
-<div class="doc-hub-grid doc-hub-grid-wide">
-  <a class="doc-hub-card doc-hub-card-accent" href="/architecture/">
-    <span class="doc-hub-overline">Architecture</span>
-    <strong>Architecture guide</strong>
-    <span>System overview, supervision layout, failure domains, southbound contracts, runtime bridge, deploy path, and debug workflow.</span>
+<div class="docs-hero-grid">
+  <a class="docs-hero-card" href="/architecture/00-system-overview">
+    <img src="/assets/figures/architecture-overview.svg" alt="Architecture overview figure">
+    <strong>System shape</strong>
+    <span>Start with the BEAM, native boundary, deploy surface, and evidence flow in one pass.</span>
   </a>
-  <a class="doc-hub-card" href="/adr/">
-    <span class="doc-hub-overline">Decision record</span>
-    <strong>ADRs</strong>
-    <span>Accepted decisions for umbrella layout, BEAM-native split, canonical IR, ranctl mutation model, and Open5GS-facing compatibility.</span>
+  <a class="docs-hero-card" href="/architecture/05-ranctl-action-model">
+    <img src="/assets/figures/ranctl-lifecycle.svg" alt="ranctl lifecycle figure">
+    <strong>Control lifecycle</strong>
+    <span>Understand how precheck, plan, apply, verify, rollback, and capture-artifacts hang together.</span>
   </a>
-  <a class="doc-hub-card" href="/backlog/">
-    <span class="doc-hub-overline">Implementation queue</span>
-    <strong>Backlog</strong>
-    <span>The remaining work toward real transports, target-host validation, and runtime hardening.</span>
+  <a class="docs-hero-card" href="/architecture/12-target-host-deployment">
+    <img src="/assets/figures/target-host-deploy.svg" alt="Target-host deployment figure">
+    <strong>Deploy loop</strong>
+    <span>See the handoff, preflight, remote execution, and fetchback path for real hosts.</span>
   </a>
-  <article class="doc-hub-card doc-hub-card-stack">
-    <span class="doc-hub-overline">Working tools</span>
-    <strong>Primary operator surfaces</strong>
-    <ul class="doc-inline-list">
-      <li><code>bin/ranctl</code> for deterministic mutation</li>
-      <li><code>bin/ran-dashboard</code> for local observability</li>
-      <li><code>bin/ran-install</code> for target-host handoff</li>
-      <li><code>bin/ran-debug-latest</code> for shortest failure-to-evidence path</li>
-    </ul>
-  </article>
 </div>
 
-## What this documentation is strongest at today
+## Fast paths
 
-<section class="landing-columns">
-  <article class="landing-column-card">
-    <span class="landing-chip">Strongest</span>
-    <h3>Boundaries and operator semantics</h3>
-    <p>
-      The documentation is strongest where the repo is strongest: boundary ownership,
-      failure domains, deterministic control flow, deploy preview, target-host preflight,
-      and evidence collection.
-    </p>
-  </article>
-  <article class="landing-column-card">
-    <span class="landing-chip landing-chip-warm">Deferred on purpose</span>
-    <h3>Production runtime internals</h3>
-    <p>
-      Real DU-low, Aerial internals, production timing guarantees, and complete live stack
-      behavior remain explicitly staged. The docs are honest about those edges rather than
-      disguising them as finished.
-    </p>
-  </article>
-</section>
+<div class="doc-hub-grid">
+  <a class="doc-hub-card" href="/architecture/">
+    <strong>Architecture guide</strong>
+    <span>System overview, supervision layout, failure domains, southbound contracts, runtime bridge, deploy workflow, and debug runbooks.</span>
+  </a>
+  <a class="doc-hub-card" href="/adr/">
+    <strong>ADRs</strong>
+    <span>Read the accepted decisions that define the repo's build structure, boundary choices, and operational model.</span>
+  </a>
+  <a class="doc-hub-card" href="/backlog/">
+    <strong>Backlog</strong>
+    <span>See the current implementation queue and how the bootstrap still needs to move toward real runtime and transport integration.</span>
+  </a>
+</div>
 
-<section class="landing-timeline">
-  <div class="landing-timeline-head">
-    <p class="landing-band-label">Suggested read order</p>
-    <h2>Read top down once, then return only to the lane you own.</h2>
-  </div>
-  <ol class="landing-timeline-list">
-    <li>
-      <strong><a href="/architecture/00-system-overview">00. System overview</a></strong>
-      <span>Understand the repo's target shape, MVP boundary, and what remains deferred.</span>
-    </li>
-    <li>
-      <strong><a href="/architecture/05-ranctl-action-model">05. ranctl action model</a></strong>
-      <span>See the single mutable action path and why every rollback-capable flow routes through it.</span>
-    </li>
-    <li>
-      <strong><a href="/architecture/09-oai-du-runtime-bridge">09. OAI DU runtime bridge</a></strong>
-      <span>Bridge architecture into a real executable runtime path without pretending the BEAM owns RT loops.</span>
-    </li>
-    <li>
-      <strong><a href="/architecture/12-target-host-deployment">12. target-host deployment</a></strong>
-      <span>Follow ship, preflight, remote ranctl, and fetchback for actual hosts.</span>
-    </li>
-    <li>
-      <strong><a href="/architecture/14-debug-and-evidence-workflow">14. debug and evidence workflow</a></strong>
-      <span>Keep the shortest path from operator failure to artifacts, transcripts, and snapshots.</span>
-    </li>
-  </ol>
-</section>
+## What is here today
 
-<div class="doc-callout doc-callout-strong">
-  The target style here is an internal telecom runbook, not a product landing page. If it scans well under pressure, it is doing the right job.
+- design-first architecture docs for the RAN control and ops stack
+- executable bootstrap surfaces such as `ranctl`, Deploy Studio, and target-host preflight
+- operator-oriented deployment and evidence workflows
+- a static documentation site that can be deployed without adding a backend
+
+<div class="doc-callout">
+  This site is intentionally documentation-centric. It explains the current bootstrap honestly, including what is working today and what still remains synthetic or deferred.
 </div>
