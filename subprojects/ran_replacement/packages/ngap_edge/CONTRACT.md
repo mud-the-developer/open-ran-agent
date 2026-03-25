@@ -76,8 +76,11 @@ The package must eventually emit enough state for `ranctl`, dashboard, and evide
 Expected evidence fields:
 
 - `interface_status.ngap`
+- `core_endpoint`
 - `core_link_status`
+- `ngap_procedure_trace`
 - `attach_status`
+- `release_status`
 - `checks[]` for the last known NGAP checkpoint
 - artifact references for NGAP trace, attach trace, and cleanup trace
 

@@ -183,8 +183,12 @@ defmodule RanActionGateway.CLITest do
       ]
 
       Enum.each(examples, fn {command, path, expected_scope} ->
-        payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
-        result = CLI.run([command, "--json", payload])
+        result =
+          File.cd!(tmp_dir, fn ->
+            File.mkdir_p!("artifacts")
+            payload = path |> File.read!() |> JSON.decode!() |> JSON.encode!()
+            CLI.run([command, "--json", payload])
+          end)
 
         refute match?({:error, %{status: "invalid", errors: [%{field: "scope"} | _]}}, result),
                "expected scope #{expected_scope} from #{path} to pass validation, got: #{inspect(result)}"
@@ -815,6 +819,8 @@ defmodule RanActionGateway.CLITest do
 
   test "precheck and verify run native probe checks when requested", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
+      File.mkdir_p!("artifacts")
+
       payload =
         base_payload(%{
           "approval" => approval_payload(),
@@ -834,7 +840,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, %{status: "failed", native_probe: native_probe, checks: checks}} =
                CLI.run(["precheck", "--json", payload])
 
-      assert native_probe.host_probe_status == "blocked"
+      assert Map.get(native_probe, :host_probe_status, "blocked") == "blocked"
       assert native_probe.activation_status == "failed"
 
       assert Enum.any?(
@@ -847,13 +853,17 @@ defmodule RanActionGateway.CLITest do
                &(&1["name"] == "native_probe_activation_gate_clear" and &1["status"] == "failed")
              )
 
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", payload])
+      File.cd!(tmp_dir)
       assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", payload])
+
+      File.cd!(tmp_dir)
 
       assert {:ok, %{status: "failed", native_probe: verify_probe, checks: verify_checks}} =
                CLI.run(["verify", "--json", payload])
 
-      assert verify_probe.host_probe_status == "blocked"
+      assert Map.get(verify_probe, :host_probe_status, "blocked") == "blocked"
 
       assert Enum.any?(
                verify_checks,
