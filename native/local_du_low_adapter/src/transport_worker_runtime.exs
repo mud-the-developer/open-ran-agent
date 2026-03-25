@@ -97,7 +97,8 @@ defmodule LocalDuLowAdapter.TransportWorkerRuntime do
   defp handle(%{command: :resume}, state) do
     case TransportWorker.resume(state) do
       {:ok, next_state} ->
-        {ok_reply(%{transport_status: next_state.transport_status}, next_state), next_state, false}
+        {ok_reply(%{transport_status: next_state.transport_status}, next_state), next_state,
+         false}
 
       {:error, reason} ->
         {error_reply(reason, state), state, false}

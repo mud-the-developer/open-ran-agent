@@ -23,8 +23,10 @@ defmodule LocalDuLowAdapter.Handler do
   def on_open_session(message, state) do
     payload = message["payload"] || %{}
     session_payload = payload["session_payload"] || %{}
+
     fronthaul_session =
-      session_payload["fronthaul_session"] || payload["fronthaul_session"] || state.fronthaul_session
+      session_payload["fronthaul_session"] || payload["fronthaul_session"] ||
+        state.fronthaul_session
 
     transport_worker =
       session_payload["transport_worker"] || payload["transport_worker"] || state.transport_worker
