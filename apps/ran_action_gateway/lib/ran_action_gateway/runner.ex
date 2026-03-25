@@ -9,6 +9,7 @@ defmodule RanActionGateway.Runner do
   alias RanActionGateway.Change
   alias RanActionGateway.ControlState
   alias RanActionGateway.OaiRuntime
+  alias RanActionGateway.RuntimeContract
   alias RanActionGateway.Store
 
   @phases [:precheck, :plan, :apply, :verify, :rollback, :observe, :capture_artifacts]
@@ -51,6 +52,7 @@ defmodule RanActionGateway.Runner do
       |> validate_idempotency_key(change.idempotency_key)
       |> validate_observe_or_capture_identifiers(command, change)
       |> validate_approval_contract(command, change)
+      |> RuntimeContract.validate(command, change)
 
     case errors do
       [] ->
@@ -75,6 +77,7 @@ defmodule RanActionGateway.Runner do
 
   defp do_execute(:precheck, change) do
     runtime_precheck = runtime_precheck(change)
+    runtime_contract = runtime_precheck_contract(change, runtime_precheck)
     config_report = RanConfig.validation_report()
     cell_group_check = validate_requested_cell_group(change)
     switch_policy = backend_switch_policy(change)
@@ -114,6 +117,7 @@ defmodule RanActionGateway.Runner do
        policy: format_policy(switch_policy),
        control_state: control_state,
        native_probe: native_probe,
+       runtime_contract: runtime_contract,
        runtime: runtime_payload(runtime_precheck),
        next: if(failed?, do: ["observe"], else: ["plan"])
      }
@@ -122,7 +126,8 @@ defmodule RanActionGateway.Runner do
 
   defp do_execute(:plan, change) do
     with {:ok, switch_policy} <- backend_switch_policy(change),
-         {:ok, runtime_plan} <- runtime_plan(change) do
+         {:ok, runtime_plan} <- runtime_plan(change),
+         {:ok, runtime_contract} <- RuntimeContract.plan_contract(change) do
       rollback_target = infer_rollback_target(change, switch_policy)
       current_backend = change.current_backend || switch_policy.current_backend
       rollback_plan = build_rollback_plan(change, rollback_target)
@@ -153,6 +158,7 @@ defmodule RanActionGateway.Runner do
         }
         |> put_optional("approval_required", approval_required?(:apply, change))
         |> put_optional("approval_fields_required", approval_fields_required(:apply, change))
+        |> put_runtime_contract(runtime_contract)
         |> put_runtime_plan(runtime_plan)
 
       Store.write_json(Store.plan_path(change.change_id), plan)
@@ -163,6 +169,7 @@ defmodule RanActionGateway.Runner do
 
   defp do_execute(:apply, change) do
     with {:ok, plan} <- load_plan(change.change_id),
+         {:ok, runtime_contract} <- RuntimeContract.ensure_planned_contract(:apply, change, plan),
          {:ok, approval} <- ensure_approval(:apply, change),
          {:ok, runtime_apply} <- maybe_apply_runtime(change),
          {:ok, control_state} <- maybe_apply_control_state(change, :apply) do
@@ -191,6 +198,7 @@ defmodule RanActionGateway.Runner do
           ]
         }
         |> put_optional("approved", approved?(change))
+        |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_apply)
 
       Store.write_json(Store.change_state_path(change.change_id), state)
@@ -232,6 +240,7 @@ defmodule RanActionGateway.Runner do
           next: if(failed?, do: ["capture-artifacts", "rollback"], else: ["observe"]),
           artifacts: [Store.verify_path(change.change_id)]
         }
+        |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_verify)
         |> maybe_put_replacement_status(:verify, change, checks)
 
@@ -243,6 +252,8 @@ defmodule RanActionGateway.Runner do
   defp do_execute(:rollback, change) do
     with {:ok, plan} <- load_plan(change.change_id),
          {:ok, rollback_plan} <- load_rollback_plan(change.change_id),
+         {:ok, runtime_contract} <-
+           RuntimeContract.ensure_planned_contract(:rollback, change, plan),
          {:ok, approval} <- ensure_approval(:rollback, change),
          {:ok, runtime_rollback} <- maybe_rollback_runtime(change),
          {:ok, control_state} <- maybe_apply_control_state(change, :rollback) do
@@ -270,6 +281,7 @@ defmodule RanActionGateway.Runner do
           ]
         }
         |> put_optional("approved", approved?(change))
+        |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_rollback)
 
       Store.write_json(Store.change_state_path(change.change_id), result)
@@ -556,7 +568,8 @@ defmodule RanActionGateway.Runner do
       "approved_at" => Map.get(approval, :approved_at) || Map.get(approval, "approved_at"),
       "ticket_ref" => Map.get(approval, :ticket_ref) || Map.get(approval, "ticket_ref"),
       "source" => Map.get(approval, :source) || Map.get(approval, "source"),
-      "evidence" => Map.get(approval, :evidence) || Map.get(approval, "evidence") || [],
+      "evidence" =>
+        normalize_evidence_refs(Map.get(approval, :evidence) || Map.get(approval, "evidence")),
       "command" => command_to_string(command)
     }
   end
@@ -581,12 +594,25 @@ defmodule RanActionGateway.Runner do
       incident_id: change.incident_id,
       target_backend: plan["target_backend"],
       rollback_target: plan["rollback_target"],
+      runtime_contract: plan["runtime_contract"],
       approval: approval,
       captured_at: now_iso8601()
     }
 
     Store.write_json(Store.approval_path(change.change_id, command_to_string(command)), payload)
   end
+
+  defp normalize_evidence_refs(evidence) when is_list(evidence) do
+    evidence
+    |> Enum.flat_map(fn
+      value when is_binary(value) and value != "" -> [value]
+      value when is_atom(value) -> [Atom.to_string(value)]
+      _ -> []
+    end)
+    |> Enum.uniq()
+  end
+
+  defp normalize_evidence_refs(_evidence), do: []
 
   defp infer_rollback_target(%Change{current_backend: current_backend}, _policy)
        when not is_nil(current_backend) do
@@ -1065,6 +1091,21 @@ defmodule RanActionGateway.Runner do
   defp runtime_payload({:ok, payload}), do: payload
   defp runtime_payload({:error, payload}), do: payload
   defp runtime_payload(_), do: nil
+
+  defp runtime_precheck_contract(%Change{} = change, runtime_precheck) do
+    if OaiRuntime.runtime_requested?(change.metadata) and
+         match?({:ok, _payload}, runtime_precheck) do
+      case RuntimeContract.precheck_contract(change) do
+        {:ok, contract} -> contract
+        {:error, _payload} -> nil
+      end
+    end
+  end
+
+  defp put_runtime_contract(payload, nil), do: payload
+
+  defp put_runtime_contract(payload, %{} = runtime_contract),
+    do: Map.put(payload, "runtime_contract", runtime_contract)
 
   defp put_runtime_plan(payload, {:ok, nil}), do: payload
   defp put_runtime_plan(payload, nil), do: payload

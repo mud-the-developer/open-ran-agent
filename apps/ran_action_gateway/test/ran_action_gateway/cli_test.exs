@@ -211,7 +211,7 @@ defmodule RanActionGateway.CLITest do
       assert verify.gate_class in ["degraded", "pass"]
       assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
@@ -234,7 +234,7 @@ defmodule RanActionGateway.CLITest do
       assert observe.gate_class == "degraded"
       assert get_in(observe, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/observe/"
       assert get_in(observe, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/observe/"
-      assert get_in(observe, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/observe/attach.json"
+      assert get_in(observe, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
@@ -255,10 +255,10 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
       assert observe.core_profile == "open5gs_nsa_lab_v1"
       assert observe.gate_class == "degraded"
-      assert get_in(observe, [:plane_status, :u_plane, :evidence_ref]) =~ "artifacts/replacement/observe/user-plane.json"
-      assert get_in(observe, [:interface_status, "f1_u", :evidence_ref]) =~ "artifacts/replacement/observe/f1_u.json"
-      assert get_in(observe, [:interface_status, "gtpu", :evidence_ref]) =~ "artifacts/replacement/observe/gtpu.json"
-      assert get_in(observe, [:rollback_status, :evidence_ref]) =~ "artifacts/replacement/observe/rollback-evidence.json"
+      assert get_in(observe, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+      assert get_in(observe, [:interface_status, "f1_u", :evidence_ref]) =~ "/f1_u.json"
+      assert get_in(observe, [:interface_status, "gtpu", :evidence_ref]) =~ "/gtpu.json"
+      assert get_in(observe, [:rollback_status, :evidence_ref]) =~ "/rollback-evidence"
     end)
   end
 
@@ -281,7 +281,7 @@ defmodule RanActionGateway.CLITest do
       assert verify.gate_class in ["degraded", "pass"]
       assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) =~ "/attach.json"
     end)
   end
 
@@ -302,9 +302,9 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
       assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
-      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "artifacts/replacement/verify/user-plane.json"
-      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "artifacts/replacement/verify/pdu-session.json"
-      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "artifacts/replacement/verify/ping.json"
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
+      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
     end)
   end
 
@@ -434,23 +434,20 @@ defmodule RanActionGateway.CLITest do
 
     runtime_fixture = build_runtime_fixture(tmp_dir)
 
-    payload =
-      base_payload(%{
+    request =
+      %{
         "approval" => approval_payload(),
         "metadata" => %{
-          "oai_runtime" => %{
-            "repo_root" => runtime_fixture.repo_root,
-            "du_conf_path" => runtime_fixture.du_conf_path,
-            "cucp_conf_path" => runtime_fixture.cucp_conf_path,
-            "cuup_conf_path" => runtime_fixture.cuup_conf_path,
-            "project_name" => "test-oai-du",
-            "pull_images" => false
-          }
+          "oai_runtime" =>
+            oai_runtime_payload(runtime_fixture, %{"project_name" => "test-oai-du"}),
+          "runtime_contract" => runtime_contract_payload()
         }
-      })
-      |> JSON.encode!()
+      }
+      |> then(&base_payload(&1))
 
     File.cd!(tmp_dir, fn ->
+      payload = JSON.encode!(request)
+
       assert {:ok, %{status: "ok", runtime: runtime}} = CLI.run(["precheck", "--json", payload])
       assert runtime.runtime_mode == "docker_compose_rfsim_f1"
       assert Enum.any?(runtime.checks, &(&1["name"] == "docker_available"))
@@ -461,6 +458,16 @@ defmodule RanActionGateway.CLITest do
       assert Enum.any?(runtime.checks, &(&1["name"] == "cuup_conf_patch_points_present"))
 
       assert {:ok, plan} = CLI.run(["plan", "--json", payload])
+
+      drifted_payload =
+        request
+        |> put_in(["metadata", "oai_runtime", "project_name"], "test-oai-du-drift")
+        |> JSON.encode!()
+
+      assert {:error, %{status: "runtime_contract_mismatch", command: "apply", errors: errors}} =
+               CLI.run(["apply", "--json", drifted_payload])
+
+      assert Enum.any?(errors, &String.contains?(&1, "runtime_digest"))
       assert plan["runtime_mode"] == "docker_compose_rfsim_f1"
       assert File.exists?(plan["runtime_plan"].compose_path)
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_du_conf_path"])
@@ -739,6 +746,33 @@ defmodule RanActionGateway.CLITest do
       "source" => "cli-test",
       "evidence" => ["docs/architecture/05-ranctl-action-model.md"]
     }
+  end
+
+  defp runtime_contract_payload(overrides \\ %{}) do
+    Map.merge(
+      %{
+        "version" => "ranctl.runtime.v1",
+        "release_unit" => "bootstrap_source_bundle",
+        "release_ref" => "source-checkout@cli-test",
+        "entrypoint" => "bin/ranctl",
+        "runtime_mode" => "docker_compose_rfsim_f1"
+      },
+      overrides
+    )
+  end
+
+  defp oai_runtime_payload(runtime_fixture, overrides \\ %{}) do
+    Map.merge(
+      %{
+        "repo_root" => runtime_fixture.repo_root,
+        "du_conf_path" => runtime_fixture.du_conf_path,
+        "cucp_conf_path" => runtime_fixture.cucp_conf_path,
+        "cuup_conf_path" => runtime_fixture.cuup_conf_path,
+        "project_name" => "test-oai-du",
+        "pull_images" => false
+      },
+      overrides
+    )
   end
 
   defp build_runtime_fixture(tmp_dir) do
