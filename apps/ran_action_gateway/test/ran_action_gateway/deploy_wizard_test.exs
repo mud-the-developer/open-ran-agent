@@ -177,4 +177,65 @@ defmodule RanActionGateway.DeployWizardTest do
              )
     end)
   end
+
+  test "run_precheck captures actionable preflight failure detail", %{tmp_dir: tmp_dir} do
+    bundle_dir = Path.join(tmp_dir, "bundle")
+    bundle_tarball = Path.join(bundle_dir, "open_ran_agent-demo.tar.gz")
+    installer_path = Path.join(bundle_dir, "install_bundle.sh")
+    current_root = Path.join(tmp_dir, "current")
+    preflight_path = Path.join(current_root, "bin/ran-host-preflight")
+
+    File.mkdir_p!(bundle_dir)
+    File.write!(bundle_tarball, "demo")
+    File.write!(installer_path, "#!/usr/bin/env bash\n")
+    File.mkdir_p!(Path.dirname(preflight_path))
+
+    File.write!(
+      preflight_path,
+      """
+      #!/usr/bin/env sh
+      echo "missing host interface sync0"
+      echo '{"status":"failed","checks":[{"name":"host_preflight","status":"failed"}],"evidence_ref":"artifacts/remote_runs/ran-lab-01/precheck/debug-summary.txt"}'
+      exit 1
+      """
+    )
+
+    File.chmod!(preflight_path, 0o755)
+
+    File.cd!(tmp_dir, fn ->
+      assert {:ok, result} =
+               DeployWizard.run([
+                 "--json",
+                 "--defaults",
+                 "--safe-preview",
+                 "--skip-install",
+                 "--bundle",
+                 bundle_tarball,
+                 "--current-root",
+                 current_root,
+                 "--target-host",
+                 "ran-lab-01",
+                 "--ssh-user",
+                 "ranops",
+                 "--run-precheck"
+               ])
+
+      assert result.preflight.status == "failed"
+      assert result.preflight.exit_code == 1
+      assert result.preflight.response["status"] == "failed"
+
+      assert result.preflight.response["evidence_ref"] ==
+               "artifacts/remote_runs/ran-lab-01/precheck/debug-summary.txt"
+
+      assert result.readiness.status == "blocked"
+      assert result.readiness.recommendation == "fix_blockers"
+
+      assert Enum.any?(result.readiness.blockers, fn blocker ->
+               blocker.id == "preflight" and
+                 blocker.detail == "Host preflight failed: missing host interface sync0"
+             end)
+
+      assert "Preflight reported failures; inspect the captured output before applying changes." in result.next_steps
+    end)
+  end
 end
