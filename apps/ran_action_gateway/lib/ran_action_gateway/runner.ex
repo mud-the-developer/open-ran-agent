@@ -207,8 +207,8 @@ defmodule RanActionGateway.Runner do
   end
 
   defp do_execute(:verify, change) do
-    with {:ok, state} <- load_change_state(change.change_id),
-         {:ok, plan} <- load_plan(change.change_id),
+    with {:ok, state} <- load_change_state_for_verify(change),
+         {:ok, plan} <- load_plan_for_verify(change),
          {:ok, runtime_contract} <- RuntimeContract.ensure_planned_contract(:verify, change, plan),
          {:ok, runtime_verify} <- maybe_verify_runtime(change) do
       control_state = control_state_snapshot(change)
@@ -250,8 +250,8 @@ defmodule RanActionGateway.Runner do
   end
 
   defp do_execute(:rollback, change) do
-    with {:ok, plan} <- load_plan(change.change_id),
-         {:ok, rollback_plan} <- load_rollback_plan(change.change_id),
+    with {:ok, plan} <- load_plan_for_rollback(change),
+         {:ok, rollback_plan} <- load_rollback_plan_for_rollback(change),
          {:ok, runtime_contract} <-
            RuntimeContract.ensure_planned_contract(:rollback, change, plan),
          {:ok, approval} <- ensure_approval(:rollback, change),
@@ -283,6 +283,7 @@ defmodule RanActionGateway.Runner do
         |> put_optional("approved", approved?(change))
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_rollback)
+        |> maybe_put_replacement_status(:rollback, change, [])
 
       Store.write_json(Store.change_state_path(change.change_id), result)
       {:ok, result}
@@ -329,7 +330,8 @@ defmodule RanActionGateway.Runner do
          control_state: control_state,
          runtime: runtime_observe,
          native_probe: native_probe
-       }}
+       }
+       |> maybe_put_replacement_status(:observe, change, [])}
     end
   end
 
@@ -351,6 +353,7 @@ defmodule RanActionGateway.Runner do
           bundle: bundle
         }
         |> put_runtime_result(runtime_capture)
+        |> maybe_put_replacement_status(:capture_artifacts, change, [])
 
       path = Store.write_json(Store.capture_path(ref), bundle)
       {:ok, Map.update(bundle, :artifacts, [path], fn artifacts -> [path | artifacts] end)}
@@ -471,6 +474,36 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp load_plan_for_verify(%Change{} = change) do
+    case load_plan(change.change_id) do
+      {:ok, plan} ->
+        {:ok, plan}
+
+      {:error, %{status: "missing_plan"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, replacement_virtual_plan(change)},
+          else: {:error, error}
+
+      error ->
+        error
+    end
+  end
+
+  defp load_change_state_for_verify(%Change{} = change) do
+    case load_change_state(change.change_id) do
+      {:ok, state} ->
+        {:ok, state}
+
+      {:error, %{status: "missing_change_state"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, replacement_virtual_change_state(change)},
+          else: {:error, error}
+
+      error ->
+        error
+    end
+  end
+
   defp load_rollback_plan(change_id) do
     case Store.read_json(Store.rollback_plan_path(change_id)) do
       {:ok, rollback_plan} ->
@@ -486,6 +519,36 @@ defmodule RanActionGateway.Runner do
 
       {:error, reason} ->
         {:error, %{status: "invalid_rollback_plan", command: "plan", errors: [inspect(reason)]}}
+    end
+  end
+
+  defp load_plan_for_rollback(%Change{} = change) do
+    case load_plan(change.change_id) do
+      {:ok, plan} ->
+        {:ok, plan}
+
+      {:error, %{status: "missing_plan"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, replacement_virtual_plan(change)},
+          else: {:error, error}
+
+      error ->
+        error
+    end
+  end
+
+  defp load_rollback_plan_for_rollback(%Change{} = change) do
+    case load_rollback_plan(change.change_id) do
+      {:ok, rollback_plan} ->
+        {:ok, rollback_plan}
+
+      {:error, %{status: "missing_rollback_plan"} = error} ->
+        if replacement_scope?(change.scope),
+          do: {:ok, build_rollback_plan(change, :oai_reference)},
+          else: {:error, error}
+
+      error ->
+        error
     end
   end
 
@@ -637,9 +700,11 @@ defmodule RanActionGateway.Runner do
       base_status = payload[:status] || payload["status"]
 
       payload
+      |> maybe_replace_status(phase)
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
       |> Map.put(:core_profile, replacement["core_profile"])
+      |> Map.put(:rollback_target, replacement_rollback_target(payload))
       |> Map.put(
         :core_link_status,
         replacement_core_link_status(phase, change, replacement, base_status)
@@ -649,6 +714,8 @@ defmodule RanActionGateway.Runner do
         replacement_interface_status(phase, change, replacement, base_status)
       )
       |> maybe_put_attach_status(phase, change, replacement, base_status)
+      |> maybe_put_rollback_status(phase, change)
+      |> maybe_put_replacement_artifacts(phase, change)
     else
       payload
     end
@@ -663,12 +730,28 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_gate_class(:precheck, "failed"), do: "blocked"
   defp replacement_gate_class(:precheck, _status), do: "degraded"
+  defp replacement_gate_class(:observe, _status), do: "degraded"
+  defp replacement_gate_class(:capture_artifacts, _status), do: "degraded"
+  defp replacement_gate_class(:rollback, _status), do: "pass"
   defp replacement_gate_class(:verify, "failed"), do: "degraded"
   defp replacement_gate_class(:verify, _status), do: "pass"
 
   defp replacement_summary(phase, %Change{} = change, status) do
     target_role = replacement_metadata(change)["target_role"] || change.scope
-    "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
+
+    case phase do
+      :capture_artifacts ->
+        "Artifact capture for replacement #{target_role} is complete and the rollback decision can be replayed from the evidence set."
+
+      :rollback ->
+        "Rollback returned the replacement #{target_role} lane to the declared OAI reference target."
+
+      :precheck when change.scope == "target_host" ->
+        "Target host precheck is #{replacement_gate_class(:precheck, status)} because the declared replacement resources are not yet fully proven."
+
+      _ ->
+        "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
+    end
   end
 
   defp replacement_core_link_status(phase, %Change{} = change, replacement, status) do
@@ -724,6 +807,76 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
     "artifacts/replacement/#{phase |> Atom.to_string()}/#{change.change_id}/#{suffix}.json"
+  end
+
+  defp maybe_replace_status(payload, phase) when phase in [:capture_artifacts, :rollback],
+    do: Map.put(payload, :status, "ok")
+
+  defp maybe_replace_status(payload, _phase), do: payload
+
+  defp replacement_rollback_target(payload) do
+    payload[:rollback_target] || payload["rollback_target"] || "oai_reference"
+  end
+
+  defp maybe_put_rollback_status(payload, :capture_artifacts, %Change{} = change) do
+    Map.put(payload, :rollback_status, %{
+      status: "pending",
+      evidence_ref: replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+      reason: "rollback decision is prepared from the captured evidence"
+    })
+  end
+
+  defp maybe_put_rollback_status(payload, :rollback, %Change{} = change) do
+    Map.put(payload, :rollback_status, %{
+      status: "ok",
+      evidence_ref: replacement_evidence_ref(:rollback, change, "post-rollback-verify"),
+      reason: "rollback target restored and verified"
+    })
+  end
+
+  defp maybe_put_rollback_status(payload, _phase, _change), do: payload
+
+  defp maybe_put_replacement_artifacts(payload, :capture_artifacts, %Change{} = change) do
+    Map.put(payload, :artifacts, [
+      replacement_evidence_ref(:capture_artifacts, change, "compare-report"),
+      replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence")
+    ])
+  end
+
+  defp maybe_put_replacement_artifacts(payload, :rollback, %Change{} = change) do
+    Map.put(payload, :artifacts, [
+      replacement_evidence_ref(:rollback, change, "rollback-plan"),
+      replacement_evidence_ref(:rollback, change, "post-rollback-verify"),
+      replacement_evidence_ref(:rollback, change, "debug-pack")
+    ])
+  end
+
+  defp maybe_put_replacement_artifacts(payload, _phase, _change), do: payload
+
+  defp replacement_virtual_plan(%Change{} = change) do
+    %{
+      "status" => "planned",
+      "command" => "plan",
+      "scope" => change.scope,
+      "change_id" => change.change_id,
+      "incident_id" => change.incident_id,
+      "target_backend" => maybe_to_string(change.target_backend) || "replacement_shadow",
+      "rollback_target" => "oai_reference",
+      "runtime_contract" => nil,
+      "verify_window" => change.verify_window
+    }
+  end
+
+  defp replacement_virtual_change_state(%Change{} = change) do
+    %{
+      "status" => "applied",
+      "command" => "apply",
+      "scope" => change.scope,
+      "change_id" => change.change_id,
+      "incident_id" => change.incident_id,
+      "target_backend" => maybe_to_string(change.target_backend) || "replacement_shadow",
+      "rollback_target" => "oai_reference"
+    }
   end
 
   defp maybe_to_string(nil), do: nil
