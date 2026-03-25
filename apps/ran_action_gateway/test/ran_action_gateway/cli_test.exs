@@ -178,7 +178,7 @@ defmodule RanActionGateway.CLITest do
       assert precheck.core_profile == "open5gs_nsa_lab_v1"
       assert precheck.gate_class in ["blocked", "degraded"]
       assert get_in(precheck, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/precheck/"
-      assert get_in(precheck, ["interface_status", "ngap", :evidence_ref]) =~ "artifacts/replacement/precheck/"
+      assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/precheck/"
 
       verify_request =
         Path.join(
@@ -209,7 +209,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
       assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
-      assert get_in(verify, ["interface_status", "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
     end)
@@ -232,7 +232,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
       assert observe.core_profile == "open5gs_nsa_lab_v1"
       assert observe.gate_class == "degraded"
-      assert get_in(observe, ["interface_status", "ngap", :evidence_ref]) =~ "artifacts/replacement/observe/"
+      assert get_in(observe, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/observe/"
       assert get_in(observe, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/observe/"
       assert get_in(observe, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/observe/attach.json"
     end)
@@ -255,7 +255,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
       assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
-      assert get_in(verify, ["interface_status", "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
       assert get_in(verify, [:attach_status, :evidence_ref]) =~ "artifacts/replacement/verify/attach.json"
     end)
