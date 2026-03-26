@@ -348,7 +348,12 @@ defmodule RanActionGateway.CLITest do
         |> JSON.encode!()
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.gate_class == "blocked"
+      assert capture.failure_class == "core_failure"
+      assert capture.rollback_target == "oai_reference"
+      assert capture.rollback_available == true
       assert capture.ngap_procedure_trace.last_observed == "UE Context Release"
+      assert get_in(capture, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
 
       assert Map.new(capture.ngap_procedure_trace.procedures, &{&1.name, &1.status}) == %{
                "NG Setup" => "ok",
@@ -360,6 +365,10 @@ defmodule RanActionGateway.CLITest do
 
       refute Enum.any?(capture.ngap_procedure_trace.procedures, fn procedure ->
                procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
+             end)
+
+      assert Enum.any?(capture.checks, fn check ->
+               check["name"] == "UE Context Release" and check["status"] == "ok"
              end)
     end)
   end
@@ -381,6 +390,7 @@ defmodule RanActionGateway.CLITest do
       assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
       assert observe.core_profile == "open5gs_nsa_lab_v1"
       assert observe.gate_class == "degraded"
+      assert observe.failure_class == "cutover_or_rollback_failure"
 
       assert get_in(observe, [:plane_status, :c_plane, :evidence_ref]) =~
                "artifacts/replacement/observe/"
@@ -499,6 +509,7 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
       assert capture.gate_class == "blocked"
+      assert capture.failure_class == "cutover_or_rollback_failure"
       assert capture.rollback_target == "oai_reference"
       assert capture.rollback_available == true
       assert capture.summary =~ "failed replacement evidence bundle"
@@ -529,6 +540,7 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, rollback} = CLI.run(["rollback", "--json", rollback_payload])
       assert rollback.gate_class == "pass"
+      assert rollback.failure_class == "cutover_or_rollback_failure"
       assert rollback.rollback_target == "oai_reference"
       assert rollback.rollback_available == true
       assert rollback.approval_required == true

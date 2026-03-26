@@ -844,7 +844,7 @@ defmodule RanActionGateway.Runner do
     end
   end
 
-  defp replacement_failure_class(_phase, %Change{} = change, replacement, _status) do
+  defp replacement_failure_class(phase, %Change{} = change, replacement, status) do
     cond do
       ngap_scope?(replacement) and ngap_registration_failure?(change) ->
         "core_failure"
@@ -852,7 +852,8 @@ defmodule RanActionGateway.Runner do
       user_plane_ping_failure?(change) ->
         "user_plane_failure"
 
-      change.scope == "replacement_cutover" ->
+      change.scope == "replacement_cutover" and
+          (phase in [:observe, :capture_artifacts, :rollback] or status == "failed") ->
         "cutover_or_rollback_failure"
 
       true ->
@@ -1178,10 +1179,7 @@ defmodule RanActionGateway.Runner do
           "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
       )
     )
-    |> Map.put(
-      :gate_class,
-      if(change.scope == "replacement_cutover", do: "blocked", else: "degraded")
-    )
+    |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
     |> put_optional(:rollback_target, rollback_target)
     |> Map.put(:rollback_available, not is_nil(rollback_target))
     |> Map.put(:suggested_next, [
@@ -1269,6 +1267,16 @@ defmodule RanActionGateway.Runner do
   end
 
   defp maybe_put_replacement_review_semantics(payload, _phase, _change, _replacement), do: payload
+
+  defp replacement_capture_gate_class(%Change{} = change, replacement) do
+    case replacement_failure_class(:capture_artifacts, change, replacement, "failed") do
+      failure_class when failure_class in ["core_failure", "cutover_or_rollback_failure"] ->
+        "blocked"
+
+      _ ->
+        "degraded"
+    end
+  end
 
   defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
     "artifacts/replacement/#{replacement_phase_name(phase)}/#{change.change_id}/#{suffix}.json"
