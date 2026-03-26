@@ -35,6 +35,23 @@ single_line() {
   printf '%s' "${1:-}" | tr '\n' ' ' | sed 's/[[:space:]][[:space:]]*/ /g'
 }
 
+status_is_failure() {
+  local status="${1:-}"
+  local lowered
+
+  lowered="$(printf '%s' "${status}" | tr '[:upper:]' '[:lower:]')"
+
+  [[ -n "${lowered}" ]] && {
+    [[ "${lowered}" == *fail* ]] ||
+      [[ "${lowered}" == *error* ]] ||
+      [[ "${lowered}" == *blocked* ]] ||
+      [[ "${lowered}" == *denied* ]] ||
+      [[ "${lowered}" == *invalid* ]] ||
+      [[ "${lowered}" == *missing* ]] ||
+      [[ "${lowered}" == *required* ]]
+  }
+}
+
 json_field() {
   local file="$1"
   local field="$2"
@@ -289,6 +306,15 @@ if [[ -z "${RUN_STATUS}" ]]; then
   RUN_STATUS="executed"
 fi
 
+if status_is_failure "${RUN_STATUS}"; then
+  FAILED_STEP="${COMMAND}"
+  FAILED_COMMAND="${COMMANDS[$((${#COMMANDS[@]} - 1))]}"
+
+  if [[ -z "${EXIT_CODE}" ]]; then
+    EXIT_CODE="1"
+  fi
+fi
+
 cat <<EOF
 Remote command completed
   result dir : ${LOCAL_RUN_DIR}
@@ -298,3 +324,7 @@ Remote command completed
   fetched    : ${FETCH_DIR:-disabled}
   debug pack : ${LOCAL_DEBUG_PACK_FILE}
 EOF
+
+if status_is_failure "${RUN_STATUS}"; then
+  exit 1
+fi

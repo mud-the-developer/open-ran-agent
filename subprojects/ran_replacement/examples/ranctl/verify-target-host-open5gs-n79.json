@@ -4,24 +4,32 @@
   "target_backend": "replacement_shadow",
   "current_backend": "oai_reference",
   "rollback_target": "oai_reference",
-  "change_id": "chg-ran-repl-precheck-001",
-  "reason": "precheck n79 target host and real open5gs interop assumptions",
-  "idempotency_key": "ran-repl-precheck-001",
-  "dry_run": true,
-  "ttl": "20m",
+  "change_id": "chg-ran-repl-target-host-001",
+  "reason": "verify target-host bring-up artifacts on the declared n79 replacement lane",
+  "idempotency_key": "ran-repl-target-host-verify-001",
+  "dry_run": false,
+  "ttl": "30m",
   "verify_window": {
-    "duration": "30s",
+    "duration": "60s",
     "checks": [
       "host_preflight",
       "ru_sync",
-      "core_link_reachable"
+      "core_link_reachable",
+      "rollback_target_known"
     ]
   },
   "max_blast_radius": "single_lab",
+  "approval": {
+    "approved": true,
+    "approved_by": "ran.operator",
+    "approved_at": "2026-03-26T00:10:00Z",
+    "ticket_ref": "YON-69",
+    "source": "ran_replacement-example"
+  },
   "metadata": {
     "replacement": {
       "target_role": "target_host",
-      "action": "precheck",
+      "action": "bring_up",
       "target_profile": "n79_single_ru_single_ue_lab_v1",
       "core_profile": "open5gs_nsa_lab_v1",
       "band": "n79",
@@ -31,10 +39,10 @@
         "c_plane",
         "u_plane"
       ],
-      "desired_state": "present",
-      "cutover_mode": "none",
+      "desired_state": "shadow",
+      "cutover_mode": "shadow",
       "allow_oai_fallback": true,
-      "destructive": false,
+      "destructive": true,
       "real_ru_required": true,
       "real_ue_required": true,
       "required_interfaces": [

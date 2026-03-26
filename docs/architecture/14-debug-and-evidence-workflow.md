@@ -87,6 +87,7 @@ If automatic fetchback is enabled, it also writes:
 
 Runtime-specific evidence remains under the existing artifact roots:
 
+- `artifacts/prechecks/*`
 - `artifacts/plans/*`
 - `artifacts/changes/*`
 - `artifacts/verify/*`
@@ -189,7 +190,7 @@ Inspect:
 
 - `artifacts/remote_runs/<host>/<run_stamp>-<command>/debug-pack.txt`
 - `artifacts/remote_runs/<host>/<run_stamp>-<command>/result.jsonl`
-- fetched `probe_snapshots`, `captures`, and config snapshots under `fetch/extracted`
+- fetched `prechecks`, `probe_snapshots`, `captures`, and config snapshots under `fetch/extracted`
 
 ### Native probe failure
 

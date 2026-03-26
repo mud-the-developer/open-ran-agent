@@ -2,26 +2,27 @@
   "scope": "target_host",
   "target_ref": "host-n79-lab-01",
   "target_backend": "replacement_shadow",
-  "current_backend": "oai_reference",
+  "current_backend": "replacement_shadow",
   "rollback_target": "oai_reference",
-  "change_id": "chg-ran-repl-precheck-001",
-  "reason": "precheck n79 target host and real open5gs interop assumptions",
-  "idempotency_key": "ran-repl-precheck-001",
+  "change_id": "chg-ran-repl-target-host-001",
+  "incident_id": "inc-ran-repl-target-host-001",
+  "reason": "capture target-host artifacts for the declared n79 replacement lane",
+  "idempotency_key": "ran-repl-target-host-capture-001",
   "dry_run": true,
-  "ttl": "20m",
+  "ttl": "15m",
   "verify_window": {
     "duration": "30s",
     "checks": [
       "host_preflight",
       "ru_sync",
-      "core_link_reachable"
+      "rollback_target_known"
     ]
   },
   "max_blast_radius": "single_lab",
   "metadata": {
     "replacement": {
       "target_role": "target_host",
-      "action": "precheck",
+      "action": "capture_artifacts",
       "target_profile": "n79_single_ru_single_ue_lab_v1",
       "core_profile": "open5gs_nsa_lab_v1",
       "band": "n79",
@@ -31,8 +32,8 @@
         "c_plane",
         "u_plane"
       ],
-      "desired_state": "present",
-      "cutover_mode": "none",
+      "desired_state": "shadow",
+      "cutover_mode": "shadow",
       "allow_oai_fallback": true,
       "destructive": false,
       "real_ru_required": true,

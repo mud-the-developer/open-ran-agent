@@ -255,7 +255,7 @@ copy_matches() {
 rm -rf "\${stage_dir}"
 mkdir -p "\${stage_dir}"
 
-for category in plans changes verify captures approvals rollback_plans probe_snapshots config_snapshots control_snapshots; do
+for category in prechecks plans changes verify captures approvals rollback_plans probe_snapshots config_snapshots control_snapshots; do
   copy_matches "\${category}" "\${change_id}"
   copy_matches "\${category}" "\${incident_id}"
 done
