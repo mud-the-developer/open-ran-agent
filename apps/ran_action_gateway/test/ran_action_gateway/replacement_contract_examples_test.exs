@@ -64,5 +64,29 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert incidents =~ "acceptance dossier"
   end
 
+  test "dashboard mapping keeps claim categories explicit for mission cards and summaries" do
+    dashboard =
+      repo_path("subprojects/ran_replacement/notes/15-dashboard-fixture-mapping.md")
+      |> File.read!()
+
+    overlay =
+      repo_path(
+        "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    operator_surfaces = get_in(overlay, ["compatibility_alignment", "operator_surfaces"])
+
+    assert dashboard =~ "Every mission card should also declare its claim category"
+    assert dashboard =~ "- `standards-subset`"
+    assert dashboard =~ "- `compatibility-baseline`"
+    assert dashboard =~ "- `live-lab acceptance dossier`"
+    assert dashboard =~ "mission cards and remote-run summaries should show the claim category"
+    assert "dashboard mission cards" in operator_surfaces
+    assert "remote-run summary" in operator_surfaces
+    assert "rollback evidence bundle" in operator_surfaces
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end
