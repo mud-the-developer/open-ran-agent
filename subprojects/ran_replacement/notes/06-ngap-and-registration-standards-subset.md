@@ -13,6 +13,16 @@ The target is not "NGAP looks alive". The target is:
 - registration evidence is explicit
 - the behavior stays standards-correct for the declared subset
 
+## Conformance Frame
+
+This subset is judged against:
+
+- `3GPP TS 38.413` for the declared `NGAP` behavior
+- `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md` for
+  required, optional, and deferred procedure classes
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+  for the repo-wide conformance and evidence mapping
+
 ## Why A Subset Is Needed
 
 The replacement track is intentionally narrow.
@@ -94,7 +104,7 @@ These deviations are acceptable only if they are:
 - surfaced in `precheck`, `plan`, `verify`, or incident artifacts
 - paired with an explicit rollback target
 
-## Non-Goals
+## Negative Space
 
 This subset does not claim:
 
@@ -104,4 +114,3 @@ This subset does not claim:
 - mobility management beyond the declared target profile
 - standards coverage outside the milestone 1 registration path
 - core ownership beyond the declared external `Open5GS` interop boundary
-

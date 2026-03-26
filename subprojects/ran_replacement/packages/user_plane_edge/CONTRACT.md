@@ -15,6 +15,16 @@ This package owns the declared user-plane edge of the milestone-1 replacement la
 
 It does not own scheduler timing, RU/fronthaul loops, or the real core's subscriber state.
 
+## Conformance Frame
+
+This package is judged against:
+
+- `3GPP TS 38.415` as the declared NG / PDU-session user-plane frame for this
+  repo-owned subset
+- `subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md`
+- `subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+
 ## Runtime Owner
 
 Primary runtime owner for milestone 1: `ran_cu_up`.

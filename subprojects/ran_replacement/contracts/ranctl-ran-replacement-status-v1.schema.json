@@ -2,13 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/ranctl-ran-replacement-status-v1.schema.json",
   "title": "ranctl RAN Replacement Status v1",
-  "description": "Draft response schema for replacement-track RAN actions. The status surface is designed for agents, dashboard actions, and remote execution against a real Open5GS-based core.",
+  "description": "Draft response schema for replacement-track RAN actions. The status surface is designed for agents, dashboard actions, and remote execution against a real Open5GS-based core, and it must declare whether the evidence is proof-only or a standards-subset claim.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "status",
     "command",
     "scope",
+    "conformance_claim",
     "summary"
   ],
   "properties": {
@@ -79,6 +80,9 @@
         "string",
         "null"
       ]
+    },
+    "conformance_claim": {
+      "$ref": "#/$defs/conformance_claim"
     },
     "core_endpoint": {
       "$ref": "#/$defs/core_endpoint"
@@ -234,6 +238,32 @@
     }
   },
   "$defs": {
+    "conformance_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "evidence_tier",
+        "baseline_ref"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_tier": {
+          "type": "string",
+          "enum": [
+            "milestone_proof",
+            "standards_subset"
+          ]
+        },
+        "baseline_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "plane_summary": {
       "type": "object",
       "additionalProperties": false,

@@ -15,6 +15,17 @@ This package owns the declared core-link edge of the milestone-1 replacement lan
 
 It does not own the internal implementation of the real `Open5GS` core, radio timing, or hot-path forwarding internals.
 
+## Conformance Frame
+
+This package is judged against:
+
+- `docs/adr/0006-open5gs-public-surface-compatibility-baseline.md`
+- `docs/adr/0008-oai-cu-du-function-and-standards-baseline.md`
+- `3GPP TS 38.413` for the replacement-side `N2` / `NGAP` subset
+- `3GPP TS 38.415` as the declared NG / PDU-session user-plane frame for the
+  replacement-side `N3` subset
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+
 ## Runtime Owner
 
 Primary runtime owners for milestone 1: `ran_cu_cp` and `ran_cu_up`.
