@@ -84,6 +84,40 @@ Expected evidence fields:
 - `checks[]` for the last known NGAP checkpoint
 - artifact references for NGAP trace, attach trace, and cleanup trace
 
+## Claim Categories
+
+Repo-visible package claims must stay aligned with the procedure matrix.
+
+### Required claims
+
+The package may positively claim attach-path ownership only for:
+
+- `NG Setup`
+- `Initial UE Message`
+- `Uplink NAS Transport`
+- `Downlink NAS Transport`
+- `UE Context Release`
+
+### Optional claims
+
+The package may mention these only as explicit recovery or diagnostic behavior:
+
+- `Error Indication`
+- `Reset`
+
+They must not be used as proof that the attach path is standards-complete.
+
+### Deferred claims
+
+The package must not imply support for these milestone-1 deferred procedures:
+
+- `Paging`
+- `Handover Preparation`
+- `Path Switch Request`
+
+If they appear in docs or evidence, they must be labeled deferred/out-of-scope
+rather than supported.
+
 ## Contract Rules
 
 - Keep all mutating actions routed through `bin/ranctl`.

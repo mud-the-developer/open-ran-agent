@@ -18,6 +18,11 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     "PDU Session Resource Modify"
   ]
 
+  @optional_procedure_terms [
+    "Error Indication",
+    "Reset"
+  ]
+
   test "failed-cutover capture example uses rollback-review vocabulary" do
     status =
       repo_path(
@@ -101,6 +106,51 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert note =~ "- handover"
     assert note =~ "This subset does not claim:"
     refute note =~ "Path Switch Request"
+  end
+
+  test "repo-visible claim docs separate required, optional, and deferred procedures" do
+    support_matrix =
+      repo_path("subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md")
+      |> File.read!()
+
+    status_readme =
+      repo_path("subprojects/ran_replacement/examples/status/README.md")
+      |> File.read!()
+
+    package_readme =
+      repo_path("subprojects/ran_replacement/packages/ngap_edge/README.md")
+      |> File.read!()
+
+    contract =
+      repo_path("subprojects/ran_replacement/packages/ngap_edge/CONTRACT.md")
+      |> File.read!()
+
+    Enum.each(@required_ngap_subset, fn procedure ->
+      assert support_matrix =~ "| `#{procedure}` |"
+      assert status_readme =~ "- `#{procedure}`"
+      assert package_readme =~ "- `#{procedure}`"
+      assert contract =~ "- `#{procedure}`"
+    end)
+
+    Enum.each(@optional_procedure_terms, fn procedure ->
+      assert support_matrix =~ "| `#{procedure}` |"
+      assert status_readme =~ "- `#{procedure}`"
+      assert package_readme =~ "- `#{procedure}`"
+      assert contract =~ "- `#{procedure}`"
+    end)
+
+    Enum.each(["Paging", "Handover Preparation", "Path Switch Request"], fn procedure ->
+      assert support_matrix =~ "| `#{procedure}` |"
+      assert status_readme =~ "- `#{procedure}`"
+      assert package_readme =~ "- `#{procedure}`"
+      assert contract =~ "- `#{procedure}`"
+    end)
+
+    assert status_readme =~ "### Required procedure claims"
+    assert status_readme =~ "### Optional recovery claims"
+    assert status_readme =~ "### Deferred procedure claims"
+    assert package_readme =~ "## Claim Taxonomy"
+    assert contract =~ "## Claim Categories"
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

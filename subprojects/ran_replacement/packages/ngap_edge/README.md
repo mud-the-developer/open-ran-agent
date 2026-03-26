@@ -7,6 +7,41 @@ Intended contract:
 - Cover registration, context setup, UE attachment, and session control flows that sit at the boundary.
 - Stay aligned with the standards subset documented in the replacement notes before any implementation work starts.
 
+## Claim Taxonomy
+
+Repo-visible package docs, fixtures, and tests must keep three categories
+separate:
+
+### Required
+
+These procedures are required for the current attach-plus-ping milestone:
+
+- `NG Setup`
+- `Initial UE Message`
+- `Uplink NAS Transport`
+- `Downlink NAS Transport`
+- `UE Context Release`
+
+### Optional
+
+These procedures may appear only as explicit recovery or diagnostic helpers:
+
+- `Error Indication`
+- `Reset`
+
+They are not attach-path completion criteria.
+
+### Deferred
+
+These procedures are out of scope and must not be implied as implemented:
+
+- `Paging`
+- `Handover Preparation`
+- `Path Switch Request`
+
+If a repo-visible artifact needs one of these names, it must describe the
+procedure as deferred rather than supported.
+
 ## Ownership Freeze
 
 - Runtime owner(s): `ran_cu_cp` owns the replacement-side NGAP control/session state. The real `Open5GS` core remains the external peer runtime for subscriber and registration state.
