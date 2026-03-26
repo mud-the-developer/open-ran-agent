@@ -1,43 +1,39 @@
 defmodule RanActionGateway.ReplacementContractExamplesTest do
   use ExUnit.Case, async: true
 
-  test "ngap docs and ranctl examples keep conformance metadata wording explicit" do
-    ranctl_readme =
-      repo_path("subprojects/ran_replacement/examples/ranctl/README.md")
-      |> File.read!()
-
-    gates_note =
-      repo_path("subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md")
-      |> File.read!()
-
-    runbook =
-      repo_path("subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md")
-      |> File.read!()
-
-    templates =
+  test "target profile example names the public-surface compatibility profile" do
+    profile =
       repo_path(
-        "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
+        "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.example.json"
       )
       |> File.read!()
+      |> JSON.decode!()
 
-    dashboard =
-      repo_path("subprojects/ran_replacement/notes/15-dashboard-fixture-mapping.md")
+    compatibility = profile["compatibility_surface"]
+
+    assert compatibility["compatibility_profile"] == "open5gs_public_surface_ran_visible_v1"
+    assert compatibility["required_nf_set"] == ["AMF", "SMF", "UPF"]
+    assert "NGAP" in compatibility["required_io_surfaces"]
+    assert "GTP-U" in compatibility["required_io_surfaces"]
+
+    assert compatibility["evidence_ref"] =~
+             "0006-open5gs-public-surface-compatibility-baseline"
+  end
+
+  test "lab-owner overlay example names operator-facing compatibility alignment" do
+    overlay =
+      repo_path(
+        "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json"
+      )
       |> File.read!()
+      |> JSON.decode!()
 
-    ngap_contract =
-      repo_path("subprojects/ran_replacement/packages/ngap_edge/CONTRACT.md")
-      |> File.read!()
+    compatibility = overlay["compatibility_alignment"]
 
-    assert ranctl_readme =~ "metadata.replacement.ngap_subset"
-    assert gates_note =~ "`failure_class`"
-    assert gates_note =~ "`ngap_subset`"
-    assert runbook =~ "`ngap_subset`"
-    assert runbook =~ "`core_failure`"
-    assert templates =~ "`failure_class`"
-    assert templates =~ "`ngap_subset`"
-    assert dashboard =~ "`failure_class`"
-    assert ngap_contract =~ "`failure_class`"
-    assert ngap_contract =~ "`ngap_subset`"
+    assert compatibility["compatibility_profile"] == "open5gs_public_surface_ran_visible_v1"
+    assert compatibility["required_nf_set"] == ["AMF", "SMF", "UPF"]
+    assert "metrics" in compatibility["required_io_surfaces"]
+    assert "remote-run summary" in compatibility["operator_surfaces"]
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

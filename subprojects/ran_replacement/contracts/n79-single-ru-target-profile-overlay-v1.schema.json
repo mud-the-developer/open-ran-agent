@@ -14,7 +14,8 @@
     "ue_inventory",
     "core_inventory",
     "scope_alignment",
-    "notes_refs"
+    "notes_refs",
+    "compatibility_alignment"
   ],
   "properties": {
     "profile": {
@@ -368,6 +369,46 @@
       "items": {
         "type": "string",
         "minLength": 1
+      }
+    },
+    "compatibility_alignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compatibility_profile",
+        "required_nf_set",
+        "required_io_surfaces",
+        "operator_surfaces"
+      ],
+      "properties": {
+        "compatibility_profile": {
+          "type": "string",
+          "const": "open5gs_public_surface_ran_visible_v1"
+        },
+        "required_nf_set": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required_io_surfaces": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "operator_surfaces": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
       }
     }
   }
