@@ -5,8 +5,8 @@ defmodule RanActionGateway.Change do
 
   defstruct [
     :scope,
-    :cell_group,
     :target_ref,
+    :cell_group,
     :target_backend,
     :current_backend,
     :requested_target_backend,
@@ -26,10 +26,10 @@ defmodule RanActionGateway.Change do
 
   @type t :: %__MODULE__{
           scope: String.t(),
-          cell_group: String.t() | nil,
           target_ref: String.t() | nil,
-          target_backend: atom() | nil,
-          current_backend: atom() | nil,
+          cell_group: String.t() | nil,
+          target_backend: atom() | String.t() | nil,
+          current_backend: atom() | String.t() | nil,
           requested_target_backend: String.t() | nil,
           requested_current_backend: String.t() | nil,
           rollback_target: String.t() | nil,

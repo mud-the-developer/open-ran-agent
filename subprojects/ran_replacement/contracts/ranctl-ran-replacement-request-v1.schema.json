@@ -120,7 +120,12 @@
                     "const": "target_host"
                   },
                   "action": {
-                    "const": "precheck"
+                    "enum": [
+                      "precheck",
+                      "bring_up",
+                      "capture_artifacts",
+                      "rollback"
+                    ]
                   }
                 }
               }

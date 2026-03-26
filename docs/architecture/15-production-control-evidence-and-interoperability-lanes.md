@@ -54,7 +54,7 @@ The current hardened evidence surface includes:
 - `artifacts/deploy_preview/*` for preview, readiness, and quick-install output
 - `artifacts/install_runs/*` for remote ship/install transcripts and summaries
 - `artifacts/remote_runs/*` for remote `ranctl` plans, command logs, and fetches
-- `artifacts/changes/*`, `artifacts/verify/*`, `artifacts/captures/*`, and
+- `artifacts/prechecks/*`, `artifacts/changes/*`, `artifacts/verify/*`, `artifacts/captures/*`, and
   `artifacts/rollback_plans/*` for action-level decision evidence
 - `artifacts/runtime/*`, `artifacts/probe_snapshots/*`,
   `artifacts/config_snapshots/*`, and `artifacts/control_snapshots/*` for

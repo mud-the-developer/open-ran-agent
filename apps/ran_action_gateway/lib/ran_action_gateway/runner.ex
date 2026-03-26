@@ -16,6 +16,8 @@ defmodule RanActionGateway.Runner do
   @phases [:precheck, :plan, :apply, :verify, :rollback, :observe, :capture_artifacts]
   @change_commands [:precheck, :plan, :apply, :verify, :rollback]
   @scopes ~w(backend cell_group association incident gnb target_host ue_session ru_link core_link replacement_cutover)
+  @replacement_scopes ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+  @replacement_backends ~w(oai_reference replacement_shadow replacement_primary)
   @ngap_failure_hints [
     "downlink nas transport",
     "downlink_nas_transport",
@@ -32,6 +34,9 @@ defmodule RanActionGateway.Runner do
 
   @spec phases() :: [atom()]
   def phases, do: @phases
+
+  @spec replacement_scopes() :: [String.t()]
+  def replacement_scopes, do: @replacement_scopes
 
   @spec execute(atom(), Change.t()) :: {:ok, map()} | {:error, map()}
   def execute(command, %Change{} = change) when command in @phases do
@@ -58,14 +63,16 @@ defmodule RanActionGateway.Runner do
       []
       |> require(:scope, change.scope)
       |> validate_scope(change.scope)
+      |> validate_target_ref(change)
       |> validate_cell_group(change)
-      |> validate_target_backend(change.target_backend)
+      |> validate_target_backend(change.target_backend, change.scope)
       |> validate_verify_window(change.verify_window)
       |> validate_change_id(command, change.change_id)
       |> validate_reason(change.reason)
       |> validate_idempotency_key(change.idempotency_key)
       |> validate_observe_or_capture_identifiers(command, change)
       |> validate_approval_contract(command, change)
+      |> validate_replacement_contract(command, change)
       |> RuntimeContract.validate(command, change)
 
     case errors do
@@ -102,7 +109,7 @@ defmodule RanActionGateway.Runner do
       check("scope_valid", true),
       check(
         "target_backend_known",
-        is_nil(change.target_backend) or change.target_backend in RanCore.supported_backends()
+        target_backend_known?(change)
       ),
       check("verify_window_valid", valid_verify_window?(change.verify_window)),
       check("config_shape_present", config_report.status == :ok),
@@ -117,26 +124,31 @@ defmodule RanActionGateway.Runner do
 
     failed? = Enum.any?(checks, &(&1["status"] == "failed"))
 
-    {:ok,
-     %{
-       status: if(failed?, do: "failed", else: "ok"),
-       command: "precheck",
-       scope: change.scope,
-       cell_group: change.cell_group,
-       change_id: change.change_id,
-       incident_id: change.incident_id,
-       target_backend: maybe_to_string(change.target_backend),
-       checks: checks,
-       config_report: config_report,
-       policy: format_policy(switch_policy),
-       control_state: control_state,
-       native_probe: native_probe,
-       runtime_contract: runtime_contract,
-       runtime: runtime_payload(runtime_precheck),
-       next: if(failed?, do: ["observe"], else: ["plan"])
-     }
-     |> maybe_put_replacement_status(:precheck, change, checks)
-     |> materialize_replacement_artifacts(:precheck, change)}
+    payload =
+      %{
+        status: if(failed?, do: "failed", else: "ok"),
+        command: "precheck",
+        scope: change.scope,
+        target_ref: change.target_ref,
+        cell_group: change.cell_group,
+        change_id: change.change_id,
+        incident_id: change.incident_id,
+        target_backend: maybe_to_string(change.target_backend),
+        checks: checks,
+        config_report: config_report,
+        policy: format_policy(switch_policy),
+        control_state: control_state,
+        native_probe: native_probe,
+        runtime_contract: runtime_contract,
+        runtime: runtime_payload(runtime_precheck),
+        next: if(failed?, do: ["observe"], else: ["plan"])
+      }
+      |> maybe_add_precheck_artifact(change)
+      |> maybe_put_replacement_status(:precheck, change, checks)
+      |> materialize_replacement_artifacts(:precheck, change)
+      |> persist_precheck(change)
+
+    {:ok, payload}
   end
 
   defp do_execute(:plan, change) do
@@ -158,6 +170,7 @@ defmodule RanActionGateway.Runner do
             status: "planned",
             command: "plan",
             scope: change.scope,
+            target_ref: change.target_ref,
             cell_group: change.cell_group,
             change_id: change.change_id,
             incident_id: change.incident_id,
@@ -199,6 +212,7 @@ defmodule RanActionGateway.Runner do
           status: "applied",
           command: "apply",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -251,6 +265,7 @@ defmodule RanActionGateway.Runner do
           status: if(failed?, do: "failed", else: "verified"),
           command: "verify",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -288,6 +303,7 @@ defmodule RanActionGateway.Runner do
           status: "rolled_back",
           command: "rollback",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -332,6 +348,7 @@ defmodule RanActionGateway.Runner do
          status: "observed",
          command: "observe",
          scope: change.scope,
+         target_ref: change.target_ref,
          cell_group: change.cell_group,
          change_id: change.change_id,
          incident_id: change.incident_id,
@@ -374,6 +391,7 @@ defmodule RanActionGateway.Runner do
           status: "captured",
           command: "capture-artifacts",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -388,6 +406,20 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp maybe_add_precheck_artifact(payload, %Change{change_id: change_id})
+       when is_binary(change_id) do
+    Map.put(payload, :artifacts, [Store.precheck_path(change_id)])
+  end
+
+  defp maybe_add_precheck_artifact(payload, _change), do: payload
+
+  defp persist_precheck(payload, %Change{change_id: change_id}) when is_binary(change_id) do
+    Store.write_json(Store.precheck_path(change_id), payload)
+    payload
+  end
+
+  defp persist_precheck(payload, _change), do: payload
+
   defp require(errors, field, value) do
     if present?(value), do: errors, else: [{field, "is required"} | errors]
   end
@@ -398,23 +430,45 @@ defmodule RanActionGateway.Runner do
   defp validate_scope(errors, _scope),
     do: [{:scope, "must be one of #{@scopes |> Enum.join(", ")}"} | errors]
 
+  defp validate_target_ref(errors, %Change{scope: scope, target_ref: target_ref})
+       when scope in @replacement_scopes do
+    require(errors, :target_ref, target_ref)
+  end
+
+  defp validate_target_ref(errors, _change), do: errors
+
   defp validate_cell_group(errors, %Change{scope: "cell_group", cell_group: cell_group}) do
     require(errors, :cell_group, cell_group)
   end
 
   defp validate_cell_group(errors, _change), do: errors
 
-  defp validate_target_backend(errors, nil), do: errors
+  defp validate_target_backend(errors, nil, scope) when scope in @replacement_scopes do
+    [
+      {:target_backend, "must be one of #{Enum.join(@replacement_backends, ", ")}"}
+      | errors
+    ]
+  end
 
-  defp validate_target_backend(errors, backend) do
-    if backend in RanCore.supported_backends() do
-      errors
-    else
-      [
-        {:target_backend,
-         "must be one of #{Enum.join(Enum.map(RanCore.supported_backends(), &Atom.to_string/1), ", ")}"}
-        | errors
-      ]
+  defp validate_target_backend(errors, nil, _scope), do: errors
+
+  defp validate_target_backend(errors, backend, scope) do
+    cond do
+      scope in @replacement_scopes and replacement_backend?(backend) ->
+        errors
+
+      backend in RanCore.supported_backends() ->
+        errors
+
+      scope in @replacement_scopes ->
+        [{:target_backend, "must be one of #{Enum.join(@replacement_backends, ", ")}"} | errors]
+
+      true ->
+        [
+          {:target_backend,
+           "must be one of #{Enum.join(Enum.map(RanCore.supported_backends(), &Atom.to_string/1), ", ")}"}
+          | errors
+        ]
     end
   end
 
@@ -465,6 +519,22 @@ defmodule RanActionGateway.Runner do
   end
 
   defp validate_approval_contract(errors, _command, _change), do: errors
+
+  defp validate_replacement_contract(errors, command, %Change{} = change)
+       when change.scope in @replacement_scopes do
+    replacement = replacement_metadata(change)
+
+    errors
+    |> require_replacement_field("target_profile", replacement["target_profile"])
+    |> require_replacement_field("core_profile", replacement["core_profile"])
+    |> require_replacement_field("action", replacement["action"])
+    |> require_replacement_field("target_role", replacement["target_role"])
+    |> require_replacement_field("required_interfaces", replacement["required_interfaces"])
+    |> require_replacement_field("acceptance_gates", replacement["acceptance_gates"])
+    |> validate_replacement_rollback_target(command, change)
+  end
+
+  defp validate_replacement_contract(errors, _command, _change), do: errors
 
   defp load_plan(change_id) do
     case Store.read_json(Store.plan_path(change_id)) do
@@ -606,7 +676,10 @@ defmodule RanActionGateway.Runner do
   end
 
   defp approval_required?(command, %Change{} = change) when command in [:apply, :rollback] do
-    not change.dry_run and change.scope in ["backend", "cell_group", "association"]
+    replacement_destructive? = truthy?(replacement_metadata(change)["destructive"])
+
+    not change.dry_run and
+      (change.scope in ["backend", "cell_group", "association"] or replacement_destructive?)
   end
 
   defp approval_required?(_command, _change), do: false
@@ -674,6 +747,19 @@ defmodule RanActionGateway.Runner do
 
   defp normalize_evidence_refs(_evidence), do: []
 
+  defp infer_rollback_target(%Change{rollback_target: rollback_target}, _policy)
+       when is_binary(rollback_target) and rollback_target != "",
+       do: rollback_target
+
+  defp infer_rollback_target(%Change{current_backend: current_backend}, _policy)
+       when is_binary(current_backend) do
+    if replacement_backend?(current_backend) do
+      current_backend
+    else
+      infer_rollback_target(%Change{target_backend: current_backend}, nil)
+    end
+  end
+
   defp infer_rollback_target(%Change{current_backend: current_backend}, _policy)
        when not is_nil(current_backend) do
     if current_backend in RanCore.supported_backends() do
@@ -692,6 +778,11 @@ defmodule RanActionGateway.Runner do
 
   defp infer_rollback_target(%Change{target_backend: :aerial_fapi_profile}, _policy),
     do: :local_fapi_profile
+
+  defp infer_rollback_target(%Change{target_backend: target_backend}, _policy)
+       when is_binary(target_backend) do
+    if replacement_backend?(target_backend), do: target_backend, else: :stub_fapi_profile
+  end
 
   defp infer_rollback_target(%Change{}, _policy), do: :stub_fapi_profile
 
@@ -764,8 +855,7 @@ defmodule RanActionGateway.Runner do
     end
   end
 
-  defp replacement_scope?(scope),
-    do: scope in ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+  defp replacement_scope?(scope), do: scope in @replacement_scopes
 
   defp replacement_metadata(%Change{metadata: metadata}) do
     metadata[:replacement] || metadata["replacement"] || %{}
@@ -788,6 +878,10 @@ defmodule RanActionGateway.Runner do
        do: target_backend
 
   defp replacement_target_backend(_phase, %Change{target_backend: target_backend})
+       when is_binary(target_backend) and target_backend != "",
+       do: target_backend
+
+  defp replacement_target_backend(_phase, %Change{target_backend: target_backend})
        when is_atom(target_backend) and not is_nil(target_backend),
        do: Atom.to_string(target_backend)
 
@@ -798,6 +892,10 @@ defmodule RanActionGateway.Runner do
        do: rollback_target
 
   defp replacement_rollback_target(%Change{requested_current_backend: current_backend})
+       when is_binary(current_backend) and current_backend != "",
+       do: current_backend
+
+  defp replacement_rollback_target(%Change{current_backend: current_backend})
        when is_binary(current_backend) and current_backend != "",
        do: current_backend
 
@@ -821,18 +919,9 @@ defmodule RanActionGateway.Runner do
     %{
       profile: core["profile"] || replacement["core_profile"],
       release_ref: core["release_ref"] || "open5gs-sanitized-lab-release-1",
-      n2: atomize_map(core["n2"] || %{}),
-      n3: atomize_map(core["n3"] || %{})
+      n2: core["n2"] || %{},
+      n3: core["n3"] || %{}
     }
-  end
-
-  defp atomize_map(value) when is_map(value) do
-    value
-    |> Enum.map(fn
-      {key, nested} when is_binary(key) -> {String.to_atom(key), nested}
-      pair -> pair
-    end)
-    |> Enum.into(%{})
   end
 
   defp replacement_gate_class(:precheck, "blocked"), do: "blocked"
@@ -1752,6 +1841,51 @@ defmodule RanActionGateway.Runner do
      }}
   end
 
+  defp target_backend_known?(%Change{scope: scope, target_backend: backend})
+       when scope in @replacement_scopes,
+       do: replacement_backend?(backend)
+
+  defp target_backend_known?(%Change{target_backend: nil}), do: true
+
+  defp target_backend_known?(%Change{target_backend: backend}),
+    do: backend in RanCore.supported_backends()
+
+  defp replacement_backend?(backend) when is_atom(backend),
+    do: Atom.to_string(backend) in @replacement_backends
+
+  defp replacement_backend?(backend) when is_binary(backend), do: backend in @replacement_backends
+  defp replacement_backend?(_backend), do: false
+
+  defp require_replacement_field(errors, field, value) when is_list(value) do
+    if value == [] do
+      [{String.to_atom(field), "replacement metadata must include #{field}"} | errors]
+    else
+      errors
+    end
+  end
+
+  defp require_replacement_field(errors, field, value) do
+    if present?(value) do
+      errors
+    else
+      [{String.to_atom(field), "replacement metadata must include #{field}"} | errors]
+    end
+  end
+
+  defp validate_replacement_rollback_target(errors, :precheck, _change), do: errors
+
+  defp validate_replacement_rollback_target(errors, _command, %Change{} = change) do
+    if present?(replacement_review_rollback_target(change)) do
+      errors
+    else
+      [
+        {:rollback_target,
+         "replacement lifecycle commands require rollback_target or current_backend"}
+        | errors
+      ]
+    end
+  end
+
   defp present?(value), do: value not in [nil, "", false]
 
   defp truthy?(value), do: value in [true, "true", 1, "1", true]
@@ -2116,6 +2250,7 @@ defmodule RanActionGateway.Runner do
         artifact_root: Store.artifact_root()
       },
       workflow: %{
+        precheck: existing_path(change.change_id && Store.precheck_path(change.change_id)),
         plan: existing_path(change.change_id && Store.plan_path(change.change_id)),
         change_state:
           existing_path(change.change_id && Store.change_state_path(change.change_id)),
@@ -2500,7 +2635,7 @@ defmodule RanActionGateway.Runner do
   end
 
   defp recent_change_refs(limit) do
-    ["plans", "changes", "verify", "captures", "approvals", "rollback_plans"]
+    ["prechecks", "plans", "changes", "verify", "captures", "approvals", "rollback_plans"]
     |> Enum.flat_map(fn kind ->
       Path.wildcard(Path.join([Store.artifact_root(), kind, "*.json"]))
     end)
@@ -2785,6 +2920,7 @@ defmodule RanActionGateway.Runner do
 
   defp native_probe_snapshot(%Change{change_id: change_id}) do
     [
+      Store.precheck_path(change_id),
       Store.verify_path(change_id),
       Store.change_state_path(change_id),
       Store.plan_path(change_id)

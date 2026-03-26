@@ -88,14 +88,16 @@ defmodule RanActionGateway.ReplacementReview do
   end
 
   defp maybe_put_target_host_semantics(payload, :precheck, %Change{scope: "target_host"} = change) do
-    failed? = current_value(payload, :status) == "failed"
+    replacement = replacement_metadata(change)
+    core = replacement["open5gs_core"] || %{}
+    blocked? = current_value(payload, :status) in ["failed", "blocked"]
 
     Map.put(payload, :plane_status, %{
       s_plane: %{
-        status: if(failed?, do: "blocked", else: "ok"),
+        status: if(blocked?, do: "blocked", else: "ok"),
         evidence_ref: replacement_artifact(:precheck, change, "ptp-state"),
         reason:
-          if(failed?, do: "timing and fronthaul resources are not yet fully proven", else: nil)
+          if(blocked?, do: "timing and fronthaul resources are not yet fully proven", else: nil)
       },
       m_plane: %{
         status: "ok",
@@ -103,22 +105,36 @@ defmodule RanActionGateway.ReplacementReview do
         reason: nil
       },
       c_plane: %{
-        status: if(failed?, do: "blocked", else: "ok"),
+        status: if(blocked?, do: "blocked", else: "ok"),
         evidence_ref: replacement_artifact(:precheck, change, "core-link"),
-        reason: if(failed?, do: "cutover to the replacement lane is not yet allowed", else: nil)
+        reason: if(blocked?, do: "cutover to the replacement lane is not yet allowed", else: nil)
       },
       u_plane: %{
-        status: if(failed?, do: "blocked", else: "ok"),
+        status: if(blocked?, do: "blocked", else: "ok"),
         evidence_ref: replacement_artifact(:precheck, change, "user-plane"),
-        reason: if(failed?, do: "user-plane path is not yet declared ready", else: nil)
+        reason: if(blocked?, do: "user-plane path is not yet declared ready", else: nil)
       }
     })
     |> put_value(:ru_status, %{
-      status: if(failed?, do: "blocked", else: "ok"),
+      status: if(blocked?, do: "blocked", else: "ok"),
       evidence_ref: replacement_artifact(:precheck, change, "ru-sync"),
       reason:
-        if(failed?, do: "RU sync has not been demonstrated for the declared profile", else: nil)
+        if(blocked?, do: "RU sync has not been demonstrated for the declared profile", else: nil)
     })
+    |> put_value(:checks, [
+      %{
+        "name" => "host_preflight",
+        "status" => if(blocked?, do: "blocked", else: "ok")
+      },
+      %{
+        "name" => "ru_sync",
+        "status" => if(blocked?, do: "blocked", else: "ok")
+      },
+      %{
+        "name" => "core_link_reachable",
+        "status" => if(core["profile"], do: "ok", else: "blocked")
+      }
+    ])
   end
 
   defp maybe_put_target_host_semantics(payload, _phase, _change), do: payload

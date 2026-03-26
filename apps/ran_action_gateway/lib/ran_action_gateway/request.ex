@@ -6,6 +6,8 @@ defmodule RanActionGateway.Request do
   alias RanActionGateway.Change
   alias RanActionGateway.Runner
 
+  @replacement_backends ~w(oai_reference replacement_shadow replacement_primary)
+
   @spec command_from_string(String.t()) :: {:ok, atom()} | {:error, map()}
   def command_from_string("capture-artifacts"), do: {:ok, :capture_artifacts}
 
@@ -18,13 +20,15 @@ defmodule RanActionGateway.Request do
 
   @spec build_change(map()) :: {:ok, Change.t()}
   def build_change(payload) when is_map(payload) do
+    scope = fetch_string(payload, "scope")
+
     {:ok,
      %Change{
-       scope: fetch_string(payload, "scope"),
-       cell_group: fetch_string(payload, "cell_group"),
+       scope: scope,
        target_ref: fetch_string(payload, "target_ref"),
-       target_backend: fetch_backend(payload, "target_backend"),
-       current_backend: fetch_backend(payload, "current_backend"),
+       cell_group: fetch_string(payload, "cell_group"),
+       target_backend: fetch_backend(payload, "target_backend", scope),
+       current_backend: fetch_backend(payload, "current_backend", scope),
        requested_target_backend: fetch_backend_string(payload, "target_backend"),
        requested_current_backend: fetch_backend_string(payload, "current_backend"),
        rollback_target: fetch_string(payload, "rollback_target"),
@@ -48,18 +52,33 @@ defmodule RanActionGateway.Request do
     end
   end
 
-  defp fetch_backend(payload, key) do
+  defp fetch_backend(payload, key, scope) do
     case Map.get(payload, key) do
       nil ->
         nil
 
       value when is_atom(value) ->
-        if value in RanCore.supported_backends(), do: value, else: nil
+        cond do
+          value in RanCore.supported_backends() ->
+            value
+
+          replacement_scope?(scope) and Atom.to_string(value) in @replacement_backends ->
+            Atom.to_string(value)
+
+          true ->
+            nil
+        end
 
       value when is_binary(value) ->
-        Enum.find(RanCore.supported_backends(), fn backend ->
-          Atom.to_string(backend) == value
-        end)
+        cond do
+          replacement_scope?(scope) and value in @replacement_backends ->
+            value
+
+          true ->
+            Enum.find(RanCore.supported_backends(), fn backend ->
+              Atom.to_string(backend) == value
+            end)
+        end
 
       _ ->
         nil
@@ -73,6 +92,8 @@ defmodule RanActionGateway.Request do
       _ -> nil
     end
   end
+
+  defp replacement_scope?(scope), do: scope in Runner.replacement_scopes()
 
   defp fetch_map(payload, key, default) do
     case Map.get(payload, key, default) do

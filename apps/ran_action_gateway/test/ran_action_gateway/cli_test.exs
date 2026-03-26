@@ -212,24 +212,36 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_payload])
       assert precheck.core_profile == "open5gs_nsa_lab_v1"
+      assert precheck.status == "blocked"
+      assert precheck.gate_class == "blocked"
       assert precheck.target_ref == "host-n79-lab-01"
       assert precheck.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert precheck.target_backend == "replacement_shadow"
       assert (precheck[:rollback_target] || precheck["rollback_target"]) == "oai_reference"
       assert precheck.rollback_available == true
-      assert precheck.gate_class in ["blocked", "degraded"]
       assert precheck.conformance_claim.profile == "oai_visible_5g_standards_baseline_v1"
       assert precheck.core_endpoint.profile == "open5gs_nsa_lab_v1"
       assert precheck.core_endpoint.n2["amf_host"] == "10.41.83.45"
       assert get_in(precheck, [:ru_status, :evidence_ref]) =~ "/ru-sync.json"
       assert Enum.any?(precheck.artifacts, &String.ends_with?(&1, "/host-n79-lab-01.json"))
       assert Enum.all?(precheck.artifacts, &File.exists?/1)
+      assert File.exists?(Store.precheck_path("chg-ran-repl-precheck-001"))
 
       assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
                "artifacts/replacement/precheck/"
 
       assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) =~
                "artifacts/replacement/precheck/"
+
+      assert get_in(precheck, [:plane_status, :s_plane, :status]) == "blocked"
+      assert get_in(precheck, [:plane_status, :m_plane, :status]) == "ok"
+      assert get_in(precheck, [:ru_status, :status]) == "blocked"
+
+      assert Map.new(precheck.checks, &{&1["name"], &1["status"]}) == %{
+               "core_link_reachable" => "ok",
+               "host_preflight" => "blocked",
+               "ru_sync" => "blocked"
+             }
 
       verify_request =
         Path.join(
@@ -327,6 +339,98 @@ defmodule RanActionGateway.CLITest do
       assert File.exists?(get_in(capture, [:attach_status, :evidence_ref]))
       assert File.exists?(get_in(capture, [:pdu_session_status, :evidence_ref]))
       assert File.exists?(get_in(capture, [:ping_status, :evidence_ref]))
+    end)
+  end
+
+  test "target-host lifecycle preserves declared lane targets and deterministic artifacts",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      load = fn name ->
+        Path.join(repo_root, "subprojects/ran_replacement/examples/ranctl/#{name}")
+        |> File.read!()
+        |> JSON.decode!()
+      end
+
+      precheck_request =
+        load.("plan-target-host-open5gs-n79.json")
+        |> put_in(["metadata", "replacement", "action"], "precheck")
+        |> Map.put("dry_run", true)
+        |> Map.put("reason", "precheck target-host bring-up on the declared n79 replacement lane")
+        |> Map.put("idempotency_key", "ran-repl-target-host-precheck-001")
+        |> JSON.encode!()
+
+      assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_request])
+      assert precheck.status == "blocked"
+      assert File.exists?(Store.precheck_path("chg-ran-repl-target-host-001"))
+
+      assert {:ok, plan} =
+               CLI.run([
+                 "plan",
+                 "--json",
+                 load.("plan-target-host-open5gs-n79.json") |> JSON.encode!()
+               ])
+
+      assert plan.target_ref == "host-n79-lab-01"
+      assert (plan[:target_backend] || plan["target_backend"]) == "replacement_shadow"
+      assert (plan[:rollback_target] || plan["rollback_target"]) == "oai_reference"
+      assert File.exists?(Store.plan_path("chg-ran-repl-target-host-001"))
+
+      assert {:ok, apply} =
+               CLI.run([
+                 "apply",
+                 "--json",
+                 load.("apply-target-host-open5gs-n79.json") |> JSON.encode!()
+               ])
+
+      assert apply.target_ref == "host-n79-lab-01"
+      assert (apply[:target_backend] || apply["target_backend"]) == "replacement_shadow"
+      assert (apply[:rollback_target] || apply["rollback_target"]) == "oai_reference"
+      assert File.exists?(Store.change_state_path("chg-ran-repl-target-host-001"))
+
+      assert {:ok, verify} =
+               CLI.run([
+                 "verify",
+                 "--json",
+                 load.("verify-target-host-open5gs-n79.json") |> JSON.encode!()
+               ])
+
+      assert verify.target_ref == "host-n79-lab-01"
+      assert (verify[:target_backend] || verify["target_backend"]) == "replacement_shadow"
+      assert (verify[:rollback_target] || verify["rollback_target"]) == "oai_reference"
+      assert File.exists?(Store.verify_path("chg-ran-repl-target-host-001"))
+
+      assert {:ok, capture} =
+               CLI.run([
+                 "capture-artifacts",
+                 "--json",
+                 load.("capture-artifacts-target-host-open5gs-n79.json") |> JSON.encode!()
+               ])
+
+      assert capture.target_ref == "host-n79-lab-01"
+      assert (capture[:rollback_target] || capture["rollback_target"]) == "oai_reference"
+
+      assert get_in(capture, [:bundle, :workflow, :precheck]) ==
+               Store.precheck_path("chg-ran-repl-target-host-001")
+
+      assert get_in(capture, [:bundle, :workflow, :plan]) ==
+               Store.plan_path("chg-ran-repl-target-host-001")
+
+      assert File.exists?(Store.capture_path("inc-ran-repl-target-host-001"))
+
+      assert {:ok, rollback} =
+               CLI.run([
+                 "rollback",
+                 "--json",
+                 load.("rollback-target-host-open5gs-n79.json") |> JSON.encode!()
+               ])
+
+      assert rollback.target_ref == "host-n79-lab-01"
+      assert (rollback[:target_backend] || rollback["target_backend"]) == "oai_reference"
+      assert (rollback[:rollback_target] || rollback["rollback_target"]) == "oai_reference"
+      assert (rollback[:restored_from] || rollback["restored_from"]) == "replacement_shadow"
+      assert File.exists?(Store.approval_path("chg-ran-repl-target-host-001", "rollback"))
     end)
   end
 
