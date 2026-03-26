@@ -4,7 +4,7 @@ layout: home
 hero:
   name: Open RAN Agent
   text: Design-first Open RAN docs and operator workflows
-  tagline: Architecture, ADRs, target-host deployment, evidence loops, and Cloudflare-hosted documentation for the bootstrap repo.
+  tagline: Architecture, ADRs, production-facing control and evidence workflows, and static docs for the current support posture.
   image:
     src: /assets/logo/open-ran-agent-32.svg
     alt: Open RAN Agent logo
@@ -32,7 +32,7 @@ features:
 
 The site groups the repo into three operator-friendly surfaces:
 
-- **Architecture** for boundaries, contracts, and target-host workflows
+- **Architecture** for boundaries, contracts, target-host workflows, and support posture
 - **ADRs** for the decisions that lock those boundaries in place
 - **Backlog** for the next implementation cuts
 
@@ -52,6 +52,11 @@ The site groups the repo into three operator-friendly surfaces:
     <strong>Deploy loop</strong>
     <span>See the handoff, preflight, remote execution, and fetchback path for real hosts.</span>
   </a>
+  <a class="docs-hero-card" href="/architecture/15-production-control-evidence-and-interoperability-lanes">
+    <img src="/assets/figures/ranctl-lifecycle.svg" alt="Support posture figure">
+    <strong>Support posture</strong>
+    <span>See what is hardened now for operators and what still remains a future interoperability lane.</span>
+  </a>
 </div>
 
 ## Fast paths
@@ -67,17 +72,17 @@ The site groups the repo into three operator-friendly surfaces:
   </a>
   <a class="doc-hub-card" href="/backlog/">
     <strong>Backlog</strong>
-    <span>See the current implementation queue and how the bootstrap still needs to move toward real runtime and transport integration.</span>
+    <span>See the current implementation queue and the future runtime and interoperability lanes that still need proof.</span>
   </a>
 </div>
 
 ## What is here today
 
 - design-first architecture docs for the RAN control and ops stack
-- executable bootstrap surfaces such as `ranctl`, Deploy Studio, and target-host preflight
-- operator-oriented deployment and evidence workflows
+- production-facing control, deploy, evidence, and recovery workflows through `ranctl`, Deploy Studio, and target-host tooling
+- explicit support-posture documentation for hardened-now versus future-lane claims
 - a static documentation site that can be deployed without adding a backend
 
 <div class="doc-callout">
-  This site is intentionally documentation-centric. It explains the current bootstrap honestly, including what is working today and what still remains synthetic or deferred.
+  This site is intentionally documentation-centric. It explains what is hardened now for operator control and evidence, and it keeps future interoperability lanes explicit until they are proven.
 </div>

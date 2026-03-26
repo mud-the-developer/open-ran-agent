@@ -60,6 +60,27 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - target-profile and lab-owner overlay examples
 - package-local request/status fixtures
 
+## Current Support Posture
+
+This workspace already hardens the replacement lane's control and evidence
+surface:
+
+- request and status schemas for `ranctl` replacement scopes
+- compare-report and rollback-evidence schemas
+- sanitized fixtures for status, artifacts, and target profiles
+- explicit rollback targets and reviewable evidence expectations
+
+Those are current support claims for reviewer-visible control and evidence.
+They are not yet claims of supported live runtime cutover.
+
+The following remain future lanes until they have repo-visible proof:
+
+- live replacement runtime ownership on the declared `n79` lane
+- real `Aerial` runtime support
+- real `cuMAC` scheduler support
+- broader RU, UE, or core profiles beyond the declared `n79` plus real
+  `Open5GS` target
+
 ## Current Deliverables
 
 - [task.md](task.md)

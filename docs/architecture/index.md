@@ -41,6 +41,10 @@ This section is the narrative path through the repo's current architecture. Read
     <strong>14. Debug and evidence</strong>
     <span>The shortest operator path from failure to artifacts, summaries, transcripts, and fetched evidence.</span>
   </a>
+  <a class="doc-hub-card" href="/architecture/15-production-control-evidence-and-interoperability-lanes">
+    <strong>15. Support posture</strong>
+    <span>Current hardened control/evidence surfaces versus future interoperability lanes such as Aerial and cuMAC.</span>
+  </a>
 </div>
 
 ## Suggested reading order
@@ -49,4 +53,4 @@ This section is the narrative path through the repo's current architecture. Read
 2. Continue through [05-ranctl-action-model](./05-ranctl-action-model.md) for the mutable control surface.
 3. Read [09-oai-du-runtime-bridge](./09-oai-du-runtime-bridge.md) and [12-target-host-deployment](./12-target-host-deployment.md) if you care about real host rollout.
 4. Keep [14-debug-and-evidence-workflow](./14-debug-and-evidence-workflow.md) open when running changes.
-
+5. Use [15-production-control-evidence-and-interoperability-lanes](./15-production-control-evidence-and-interoperability-lanes.md) when you need the current hardened-now versus future-lane support boundary.

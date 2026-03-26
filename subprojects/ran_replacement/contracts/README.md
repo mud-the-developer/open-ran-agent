@@ -1,8 +1,17 @@
 # RAN Replacement Contracts
 
-This directory will hold draft contracts for the replacement track.
+This directory holds draft contracts for the replacement track's control and
+evidence surface.
 
-Planned first contracts:
+These schemas are part of the current hardened-now review posture: they make
+status, compare reports, rollback evidence, and target-profile assumptions
+explicit and schema-backed.
+
+They do not, by themselves, claim supported live runtime cutover, `Aerial`
+runtime ownership, `cuMAC` scheduler ownership, or broader interoperability
+beyond the declared `n79` plus real `Open5GS` lane.
+
+Current schema set:
 
 - `ranctl-ran-replacement-request-v1.schema.json`
 - `ranctl-ran-replacement-status-v1.schema.json`
