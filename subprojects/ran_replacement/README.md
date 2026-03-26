@@ -38,6 +38,12 @@ The immediate work here is not runtime code. The immediate work is:
 - define `precheck -> plan -> apply -> verify -> rollback -> capture-artifacts` for replacement-track scopes
 - describe how a staged cutover can happen without hiding rollback or evidence
 
+The current document split is deliberate:
+
+- notes `05` through `12` are the milestone-2 standards-baseline inputs
+- notes `13` through `16` are the milestone-3 live-lab validation and
+  operator-facing evidence inputs
+
 ## Quick Validation
 
 Use the same contract validator locally that the repo-visible workflow runs:
@@ -74,6 +80,8 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - [notes/12-standards-evidence-and-acceptance-gates.md](notes/12-standards-evidence-and-acceptance-gates.md)
 - [notes/13-milestone-1-acceptance-runbook.md](notes/13-milestone-1-acceptance-runbook.md)
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
+- [notes/15-dashboard-fixture-mapping.md](notes/15-dashboard-fixture-mapping.md)
+- [notes/16-milestone-3-live-lab-validation-lanes.md](notes/16-milestone-3-live-lab-validation-lanes.md)
 - [notes/README.md](notes/README.md)
 - [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
