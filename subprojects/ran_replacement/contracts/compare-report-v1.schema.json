@@ -108,6 +108,10 @@
       "type": "string",
       "minLength": 1
     },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
     "operator_next_step": {
       "type": "string",
       "minLength": 1
