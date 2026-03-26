@@ -157,12 +157,18 @@ Gate expectations:
 It must surface, at minimum:
 
 - `gate_class`
+- `failure_class`
 - `target_profile`
 - `core_profile`
 - `core_endpoint`
 - `ru_profile`
 - `ue_profile`
 - `rollback_target`
+- `ngap_subset.standards_subset_ref`
+- `ngap_subset.procedure_matrix_ref`
+- `ngap_subset.required_procedures`
+- `ngap_subset.optional_procedures`
+- `ngap_subset.deferred_procedures`
 - per-interface gate state for `NGAP`, `F1-C`, `E1AP`, `F1-U`, and `GTP-U`
 - a list of reasons for any `blocked` or `degraded` result
 
@@ -181,7 +187,9 @@ It must surface, at minimum:
 It must surface, at minimum:
 
 - the latest per-interface gate class
+- `failure_class`
 - `core_endpoint`
+- `ngap_subset`
 - `core_link_status`
 - `ngap_procedure_trace`
 - the last observed procedure or state transition per interface
@@ -206,6 +214,8 @@ It must capture, at minimum:
 - `precheck` output
 - `plan` output
 - `verify` output
+- the declared `ngap_subset` references and procedure lists
+- the resolved `failure_class` when the gate is not `pass`
 - interface-specific logs or snapshots
 - rollback evidence when the gate was not `pass`
 
@@ -234,7 +244,7 @@ If any one of those is missing, the result is not `pass`.
 `ranctl` should treat the gates as the control contract, not as incidental logs.
 
 - `ranctl precheck` computes the gate class and refuses unsafe cutover planning.
-- `ranctl plan` may only describe mutation when `precheck` is not `blocked`.
+- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must not imply support outside `ngap_subset.optional_procedures` and `ngap_subset.deferred_procedures`.
 - `ranctl apply` requires the explicit approval gate already defined by the repo rules.
 - `ranctl verify` confirms whether the current state is still standards-correct or whether rollback is now the safer operator action.
 - `ranctl capture-artifacts` freezes the evidence that justified the decision.

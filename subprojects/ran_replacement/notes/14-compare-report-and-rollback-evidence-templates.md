@@ -53,6 +53,8 @@ Minimum sections:
 - `expected_state`
 - `observed_state`
 - `gate_class`
+- `failure_class`
+- `ngap_subset`
 - `diff_summary`
 - `evidence_refs`
 - `rollback_target`
@@ -63,6 +65,7 @@ Minimum sections:
 - The report must name the declared profile, not a local-only alias.
 - The report must name the declared core endpoint and profile, not just a generic core label.
 - The report must say which interface family is being compared.
+- The report must carry the declared NGAP subset references when NGAP-facing evidence is involved.
 - The report must distinguish `expected` from `observed`.
 - The report must call out whether a mismatch is functional, procedural, or
   evidence-related.
@@ -82,6 +85,8 @@ Minimum sections:
 - `rollback_target`
 - `rollback_reason`
 - `triggering_gate`
+- `failure_class`
+- `ngap_subset`
 - `pre_rollback_state`
 - `post_rollback_state`
 - `recovery_check`
@@ -94,6 +99,7 @@ Minimum sections:
   up.
 - The rollback evidence must reference the compare report that triggered the
   decision.
+- The rollback evidence must preserve the same NGAP subset references and failure class that justified the decision.
 - The rollback evidence must show whether the rollback target was restored
   cleanly.
 - The rollback evidence must not rely on implicit operator memory.
