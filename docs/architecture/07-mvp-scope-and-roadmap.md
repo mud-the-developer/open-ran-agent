@@ -37,9 +37,11 @@ support claims:
 
 For roadmap review, treat them as separate future lanes:
 
-- `Aerial interoperability`
-- `cuMAC scheduler interoperability`
-- `broader profile expansion`
+| Lane | Hardened-now support | Explicit non-claim | Tracking issue |
+| --- | --- | --- | --- |
+| `Aerial interoperability` | `aerial_fapi_profile` contract scaffolding, shared Port bootstrap runtime, session lifecycle scaffolds, and host-probe gating | no vendor device bring-up proof, no attach-plus-ping proof, no production timing claim | `YON-58` |
+| `cuMAC scheduler interoperability` | `ran_scheduler_host` boundary plus placeholder `cumac_scheduler` adapter surface | no external scheduler worker proof, no runtime timing proof, no attach validation claim | `YON-59` |
+| `broader profile expansion` | one DU, one cell group, one UE bootstrap lane plus contract-only backend surfaces | no multi-cell parity claim, no multi-DU parity claim, no broad vendor/profile parity claim | `YON-60` |
 
 ## Out Of Scope For This Bootstrap
 

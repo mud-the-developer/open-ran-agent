@@ -48,6 +48,13 @@ The first meaningful target is:
 
 Roadmap note:
 
-- `aerial_backend`, `cumac_scheduler`, and broader profile expansion remain
-  future interoperability lanes until explicitly proven and promoted out of the
-  roadmap-only set.
+- Hardened-now support stops at the single-DU, single-cell, single-UE bootstrap
+  lane plus contract-level backend and scheduler surfaces.
+- `Aerial interoperability` remains roadmap-only until the `aerial_backend`
+  lane has real external proof. Track promotion work in `YON-58`.
+- `cuMAC scheduler interoperability` remains roadmap-only until the
+  `cumac_scheduler` lane has real external proof. Track promotion work in
+  `YON-59`.
+- `Broader profile expansion` remains roadmap-only until any multi-cell,
+  multi-DU, or broader vendor/profile lane is separately proven. Track that
+  decomposition in `YON-60`.
