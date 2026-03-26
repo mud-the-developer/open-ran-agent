@@ -35,3 +35,11 @@ Reading order:
 10. milestone-1 acceptance runbook
 11. compare-report and rollback-evidence templates
 12. dashboard fixture mapping
+
+## How To Read Claims
+
+- ADR 0006 defines the broader public-surface compatibility baseline.
+- ADR 0008 plus notes `06` through `12` define the narrower standards-subset
+  claims for the milestone path.
+- Repo-visible docs/tests/artifacts should make it explicit whether a claim is
+  about compatibility baseline or standards-subset conformance.

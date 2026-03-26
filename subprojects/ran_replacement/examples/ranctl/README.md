@@ -17,6 +17,13 @@ Runbook alignment:
 - use `notes/13-milestone-1-acceptance-runbook.md` as the operator sequence reference
 - keep all example payloads sanitized and profile-specific
 
+Claim boundary:
+
+- these payloads illustrate the standards-subset workflow for the declared
+  replacement lane
+- they may carry compatibility vocabulary, but they do not by themselves prove
+  public-surface parity outside the declared milestone subset
+
 Current draft files:
 
 - [precheck-target-host-open5gs-n79.json](precheck-target-host-open5gs-n79.json)
