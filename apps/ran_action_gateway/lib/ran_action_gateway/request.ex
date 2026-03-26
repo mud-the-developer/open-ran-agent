@@ -22,8 +22,11 @@ defmodule RanActionGateway.Request do
      %Change{
        scope: fetch_string(payload, "scope"),
        cell_group: fetch_string(payload, "cell_group"),
+       target_ref: fetch_string(payload, "target_ref"),
        target_backend: fetch_backend(payload, "target_backend"),
        current_backend: fetch_backend(payload, "current_backend"),
+       requested_target_backend: fetch_backend_string(payload, "target_backend"),
+       requested_current_backend: fetch_backend_string(payload, "current_backend"),
        rollback_target: fetch_string(payload, "rollback_target"),
        change_id: fetch_string(payload, "change_id"),
        incident_id: fetch_string(payload, "incident_id"),
@@ -60,6 +63,14 @@ defmodule RanActionGateway.Request do
 
       _ ->
         nil
+    end
+  end
+
+  defp fetch_backend_string(payload, key) do
+    case Map.get(payload, key) do
+      value when is_binary(value) and value != "" -> value
+      value when is_atom(value) -> Atom.to_string(value)
+      _ -> nil
     end
   end
 

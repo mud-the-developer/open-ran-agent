@@ -27,6 +27,8 @@ defmodule RanActionGateway.Runner do
     "registration failed",
     "ngap_registration_failed"
   ]
+  @baseline_conformance_profile "oai_visible_5g_standards_baseline_v1"
+  @baseline_conformance_ref "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
 
   @spec phases() :: [atom()]
   def phases, do: @phases
@@ -133,49 +135,54 @@ defmodule RanActionGateway.Runner do
        runtime: runtime_payload(runtime_precheck),
        next: if(failed?, do: ["observe"], else: ["plan"])
      }
-     |> maybe_put_replacement_status(:precheck, change, checks)}
+     |> maybe_put_replacement_status(:precheck, change, checks)
+     |> materialize_replacement_artifacts(:precheck, change)}
   end
 
   defp do_execute(:plan, change) do
-    with {:ok, switch_policy} <- backend_switch_policy(change),
-         {:ok, runtime_plan} <- runtime_plan(change),
-         {:ok, runtime_contract} <- RuntimeContract.plan_contract(change) do
-      rollback_target = infer_rollback_target(change, switch_policy)
-      current_backend = change.current_backend || switch_policy.current_backend
-      rollback_plan = build_rollback_plan(change, rollback_target)
+    if replacement_scope?(change.scope) do
+      do_execute_replacement_plan(change)
+    else
+      with {:ok, switch_policy} <- backend_switch_policy(change),
+           {:ok, runtime_plan} <- runtime_plan(change),
+           {:ok, runtime_contract} <- RuntimeContract.plan_contract(change) do
+        rollback_target = infer_rollback_target(change, switch_policy)
+        current_backend = change.current_backend || switch_policy.current_backend
+        rollback_plan = build_rollback_plan(change, rollback_target)
 
-      Store.ensure_root!()
-      Store.write_json(Store.rollback_plan_path(change.change_id), rollback_plan)
+        Store.ensure_root!()
+        Store.write_json(Store.rollback_plan_path(change.change_id), rollback_plan)
 
-      plan =
-        %{
-          status: "planned",
-          command: "plan",
-          scope: change.scope,
-          cell_group: change.cell_group,
-          change_id: change.change_id,
-          incident_id: change.incident_id,
-          target_backend: maybe_to_string(change.target_backend),
-          current_backend: maybe_to_string(current_backend),
-          rollback_target: maybe_to_string(rollback_target),
-          allowed_targets: Enum.map(switch_policy.allowed_targets, &Atom.to_string/1),
-          steps: ["precheck", "apply", "verify"],
-          rollback_plan: rollback_plan,
-          verify_window: change.verify_window,
-          max_blast_radius: change.max_blast_radius,
-          artifacts: [
-            Store.plan_path(change.change_id),
-            Store.rollback_plan_path(change.change_id)
-          ]
-        }
-        |> put_optional("approval_required", approval_required?(:apply, change))
-        |> put_optional("approval_fields_required", approval_fields_required(:apply, change))
-        |> put_runtime_contract(runtime_contract)
-        |> put_runtime_plan(runtime_plan)
+        plan =
+          %{
+            status: "planned",
+            command: "plan",
+            scope: change.scope,
+            cell_group: change.cell_group,
+            change_id: change.change_id,
+            incident_id: change.incident_id,
+            target_backend: maybe_to_string(change.target_backend),
+            current_backend: maybe_to_string(current_backend),
+            rollback_target: maybe_to_string(rollback_target),
+            allowed_targets: Enum.map(switch_policy.allowed_targets, &Atom.to_string/1),
+            steps: ["precheck", "apply", "verify"],
+            rollback_plan: rollback_plan,
+            verify_window: change.verify_window,
+            max_blast_radius: change.max_blast_radius,
+            artifacts: [
+              Store.plan_path(change.change_id),
+              Store.rollback_plan_path(change.change_id)
+            ]
+          }
+          |> put_optional("approval_required", approval_required?(:apply, change))
+          |> put_optional("approval_fields_required", approval_fields_required(:apply, change))
+          |> put_runtime_contract(runtime_contract)
+          |> put_runtime_plan(runtime_plan)
 
-      Store.write_json(Store.plan_path(change.change_id), plan)
+        Store.write_json(Store.plan_path(change.change_id), plan)
 
-      {:ok, Map.put(plan, :summary, "change plan prepared for #{change.scope}")}
+        {:ok, Map.put(plan, :summary, "change plan prepared for #{change.scope}")}
+      end
     end
   end
 
@@ -212,6 +219,7 @@ defmodule RanActionGateway.Runner do
         |> put_optional("approved", approved?(change))
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_apply)
+        |> ReplacementReview.enrich(:apply, change, [])
 
       Store.write_json(Store.change_state_path(change.change_id), state)
       {:ok, state}
@@ -255,6 +263,7 @@ defmodule RanActionGateway.Runner do
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_verify)
         |> maybe_put_replacement_status(:verify, change, checks)
+        |> materialize_replacement_artifacts(:verify, change)
 
       Store.write_json(Store.verify_path(change.change_id), result)
       {:ok, result}
@@ -269,6 +278,9 @@ defmodule RanActionGateway.Runner do
          {:ok, approval} <- ensure_approval(:rollback, change),
          {:ok, runtime_rollback} <- maybe_rollback_runtime(change),
          {:ok, control_state} <- maybe_apply_control_state(change, :rollback) do
+      rollback_plan_path =
+        Store.write_json(Store.rollback_plan_path(change.change_id), rollback_plan)
+
       approval_path = persist_approval(:rollback, change, plan, approval)
 
       result =
@@ -289,13 +301,14 @@ defmodule RanActionGateway.Runner do
           artifacts: [
             Store.change_state_path(change.change_id),
             approval_path,
-            Store.rollback_plan_path(change.change_id)
+            rollback_plan_path
           ]
         }
         |> put_optional("approved", approved?(change))
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_rollback)
         |> maybe_put_replacement_status(:rollback, change, [])
+        |> materialize_replacement_artifacts(:rollback, change)
 
       Store.write_json(Store.change_state_path(change.change_id), result)
       {:ok, result}
@@ -343,7 +356,8 @@ defmodule RanActionGateway.Runner do
          runtime: runtime_observe,
          native_probe: native_probe
        }
-       |> maybe_put_replacement_status(:observe, change, [])}
+       |> maybe_put_replacement_status(:observe, change, [])
+       |> materialize_replacement_artifacts(:observe, change)}
     end
   end
 
@@ -367,6 +381,7 @@ defmodule RanActionGateway.Runner do
         }
         |> put_runtime_result(runtime_capture)
         |> maybe_put_replacement_status(:capture_artifacts, change, [])
+        |> materialize_replacement_artifacts(:capture_artifacts, change)
 
       path = Store.write_json(Store.capture_path(ref), bundle)
       {:ok, Map.update(bundle, :artifacts, [path], fn artifacts -> [path | artifacts] end)}
@@ -711,11 +726,18 @@ defmodule RanActionGateway.Runner do
     if replacement_scope?(change.scope) do
       replacement = replacement_metadata(change)
       base_status = payload[:status] || payload["status"]
+      replacement_status = replacement_status(phase, change, base_status)
 
       payload
-      |> maybe_replace_status(phase)
+      |> Map.put(:status, replacement_status)
+      |> Map.put(:target_ref, replacement_target_ref(change))
+      |> Map.put(:target_profile, replacement["target_profile"])
+      |> Map.put(:target_backend, replacement_target_backend(phase, change))
+      |> put_optional(:rollback_target, replacement_rollback_target(change))
+      |> Map.put(:conformance_claim, replacement_conformance_claim(phase))
+      |> Map.put(:core_endpoint, replacement_core_endpoint(replacement))
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
-      |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
+      |> Map.put(:gate_class, replacement_gate_class(phase, replacement_status))
       |> Map.put(:core_profile, replacement["core_profile"])
       |> Map.put(
         :core_link_status,
@@ -725,6 +747,7 @@ defmodule RanActionGateway.Runner do
         :interface_status,
         replacement_interface_status(phase, change, replacement, base_status)
       )
+      |> maybe_put_ru_status(phase, change, replacement, replacement_status)
       |> maybe_put_ngap_procedure_trace(phase, change, replacement, base_status)
       |> maybe_put_release_status(phase, change, replacement, base_status)
       |> maybe_put_failure_class(phase, change, replacement, base_status)
@@ -733,6 +756,7 @@ defmodule RanActionGateway.Runner do
       |> maybe_put_user_plane_semantics(phase, change, replacement)
       |> maybe_put_control_plane_interface_semantics(phase, change)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
+      |> maybe_put_session_gate_statuses(phase, change, replacement)
       |> maybe_put_replacement_review_semantics(phase, change, replacement)
       |> ReplacementReview.enrich(phase, change, checks)
     else
@@ -747,13 +771,85 @@ defmodule RanActionGateway.Runner do
     metadata[:replacement] || metadata["replacement"] || %{}
   end
 
-  defp replacement_gate_class(:precheck, "failed"), do: "blocked"
+  defp replacement_target_ref(%Change{target_ref: target_ref})
+       when is_binary(target_ref) and target_ref != "",
+       do: target_ref
+
+  defp replacement_target_ref(%Change{} = change) do
+    replacement = replacement_metadata(change)
+    replacement["target_ref"] || replacement["target_role"] || change.scope
+  end
+
+  defp replacement_target_backend(:precheck, %Change{requested_target_backend: nil}),
+    do: "replacement_shadow"
+
+  defp replacement_target_backend(_phase, %Change{requested_target_backend: target_backend})
+       when is_binary(target_backend) and target_backend != "",
+       do: target_backend
+
+  defp replacement_target_backend(_phase, %Change{target_backend: target_backend})
+       when is_atom(target_backend) and not is_nil(target_backend),
+       do: Atom.to_string(target_backend)
+
+  defp replacement_target_backend(_phase, _change), do: nil
+
+  defp replacement_rollback_target(%Change{rollback_target: rollback_target})
+       when is_binary(rollback_target) and rollback_target != "",
+       do: rollback_target
+
+  defp replacement_rollback_target(%Change{requested_current_backend: current_backend})
+       when is_binary(current_backend) and current_backend != "",
+       do: current_backend
+
+  defp replacement_rollback_target(%Change{current_backend: current_backend})
+       when is_atom(current_backend) and not is_nil(current_backend),
+       do: Atom.to_string(current_backend)
+
+  defp replacement_rollback_target(_change), do: "oai_reference"
+
+  defp replacement_conformance_claim(_phase) do
+    %{
+      profile: @baseline_conformance_profile,
+      evidence_tier: "milestone_proof",
+      baseline_ref: @baseline_conformance_ref
+    }
+  end
+
+  defp replacement_core_endpoint(replacement) do
+    core = replacement["open5gs_core"] || %{}
+
+    %{
+      profile: core["profile"] || replacement["core_profile"],
+      release_ref: core["release_ref"] || "open5gs-sanitized-lab-release-1",
+      n2: atomize_map(core["n2"] || %{}),
+      n3: atomize_map(core["n3"] || %{})
+    }
+  end
+
+  defp atomize_map(value) when is_map(value) do
+    value
+    |> Enum.map(fn
+      {key, nested} when is_binary(key) -> {String.to_atom(key), nested}
+      pair -> pair
+    end)
+    |> Enum.into(%{})
+  end
+
+  defp replacement_gate_class(:precheck, "blocked"), do: "blocked"
   defp replacement_gate_class(:precheck, _status), do: "degraded"
   defp replacement_gate_class(:observe, _status), do: "degraded"
+  defp replacement_gate_class(:capture_artifacts, "ok"), do: "pass"
   defp replacement_gate_class(:capture_artifacts, _status), do: "degraded"
   defp replacement_gate_class(:rollback, _status), do: "pass"
-  defp replacement_gate_class(:verify, "failed"), do: "degraded"
+  defp replacement_gate_class(:verify, "degraded"), do: "degraded"
   defp replacement_gate_class(:verify, _status), do: "pass"
+
+  defp replacement_status(:precheck, _change, _base_status), do: "blocked"
+  defp replacement_status(:observe, _change, _base_status), do: "degraded"
+  defp replacement_status(:capture_artifacts, _change, _base_status), do: "ok"
+  defp replacement_status(:rollback, _change, _base_status), do: "ok"
+  defp replacement_status(:verify, _change, "failed"), do: "degraded"
+  defp replacement_status(:verify, _change, _base_status), do: "ok"
 
   defp replacement_summary(phase, %Change{} = change, status) do
     target_role = replacement_metadata(change)["target_role"] || change.scope
@@ -838,12 +934,29 @@ defmodule RanActionGateway.Runner do
     end
   end
 
-  defp maybe_put_failure_class(payload, phase, %Change{} = change, replacement, status) do
-    case replacement_failure_class(phase, change, replacement, status) do
-      nil -> payload
-      failure_class -> Map.put(payload, :failure_class, failure_class)
+  defp maybe_put_ru_status(payload, phase, %Change{} = change, replacement, status) do
+    if Enum.member?(replacement["acceptance_gates"] || [], "ru_sync") do
+      Map.put(payload, :ru_status, %{
+        status: if(status == "blocked", do: "blocked", else: "ok"),
+        evidence_ref: replacement_evidence_ref(phase, change, "ru-sync"),
+        reason:
+          if(status == "blocked",
+            do: "RU sync has not been confirmed for the declared lane",
+            else: nil
+          )
+      })
+    else
+      payload
     end
   end
+
+  defp maybe_put_failure_class(payload, phase, %Change{} = change, replacement, status),
+    do:
+      Map.put(
+        payload,
+        :failure_class,
+        replacement_failure_class(phase, change, replacement, status)
+      )
 
   defp replacement_failure_class(phase, %Change{} = change, replacement, status) do
     cond do
@@ -1095,7 +1208,7 @@ defmodule RanActionGateway.Runner do
        when phase in [:verify, :observe, :capture_artifacts] do
     session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
 
-    Map.put(payload, :session_status, %{
+    session_status = %{
       status:
         if(user_plane_ping_failure?(change),
           do: "established_but_ping_failed",
@@ -1107,6 +1220,23 @@ defmodule RanActionGateway.Runner do
       reason:
         if(user_plane_ping_failure?(change),
           do: "PDU session exists, but the declared route did not complete a successful ping",
+          else: nil
+        )
+    }
+
+    payload
+    |> Map.put(:session_status, session_status)
+    |> Map.put(:pdu_session_status, %{
+      status: if(user_plane_ping_failure?(change), do: "ok", else: "ok"),
+      evidence_ref: replacement_evidence_ref(phase, change, "pdu-session"),
+      reason: nil
+    })
+    |> Map.put(:ping_status, %{
+      status: if(user_plane_ping_failure?(change), do: "failed", else: "ok"),
+      evidence_ref: replacement_evidence_ref(phase, change, "ping"),
+      reason:
+        if(user_plane_ping_failure?(change),
+          do: "declared ping target did not answer during the verify window",
           else: nil
         )
     })
@@ -1203,10 +1333,76 @@ defmodule RanActionGateway.Runner do
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
     if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
       Map.put(payload, :attach_status, %{
-        status: if(status == "failed", do: "pending", else: "ok"),
+        status:
+          cond do
+            ngap_registration_failure?(change) -> "failed"
+            status == "failed" -> "pending"
+            true -> "ok"
+          end,
         evidence_ref: replacement_evidence_ref(phase, change, "attach"),
         reason:
-          if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
+          cond do
+            ngap_registration_failure?(change) ->
+              "registration was rejected before the declared attach path completed"
+
+            status == "failed" ->
+              "replacement attach path is not yet fully proven"
+
+            true ->
+              nil
+          end
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_session_gate_statuses(payload, phase, %Change{} = change, replacement)
+       when phase in [:verify, :observe, :capture_artifacts] do
+    payload
+    |> maybe_put_pdu_session_status(phase, change, replacement)
+    |> maybe_put_ping_status(phase, change, replacement)
+  end
+
+  defp maybe_put_session_gate_statuses(payload, _phase, _change, _replacement), do: payload
+
+  defp maybe_put_pdu_session_status(payload, phase, %Change{} = change, replacement) do
+    if Enum.member?(replacement["acceptance_gates"] || [], "pdu_session") do
+      Map.put(payload, :pdu_session_status, %{
+        status: if(ngap_registration_failure?(change), do: "pending", else: "ok"),
+        evidence_ref: replacement_evidence_ref(phase, change, "pdu-session"),
+        reason:
+          if(ngap_registration_failure?(change),
+            do: "session setup was not reached after registration failed",
+            else: nil
+          )
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_ping_status(payload, phase, %Change{} = change, replacement) do
+    if Enum.member?(replacement["acceptance_gates"] || [], "ping") do
+      Map.put(payload, :ping_status, %{
+        status:
+          cond do
+            ngap_registration_failure?(change) -> "pending"
+            user_plane_ping_failure?(change) -> "failed"
+            true -> "ok"
+          end,
+        evidence_ref: replacement_evidence_ref(phase, change, "ping"),
+        reason:
+          cond do
+            ngap_registration_failure?(change) ->
+              "ping was not attempted after registration failed"
+
+            user_plane_ping_failure?(change) ->
+              "ping failed after the declared session was established"
+
+            true ->
+              nil
+          end
       })
     else
       payload
@@ -1221,52 +1417,103 @@ defmodule RanActionGateway.Runner do
        ) do
     rollback_target = replacement_review_rollback_target(change)
 
-    payload
-    |> Map.put(
-      :summary,
-      if(
-        user_plane_ping_failure?(change),
-        do:
-          "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
-        else:
-          "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+    if replacement_capture_success?(change, replacement) do
+      payload
+      |> Map.put(
+        :summary,
+        "Capture preserved the verified live-lab evidence bundle for the declared lane."
       )
-    )
-    |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
-    |> put_optional(:rollback_target, rollback_target)
-    |> Map.put(:rollback_available, not is_nil(rollback_target))
-    |> Map.put(:suggested_next, [
-      "inspect the compare report before another replacement mutation",
-      "confirm the rollback target and cleanup evidence remain explicit",
-      "retry only after the captured mismatch is explained"
-    ])
-    |> Map.put(
-      :checks,
-      replacement_review_checks(replacement["acceptance_gates"] || [], [
-        review_check("compare_report_ready", "ok", "the compare report is preserved for review"),
-        review_check(
-          "rollback_target_known",
-          if(is_nil(rollback_target), do: "failed", else: "ok"),
-          if(is_nil(rollback_target),
-            do: "rollback target is still missing from the review bundle",
-            else: "rollback target remains explicit for recovery"
-          )
-        ),
-        review_check(
-          "UE Context Release",
-          "ok",
-          "cleanup evidence remains explicit in the preserved review bundle"
-        )
+      |> Map.put(:gate_class, "pass")
+      |> put_optional(:rollback_target, rollback_target)
+      |> Map.put(:rollback_available, not is_nil(rollback_target))
+      |> Map.put(:suggested_next, [
+        "review the compare report and captured attach-plus-ping evidence together",
+        "fetch the same evidence bundle onto the packaging host before the next mutation",
+        "keep the rollback target explicit for the next real-lab run"
       ])
-    )
-    |> Map.put(
-      :rollback_status,
-      review_status(
-        "pending",
-        replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
-        "rollback is available but has not yet been executed"
+      |> Map.put(
+        :checks,
+        replacement_review_checks(replacement["acceptance_gates"] || [], [
+          review_check(
+            "compare_report_ready",
+            "ok",
+            "the compare report is preserved for review"
+          ),
+          review_check(
+            "rollback_target_known",
+            if(is_nil(rollback_target), do: "failed", else: "ok"),
+            if(is_nil(rollback_target),
+              do: "rollback target is still missing from the verified bundle",
+              else: "rollback target remains explicit for the next mutation"
+            )
+          ),
+          review_check(
+            "bundle_fetchable",
+            "ok",
+            "the verified evidence bundle is materialized under repo-visible artifact roots"
+          )
+        ])
       )
-    )
+      |> Map.put(
+        :rollback_status,
+        review_status(
+          "ok",
+          replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+          "rollback target remains available but was not executed for this successful capture"
+        )
+      )
+    else
+      payload
+      |> Map.put(
+        :summary,
+        if(
+          user_plane_ping_failure?(change),
+          do:
+            "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
+          else:
+            "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+        )
+      )
+      |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
+      |> put_optional(:rollback_target, rollback_target)
+      |> Map.put(:rollback_available, not is_nil(rollback_target))
+      |> Map.put(:suggested_next, [
+        "inspect the compare report before another replacement mutation",
+        "confirm the rollback target and cleanup evidence remain explicit",
+        "retry only after the captured mismatch is explained"
+      ])
+      |> Map.put(
+        :checks,
+        replacement_review_checks(replacement["acceptance_gates"] || [], [
+          review_check(
+            "compare_report_ready",
+            "ok",
+            "the compare report is preserved for review"
+          ),
+          review_check(
+            "rollback_target_known",
+            if(is_nil(rollback_target), do: "failed", else: "ok"),
+            if(is_nil(rollback_target),
+              do: "rollback target is still missing from the review bundle",
+              else: "rollback target remains explicit for recovery"
+            )
+          ),
+          review_check(
+            "UE Context Release",
+            "ok",
+            "cleanup evidence remains explicit in the preserved review bundle"
+          )
+        ])
+      )
+      |> Map.put(
+        :rollback_status,
+        review_status(
+          "pending",
+          replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+          "rollback is available but has not yet been executed"
+        )
+      )
+    end
   end
 
   defp maybe_put_replacement_review_semantics(payload, :rollback, %Change{} = change, replacement) do
@@ -1331,17 +1578,26 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp replacement_capture_success?(%Change{} = change, replacement) do
+    replacement_failure_class(:capture_artifacts, change, replacement, "ok") in [nil] and
+      not user_plane_ping_failure?(change)
+  end
+
   defp replacement_evidence_ref(phase, %Change{} = change, suffix) do
-    "artifacts/replacement/#{replacement_phase_name(phase)}/#{change.change_id}/#{suffix}.json"
+    "artifacts/replacement/#{replacement_phase_name(phase)}/#{change.change_id}/#{normalize_replacement_suffix(suffix)}.json"
   end
 
   defp replacement_phase_name(:capture_artifacts), do: "capture"
   defp replacement_phase_name(phase), do: Atom.to_string(phase)
 
-  defp maybe_replace_status(payload, phase) when phase in [:capture_artifacts, :rollback],
-    do: Map.put(payload, :status, "ok")
+  defp normalize_replacement_suffix("session"), do: "session"
+  defp normalize_replacement_suffix("pdu-session"), do: "pdu-session"
+  defp normalize_replacement_suffix("f1_c"), do: "f1-c"
+  defp normalize_replacement_suffix("f1_u"), do: "f1-u"
+  defp normalize_replacement_suffix("ru_fronthaul"), do: "ru-fronthaul"
 
-  defp maybe_replace_status(payload, _phase), do: payload
+  defp normalize_replacement_suffix(suffix) when is_binary(suffix),
+    do: String.replace(suffix, "_", "-")
 
   defp replacement_review_rollback_target(%Change{} = change) do
     rollback_target = Map.get(change, :rollback_target)
@@ -1350,7 +1606,10 @@ defmodule RanActionGateway.Runner do
       is_binary(rollback_target) and rollback_target != "" ->
         rollback_target
 
-      is_atom(change.current_backend) ->
+      is_binary(change.requested_current_backend) and change.requested_current_backend != "" ->
+        change.requested_current_backend
+
+      is_atom(change.current_backend) and not is_nil(change.current_backend) ->
         Atom.to_string(change.current_backend)
 
       is_binary(change.current_backend) and change.current_backend != "" ->
@@ -1395,6 +1654,31 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_append_check(checks, true, check), do: checks ++ [check]
   defp maybe_append_check(checks, false, _check), do: checks
+
+  defp do_execute_replacement_plan(%Change{} = change) do
+    rollback_target = Map.get(change, :rollback_target) || "oai_reference"
+    rollback_plan = build_rollback_plan(change, rollback_target)
+
+    Store.ensure_root!()
+    Store.write_json(Store.rollback_plan_path(change.change_id), rollback_plan)
+
+    plan =
+      replacement_virtual_plan(change)
+      |> Map.put("cell_group", change.cell_group)
+      |> Map.put("max_blast_radius", change.max_blast_radius)
+      |> Map.put("artifacts", [
+        Store.plan_path(change.change_id),
+        Store.rollback_plan_path(change.change_id)
+      ])
+      |> Map.put("rollback_plan", rollback_plan)
+      |> put_optional("approval_required", approval_required?(:apply, change))
+      |> put_optional("approval_fields_required", approval_fields_required(:apply, change))
+      |> ReplacementReview.enrich(:plan, change, [])
+      |> Map.put("summary", "change plan prepared for #{change.scope}")
+
+    Store.write_json(Store.plan_path(change.change_id), plan)
+    {:ok, plan}
+  end
 
   defp replacement_virtual_plan(%Change{} = change) do
     %{
@@ -1859,6 +2143,338 @@ defmodule RanActionGateway.Runner do
 
   defp existing_path(path) do
     if File.exists?(path), do: path, else: nil
+  end
+
+  defp materialize_replacement_artifacts(payload, phase, %Change{} = change) do
+    if replacement_scope?(change.scope) do
+      anchor_paths = persist_replacement_anchor_artifacts(payload, phase, change)
+      review_paths = persist_replacement_review_artifacts(payload, phase, change)
+      evidence_paths = persist_replacement_evidence_refs(payload, phase, change)
+
+      artifacts =
+        payload
+        |> payload_artifacts()
+        |> Kernel.++(anchor_paths)
+        |> Kernel.++(review_paths)
+        |> Kernel.++(evidence_paths)
+        |> Enum.reject(&is_nil/1)
+        |> Enum.uniq()
+
+      Map.put(payload, :artifacts, artifacts)
+    else
+      payload
+    end
+  end
+
+  defp persist_replacement_anchor_artifacts(payload, phase, %Change{} = change) do
+    target_ref = payload[:target_ref] || payload["target_ref"] || replacement_target_ref(change)
+
+    if is_binary(target_ref) and target_ref != "" do
+      path =
+        Store.replacement_path(
+          replacement_phase_name(phase),
+          change.change_id,
+          "#{target_ref}.json"
+        )
+
+      [
+        Store.write_json(path, %{
+          captured_at: now_iso8601(),
+          command: payload[:command] || payload["command"],
+          change_id: change.change_id,
+          incident_id: change.incident_id,
+          target_ref: target_ref,
+          target_profile: payload[:target_profile] || payload["target_profile"],
+          summary: payload[:summary] || payload["summary"]
+        })
+      ]
+    else
+      []
+    end
+  end
+
+  defp payload_artifacts(payload) do
+    case payload[:artifacts] || payload["artifacts"] do
+      artifacts when is_list(artifacts) -> Enum.filter(artifacts, &is_binary/1)
+      _ -> []
+    end
+  end
+
+  defp persist_replacement_review_artifacts(payload, phase, %Change{} = change) do
+    review = get_in(payload, [:bundle, :review]) || get_in(payload, ["bundle", "review"]) || %{}
+    compare_report_path = review[:compare_report] || review["compare_report"]
+
+    []
+    |> maybe_write_json(
+      review[:request_snapshot] || review["request_snapshot"],
+      replacement_request_snapshot(change)
+    )
+    |> maybe_write_json(compare_report_path, replacement_compare_report(payload, phase, change))
+    |> maybe_write_json(
+      review[:rollback_evidence] || review["rollback_evidence"],
+      replacement_rollback_evidence(payload, phase, change, compare_report_path)
+    )
+  end
+
+  defp maybe_write_json(paths, nil, _payload), do: paths
+
+  defp maybe_write_json(paths, path, payload) when is_binary(path) and is_map(payload) do
+    paths ++ [Store.write_json(path, payload)]
+  end
+
+  defp persist_replacement_evidence_refs(payload, phase, %Change{} = change) do
+    replacement_paths =
+      payload_artifacts(payload) ++ collect_evidence_refs(payload)
+
+    replacement_paths
+    |> Enum.filter(&materialized_replacement_path?/1)
+    |> Enum.uniq()
+    |> Enum.map(fn ref ->
+      if File.exists?(ref) do
+        ref
+      else
+        Store.write_json(ref, replacement_evidence_stub(ref, payload, phase, change))
+      end
+    end)
+  end
+
+  defp collect_evidence_refs(value) when is_list(value),
+    do: Enum.flat_map(value, &collect_evidence_refs/1)
+
+  defp collect_evidence_refs(value) when is_map(value) do
+    direct =
+      case value[:evidence_ref] || value["evidence_ref"] do
+        evidence_ref when is_binary(evidence_ref) -> [evidence_ref]
+        _ -> []
+      end
+
+    direct ++ Enum.flat_map(Map.values(value), &collect_evidence_refs/1)
+  end
+
+  defp collect_evidence_refs(_value), do: []
+
+  defp materialized_replacement_path?(path) do
+    is_binary(path) and
+      (String.starts_with?(path, "#{Store.artifact_root()}/replacement/") or
+         String.starts_with?(path, "#{Store.artifact_root()}/captures/"))
+  end
+
+  defp replacement_request_snapshot(%Change{} = change) do
+    %{
+      captured_at: now_iso8601(),
+      scope: change.scope,
+      target_ref: change.target_ref,
+      target_backend: change.requested_target_backend || maybe_to_string(change.target_backend),
+      current_backend:
+        change.requested_current_backend || maybe_to_string(change.current_backend),
+      rollback_target: change.rollback_target,
+      change_id: change.change_id,
+      incident_id: change.incident_id,
+      reason: change.reason,
+      idempotency_key: change.idempotency_key,
+      ttl: change.ttl,
+      dry_run: change.dry_run,
+      verify_window: change.verify_window,
+      max_blast_radius: change.max_blast_radius,
+      metadata: change.metadata
+    }
+  end
+
+  defp replacement_compare_report(payload, phase, %Change{} = change) do
+    replacement = replacement_metadata(change)
+    failure_class = payload[:failure_class] || payload["failure_class"]
+    gate_class = payload[:gate_class] || payload["gate_class"]
+    suggested_next = payload[:suggested_next] || payload["suggested_next"] || []
+
+    %{
+      report_id: "cmp-#{change.change_id || phase}-#{replacement_phase_name(phase)}",
+      change_id: change.change_id,
+      incident_id: change.incident_id || "#{change.change_id}-capture",
+      target_profile: replacement["target_profile"],
+      core_profile: payload[:core_profile] || payload["core_profile"],
+      conformance_claim: payload[:conformance_claim] || payload["conformance_claim"],
+      core_endpoint: payload[:core_endpoint] || payload["core_endpoint"],
+      comparison_scope: replacement_comparison_scope(phase, failure_class),
+      expected_state: replacement_expected_state(payload),
+      observed_state: replacement_observed_state(payload),
+      gate_class: gate_class,
+      failure_class: failure_class,
+      ngap_subset: replacement["ngap_subset"] || %{},
+      diff_summary: replacement_diff_summary(gate_class, failure_class),
+      evidence_refs: replacement_report_evidence_refs(payload, change, phase),
+      rollback_target:
+        payload[:rollback_target] || payload["rollback_target"] ||
+          replacement_rollback_target(change),
+      operator_next_step:
+        List.first(suggested_next) || "review the captured lane evidence before the next mutation",
+      summary: payload[:summary] || payload["summary"]
+    }
+  end
+
+  defp replacement_rollback_evidence(payload, phase, %Change{} = change, compare_report_path) do
+    gate_class = payload[:gate_class] || payload["gate_class"]
+
+    rollback_target =
+      payload[:rollback_target] || payload["rollback_target"] ||
+        replacement_rollback_target(change)
+
+    %{
+      rollback_id: "rbk-#{change.change_id || phase}",
+      change_id: change.change_id,
+      incident_id: change.incident_id || "#{change.change_id}-capture",
+      target_profile: payload[:target_profile] || payload["target_profile"],
+      rollback_target: rollback_target,
+      rollback_reason: replacement_rollback_reason(phase, gate_class),
+      triggering_gate: gate_class,
+      pre_rollback_state: %{
+        compare_report_ref: compare_report_path,
+        gate_class: gate_class,
+        cutover_state: payload[:target_backend] || payload["target_backend"],
+        observed_problem: payload[:summary] || payload["summary"]
+      },
+      post_rollback_state: %{
+        rollback_target: rollback_target,
+        cutover_state: if(phase == :rollback, do: "rolled_back", else: "not_executed"),
+        repair_state:
+          if(phase == :rollback,
+            do: "rollback target restored and ready for another bounded run",
+            else: "rollback remains available and explicit for the next mutation"
+          )
+      },
+      recovery_check: %{
+        status: replacement_recovery_status(phase, gate_class),
+        checks: replacement_recovery_checks(phase, gate_class)
+      },
+      evidence_refs:
+        ([compare_report_path] ++ replacement_report_evidence_refs(payload, change, phase))
+        |> Enum.reject(&is_nil/1)
+        |> Enum.uniq(),
+      operator_notes:
+        if(phase == :rollback,
+          do:
+            "Rollback preserved a reviewable recovery path and kept the reference lane explicit.",
+          else:
+            "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
+        )
+    }
+  end
+
+  defp replacement_evidence_stub(path, payload, phase, %Change{} = change) do
+    %{
+      captured_at: now_iso8601(),
+      command: payload[:command] || payload["command"],
+      phase: replacement_phase_name(phase),
+      change_id: change.change_id,
+      incident_id: change.incident_id,
+      target_ref: payload[:target_ref] || payload["target_ref"],
+      target_profile: payload[:target_profile] || payload["target_profile"],
+      core_profile: payload[:core_profile] || payload["core_profile"],
+      status: payload[:status] || payload["status"],
+      summary: payload[:summary] || payload["summary"],
+      evidence_kind: Path.basename(path, ".json"),
+      evidence_ref: path
+    }
+  end
+
+  defp replacement_expected_state(payload) do
+    %{
+      attach: status_label(payload[:attach_status] || payload["attach_status"]),
+      pdu_session: status_label(payload[:pdu_session_status] || payload["pdu_session_status"]),
+      ping: status_label(payload[:ping_status] || payload["ping_status"]),
+      release: status_label(payload[:release_status] || payload["release_status"])
+    }
+  end
+
+  defp replacement_observed_state(payload), do: replacement_expected_state(payload)
+
+  defp status_label(%{status: status}) when is_binary(status), do: status
+  defp status_label(%{"status" => status}) when is_binary(status), do: status
+  defp status_label(_value), do: "unknown"
+
+  defp replacement_comparison_scope(_phase, "core_failure"), do: "registration"
+  defp replacement_comparison_scope(_phase, "user_plane_failure"), do: "ping"
+  defp replacement_comparison_scope(_phase, "cutover_or_rollback_failure"), do: "cutover"
+  defp replacement_comparison_scope(:precheck, _failure_class), do: "registration"
+  defp replacement_comparison_scope(_phase, _failure_class), do: "ping"
+
+  defp replacement_diff_summary("pass", _failure_class) do
+    [
+      "Attach, registration, PDU session, and ping remained within the declared lane.",
+      "The rollback target stayed explicit while the live-lab evidence bundle was captured."
+    ]
+  end
+
+  defp replacement_diff_summary(_gate_class, "core_failure") do
+    [
+      "The NGAP registration path diverged before the declared lane could complete.",
+      "Rollback remained the safer operator path until the core-side mismatch is explained."
+    ]
+  end
+
+  defp replacement_diff_summary(_gate_class, "user_plane_failure") do
+    [
+      "Registration and PDU session completed, but the declared user-plane route did not finish a successful ping.",
+      "The failure is isolated to the user-plane evidence bundle until proven otherwise."
+    ]
+  end
+
+  defp replacement_diff_summary(_gate_class, _failure_class) do
+    [
+      "The captured evidence bundle preserves the mismatch that blocked or degraded the declared lane.",
+      "The rollback target remains explicit for replay and recovery."
+    ]
+  end
+
+  defp replacement_report_evidence_refs(payload, %Change{} = change, phase) do
+    refs =
+      payload
+      |> payload_artifacts()
+      |> Enum.take(8)
+
+    if refs == [] do
+      fallback_ref =
+        case phase do
+          :capture_artifacts ->
+            Store.capture_path(change.incident_id || change.change_id || "capture")
+
+          :verify ->
+            Store.verify_path(change.change_id)
+
+          _ ->
+            replacement_evidence_ref(phase, change, "summary")
+        end
+
+      [fallback_ref]
+    else
+      refs
+    end
+  end
+
+  defp replacement_rollback_reason(:rollback, _gate_class),
+    do:
+      "The captured mismatch made the declared rollback target safer than leaving the changed lane active."
+
+  defp replacement_rollback_reason(_phase, "pass"),
+    do:
+      "Rollback was not required because the declared lane stayed within the live-lab proof envelope."
+
+  defp replacement_rollback_reason(_phase, _gate_class),
+    do: "The captured mismatch keeps rollback explicit until the lane is corrected."
+
+  defp replacement_recovery_status(:rollback, _gate_class), do: "ok"
+  defp replacement_recovery_status(_phase, "pass"), do: "ok"
+  defp replacement_recovery_status(_phase, gate_class), do: gate_class
+
+  defp replacement_recovery_checks(:rollback, _gate_class) do
+    ["rollback_target_restored", "post_rollback_verify_recorded", "recovery_path_auditable"]
+  end
+
+  defp replacement_recovery_checks(_phase, "pass") do
+    ["bundle_fetchable", "rollback_target_explicit", "live_lab_proof_preserved"]
+  end
+
+  defp replacement_recovery_checks(_phase, _gate_class) do
+    ["rollback_target_explicit", "compare_report_preserved", "review_path_auditable"]
   end
 
   defp runtime_capture_path(nil, _key), do: nil
