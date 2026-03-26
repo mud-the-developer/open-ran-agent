@@ -85,6 +85,8 @@
   },
   "standards_subset": {
     "ngap": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
       "required_procedures": [
         "NG Setup",
         "Initial UE Message",
@@ -93,11 +95,14 @@
         "UE Context Release"
       ],
       "optional_procedures": [
+        "Error Indication",
+        "Reset"
+      ],
+      "deferred_procedures": [
         "Paging",
         "Handover Preparation",
-        "Path Switch"
-      ],
-      "evidence_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+        "Path Switch Request"
+      ]
     },
     "f1_c": {
       "required_procedures": [
