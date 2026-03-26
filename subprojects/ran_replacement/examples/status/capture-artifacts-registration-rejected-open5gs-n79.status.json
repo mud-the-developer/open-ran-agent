@@ -75,7 +75,7 @@
     "ngap": {
       "status": "failed",
       "evidence_ref": "artifacts/replacement/capture/registration-rejected/ngap.json",
-      "reason": "registration did not progress to attach completion"
+      "reason": "registration did not progress past Downlink NAS Transport in the required NGAP subset"
     },
     "f1_c": {
       "status": "ok",
@@ -114,7 +114,16 @@
     "reason": "the real Open5GS core rejected the declared subscriber or identity context"
   },
   "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
     "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": "Downlink NAS Transport",
     "procedures": [
       {
         "name": "NG Setup",

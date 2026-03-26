@@ -24,22 +24,66 @@
   },
   "comparison_scope": "ping",
   "expected_state": {
-    "ngap": "NG Setup, Initial UE Message, and uplink/downlink NAS transport remain healthy against the declared Open5GS endpoint.",
+    "ngap": "The required milestone-1 NGAP subset remains healthy against the declared Open5GS endpoint.",
     "release_state": "UE context release remains clean and auditable after the verify window.",
     "pdu_session": "The UE holds a declared IPv4 session on the internet DNN.",
     "gtpu": "The tunnel and route are bound to the declared UE session.",
     "ping_target": "8.8.8.8"
   },
   "observed_state": {
-    "ngap": "Registration completed against the declared Open5GS endpoint before the user-plane failure.",
+    "ngap": "The required milestone-1 NGAP subset completed against the declared Open5GS endpoint before the user-plane failure.",
     "release_state": "UE context release completed after the failed ping verification window.",
     "pdu_session": "The UE established a PDU session.",
     "gtpu": "The tunnel exists, but user-plane reachability does not complete end to end.",
     "ping_target": "8.8.8.8"
   },
+  "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": null,
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/ngap-setup.json",
+        "detail": "the declared Open5GS AMF accepted the NG setup handshake"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the declared Open5GS core lane"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/uplink-nas-transport.json",
+        "detail": "uplink NAS transport stayed aligned with the declared subscriber profile"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/downlink-nas-transport.json",
+        "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/verify/ue-context-release.json",
+        "detail": "the UE context was released cleanly after the declared soak window"
+      }
+    ]
+  },
   "gate_class": "degraded",
   "diff_summary": [
-    "Control-plane registration is already past the acceptance threshold.",
+    "Control-plane registration is already past the acceptance threshold and the required NGAP subset is explicit through UE Context Release.",
     "PDU session exists, but user-plane forwarding does not produce a successful ping.",
     "The failure is isolated to the declared user-plane path until proven otherwise."
   ],

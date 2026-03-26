@@ -15,6 +15,8 @@
     "triggering_gate",
     "pre_rollback_state",
     "post_rollback_state",
+    "pre_rollback_ngap_procedure_trace",
+    "post_rollback_ngap_procedure_trace",
     "recovery_check",
     "evidence_refs",
     "operator_notes"
@@ -60,6 +62,12 @@
       "type": "object",
       "additionalProperties": true
     },
+    "pre_rollback_ngap_procedure_trace": {
+      "$ref": "#/$defs/procedure_trace"
+    },
+    "post_rollback_ngap_procedure_trace": {
+      "$ref": "#/$defs/procedure_trace"
+    },
     "recovery_check": {
       "type": "object",
       "additionalProperties": false,
@@ -98,6 +106,89 @@
     "operator_notes": {
       "type": "string",
       "minLength": 1
+    }
+  },
+  "$defs": {
+    "procedure_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "status",
+        "evidence_ref"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ok",
+            "failed",
+            "blocked",
+            "degraded",
+            "pending"
+          ]
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "detail": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "procedure_trace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_procedures",
+        "last_observed",
+        "last_succeeded",
+        "last_failed",
+        "procedures"
+      ],
+      "properties": {
+        "required_procedures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "last_observed": {
+          "type": "string",
+          "minLength": 1
+        },
+        "last_succeeded": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "last_failed": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "procedures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/procedure_summary"
+          }
+        }
+      }
     }
   }
 }

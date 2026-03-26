@@ -151,7 +151,16 @@
     "reason": null
   },
   "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
     "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": null,
     "procedures": [
       {
         "name": "NG Setup",

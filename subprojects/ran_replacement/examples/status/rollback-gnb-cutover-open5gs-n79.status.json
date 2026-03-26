@@ -45,11 +45,55 @@
     "evidence_ref": "artifacts/replacement/rollback/post-rollback-verify.json",
     "reason": "rollback target restored and verified"
   },
+  "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": null,
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/ngap-setup.json",
+        "detail": "the rollback target accepted NG Setup after restoration"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/initial-ue-message.json",
+        "detail": "initial UE access is again accepted on the rollback target"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/uplink-nas-transport.json",
+        "detail": "uplink NAS transport reaches the rollback target core lane"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/downlink-nas-transport.json",
+        "detail": "downlink NAS transport again returns registration progress toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/ue-context-release.json",
+        "detail": "cleanup and release state are again auditable on the rollback target"
+      }
+    ]
+  },
   "interface_status": {
     "ngap": {
       "status": "ok",
       "evidence_ref": "artifacts/replacement/rollback/ngap.json",
-      "reason": null
+      "reason": "rollback restored and re-proved the required NGAP subset against the declared rollback target"
     },
     "f1_c": {
       "status": "ok",

@@ -79,10 +79,15 @@ Expected evidence fields:
 - `core_endpoint`
 - `core_link_status`
 - `ngap_procedure_trace`
+- `ngap_procedure_trace.required_procedures`
+- `ngap_procedure_trace.last_observed`
+- `ngap_procedure_trace.last_succeeded`
+- `ngap_procedure_trace.last_failed`
 - `attach_status`
 - `release_status`
 - `checks[]` for the last known NGAP checkpoint
-- artifact references for NGAP trace, attach trace, and cleanup trace
+- deterministic artifact references for `NG Setup`, `Initial UE Message`,
+  `Uplink NAS Transport`, `Downlink NAS Transport`, and `UE Context Release`
 
 ## Contract Rules
 

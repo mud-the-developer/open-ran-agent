@@ -52,6 +52,7 @@ Minimum sections:
 - `comparison_scope`
 - `expected_state`
 - `observed_state`
+- `ngap_procedure_trace` when the report relies on the milestone-1 `NGAP` subset
 - `gate_class`
 - `diff_summary`
 - `evidence_refs`
@@ -64,6 +65,9 @@ Minimum sections:
 - The report must name the declared core endpoint and profile, not just a generic core label.
 - The report must say which interface family is being compared.
 - The report must distinguish `expected` from `observed`.
+- For `NGAP`, the report must list only the required milestone-1 procedures and
+  record deterministic evidence refs plus the last observed, last succeeded,
+  and last failed required procedure.
 - The report must call out whether a mismatch is functional, procedural, or
   evidence-related.
 - The report must be readable without SSH access.
@@ -84,6 +88,10 @@ Minimum sections:
 - `triggering_gate`
 - `pre_rollback_state`
 - `post_rollback_state`
+- `pre_rollback_ngap_procedure_trace` when rollback reasoning depends on
+  `NGAP`
+- `post_rollback_ngap_procedure_trace` when rollback recovery depends on
+  `NGAP`
 - `recovery_check`
 - `evidence_refs`
 - `operator_notes`
@@ -94,6 +102,8 @@ Minimum sections:
   up.
 - The rollback evidence must reference the compare report that triggered the
   decision.
+- For `NGAP`, the rollback evidence must preserve deterministic pre-rollback
+  and post-rollback required-procedure traces.
 - The rollback evidence must show whether the rollback target was restored
   cleanly.
 - The rollback evidence must not rely on implicit operator memory.
@@ -110,11 +120,14 @@ Compare:
 - setup state against the real `Open5GS` core
 - registration progression versus expected attach path
 - named NGAP procedure checkpoints from `NG Setup` through `UE Context Release`
+- deterministic evidence refs for each required checkpoint
+- the last observed, last succeeded, and last failed required procedure
 - release state versus expected cleanup state
 
 Rollback:
 
 - report whether the NGAP path was restored to the declared rollback target
+- preserve the required-procedure trace before and after rollback
 - note whether registration attempts are safe to retry
 
 ### `F1-C`

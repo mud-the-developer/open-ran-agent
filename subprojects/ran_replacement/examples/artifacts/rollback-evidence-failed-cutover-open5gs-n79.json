@@ -10,12 +10,100 @@
     "compare_report_ref": "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
     "gate_class": "degraded",
     "cutover_state": "replacement_primary",
-    "observed_problem": "The lane could not prove attach-plus-ping against the declared target profile after cutover."
+    "observed_problem": "The lane could not keep the required NGAP subset explicit beyond Uplink NAS Transport while proving attach-plus-ping after cutover."
   },
   "post_rollback_state": {
     "rollback_target": "oai_reference",
     "cutover_state": "rolled_back",
-    "repair_state": "reference lane restored and ready for a corrected next attempt"
+    "repair_state": "reference lane restored and the required NGAP subset is again explicit through UE Context Release"
+  },
+  "pre_rollback_ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "Downlink NAS Transport",
+    "last_succeeded": "Uplink NAS Transport",
+    "last_failed": null,
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-ngap-setup.json",
+        "detail": "the declared Open5GS endpoint still accepts NG Setup after cutover"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-initial-ue-message.json",
+        "detail": "initial UE access still reaches the declared NGAP lane after cutover"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-uplink-nas-transport.json",
+        "detail": "uplink NAS transport still reaches the real core after cutover"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "degraded",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-downlink-nas-transport.json",
+        "detail": "downlink NAS transport is no longer deterministic enough to trust the cutover lane"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "pending",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-ue-context-release.json",
+        "detail": "cleanup evidence is deferred until rollback review resolves the lane state"
+      }
+    ]
+  },
+  "post_rollback_ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": null,
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/ngap-setup.json",
+        "detail": "the rollback target accepted NG Setup after restoration"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/initial-ue-message.json",
+        "detail": "initial UE access is again accepted on the rollback target"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/uplink-nas-transport.json",
+        "detail": "uplink NAS transport reaches the rollback target core lane"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/downlink-nas-transport.json",
+        "detail": "downlink NAS transport again returns registration progress toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/ue-context-release.json",
+        "detail": "cleanup and release state are again auditable on the rollback target"
+      }
+    ]
   },
   "recovery_check": {
     "status": "ok",
@@ -31,5 +119,5 @@
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md",
     "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
   ],
-  "operator_notes": "Rollback was preferred because leaving the lane up would hide the unresolved user-plane failure behind a cutover state. The rollback target is explicit and the restored state is auditable."
+  "operator_notes": "Rollback was preferred because leaving the lane up would hide that the required NGAP subset was no longer explicit beyond Uplink NAS Transport. The rollback target is explicit and the restored state is auditable through UE Context Release."
 }

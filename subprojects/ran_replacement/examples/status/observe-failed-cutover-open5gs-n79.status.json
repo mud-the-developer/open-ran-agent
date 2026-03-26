@@ -59,7 +59,7 @@
     "ngap": {
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/ngap-cutover.json",
-      "reason": "registration confidence regressed after cutover"
+      "reason": "registration confidence regressed after cutover and the required NGAP subset is only explicit through Uplink NAS Transport"
     },
     "f1_c": {
       "status": "ok",
@@ -81,6 +81,50 @@
       "evidence_ref": "artifacts/replacement/observe/gtpu-cutover.json",
       "reason": "data-plane state is not yet trusted after cutover"
     }
+  },
+  "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "Downlink NAS Transport",
+    "last_succeeded": "Uplink NAS Transport",
+    "last_failed": null,
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-ngap-setup.json",
+        "detail": "the declared Open5GS endpoint still accepts NG Setup after cutover"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-initial-ue-message.json",
+        "detail": "initial UE access still reaches the declared NGAP lane after cutover"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-uplink-nas-transport.json",
+        "detail": "uplink NAS transport still reaches the real core after cutover"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "degraded",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-downlink-nas-transport.json",
+        "detail": "downlink NAS transport is no longer deterministic enough to trust the cutover lane"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "pending",
+        "evidence_ref": "artifacts/replacement/observe/ngap-cutover-ue-context-release.json",
+        "detail": "cleanup evidence is deferred until rollback review resolves the lane state"
+      }
+    ]
   },
   "rollback_status": {
     "status": "pending",

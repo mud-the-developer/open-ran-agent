@@ -24,7 +24,7 @@
   },
   "comparison_scope": "registration",
   "expected_state": {
-    "ngap": "NG Setup is established with the real Open5GS core and registration can progress to UE context setup.",
+    "ngap": "The required milestone-1 NGAP subset is established with the real Open5GS core and registration can progress to UE context setup.",
     "ngap_procedures": {
       "NG Setup": "accepted by the declared AMF endpoint",
       "Initial UE Message": "reaches the declared Open5GS control-plane lane",
@@ -39,7 +39,7 @@
     "dnn": "internet"
   },
   "observed_state": {
-    "ngap": "NG Setup completed, but registration was rejected by the real Open5GS core.",
+    "ngap": "The required milestone-1 NGAP subset reached Downlink NAS Transport, where the real Open5GS core rejected registration.",
     "ngap_procedures": {
       "NG Setup": "completed against 10.41.83.45:38412",
       "Initial UE Message": "reached the declared control-plane lane",
@@ -53,10 +53,54 @@
     "tac": 100,
     "dnn": "internet"
   },
+  "ngap_procedure_trace": {
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "last_observed": "UE Context Release",
+    "last_succeeded": "UE Context Release",
+    "last_failed": "Downlink NAS Transport",
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap-setup.json",
+        "detail": "the declared AMF accepted NG setup before registration began"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/registration-rejected/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the NGAP-facing edge"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/registration-rejected/uplink-nas-transport.json",
+        "detail": "uplink NAS transport carried the registration request to the real core"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "failed",
+        "evidence_ref": "artifacts/replacement/observe/registration-rejected/downlink-nas-transport.json",
+        "detail": "downlink NAS transport returned the registration rejection from the declared core profile"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/observe/registration-rejected/ue-context-release.json",
+        "detail": "UE context release completed and the cleanup state is auditable"
+      }
+    ]
+  },
   "gate_class": "degraded",
   "diff_summary": [
     "NGAP transport is reachable and the named Open5GS endpoint is explicit.",
-    "Registration does not progress past downlink NAS transport and the core acceptance step.",
+    "Registration does not progress past Downlink NAS Transport in the required NGAP subset.",
     "The failure is procedural or profile-related rather than a total transport outage."
   ],
   "evidence_refs": [
