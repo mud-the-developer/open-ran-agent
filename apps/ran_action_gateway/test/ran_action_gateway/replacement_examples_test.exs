@@ -153,5 +153,35 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert contract =~ "## Claim Categories"
   end
 
+  test "control-plane cutover examples keep release and rollback evidence explicit" do
+    package_status =
+      repo_path(
+        "subprojects/ran_replacement/packages/f1e1_control_edge/examples/observe-failed-cutover.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    global_status =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/observe-failed-cutover-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    for status <- [package_status, global_status] do
+      assert status["rollback_target"] == "oai_reference"
+      assert status["rollback_available"] == true
+      assert get_in(status, ["rollback_status", "status"]) == "pending"
+      assert get_in(status, ["rollback_status", "evidence_ref"]) =~ "/rollback-evidence.json"
+      assert get_in(status, ["release_status", "status"]) == "ok"
+      assert get_in(status, ["release_status", "evidence_ref"]) =~ "/control-plane-release.json"
+
+      assert Enum.any?(status["checks"], fn check ->
+               check["name"] == "control_plane_release_evidence_present" and
+                 check["status"] == "ok"
+             end)
+    end
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end
