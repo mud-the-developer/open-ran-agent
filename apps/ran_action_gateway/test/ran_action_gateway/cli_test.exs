@@ -258,6 +258,16 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
                "/attach.json"
 
+      assert get_in(verify, [:plane_status, :u_plane, :status]) == "ok"
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+      assert get_in(verify, [:session_status, :status]) == "established"
+      assert get_in(verify, [:session_status, :pdu_type]) == "ipv4"
+      assert get_in(verify, [:session_status, :ping_target]) == "8.8.8.8"
+      assert get_in(verify, [:session_status, :evidence_ref]) =~ "/session.json"
+      assert get_in(verify, [:interface_status, "f1_u", :status]) == "ok"
+      assert get_in(verify, [:interface_status, "gtpu", :status]) == "ok"
+      assert verify.summary =~ "UE attach, PDU session, and ping are all proven"
+
       assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
 
       assert Enum.map(verify.ngap_procedure_trace.procedures, & &1.name) == [
@@ -453,6 +463,53 @@ defmodule RanActionGateway.CLITest do
              ]
 
       assert Enum.all?(verify.ngap_procedure_trace.procedures, &(&1.status == "ok"))
+    end)
+  end
+
+  test "replacement user-plane observe and capture surface ping failure semantics",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/observe-ping-failed-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.gate_class == "degraded"
+      assert observe.failure_class == "user_plane_failure"
+      assert observe.summary =~ "ping diverged on the declared route"
+      assert get_in(observe, [:plane_status, :u_plane, :status]) == "degraded"
+      assert get_in(observe, [:session_status, :status]) == "established_but_ping_failed"
+      assert get_in(observe, [:session_status, :ping_target]) == "8.8.8.8"
+      assert get_in(observe, [:interface_status, "f1_u", :status]) == "degraded"
+      assert get_in(observe, [:interface_status, "gtpu", :status]) == "degraded"
+      assert get_in(observe, [:rollback_status, :status]) == "pending"
+      assert get_in(observe, [:rollback_status, :reason]) =~ "user-plane route remains unresolved"
+
+      capture_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/capture-artifacts-ping-failed-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.gate_class == "degraded"
+      assert capture.failure_class == "user_plane_failure"
+      assert capture.summary =~ "user-plane evidence bundle after ping failed"
+      assert get_in(capture, [:plane_status, :u_plane, :status]) == "degraded"
+      assert get_in(capture, [:session_status, :status]) == "established_but_ping_failed"
+      assert get_in(capture, [:interface_status, "f1_u", :status]) == "degraded"
+      assert get_in(capture, [:interface_status, "gtpu", :status]) == "degraded"
+      assert get_in(capture, [:rollback_status, :status]) == "pending"
     end)
   end
 

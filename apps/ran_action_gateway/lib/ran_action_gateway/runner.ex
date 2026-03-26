@@ -730,6 +730,7 @@ defmodule RanActionGateway.Runner do
       |> maybe_put_failure_class(phase, change, replacement, base_status)
       |> maybe_put_plane_status(phase, change, replacement, base_status)
       |> maybe_put_rollback_status(phase, change, base_status)
+      |> maybe_put_user_plane_semantics(phase, change, replacement)
       |> maybe_put_control_plane_interface_semantics(phase, change)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
       |> maybe_put_replacement_review_semantics(phase, change, replacement)
@@ -758,6 +759,16 @@ defmodule RanActionGateway.Runner do
     target_role = replacement_metadata(change)["target_role"] || change.scope
 
     cond do
+      phase == :verify and user_plane_scope?(replacement_metadata(change)) and
+          not user_plane_ping_failure?(change) ->
+        "UE attach, PDU session, and ping are all proven against the declared Open5GS core lane."
+
+      phase == :observe and user_plane_ping_failure?(change) ->
+        "User-plane observe confirms attach and session hold, but ping diverged on the declared route."
+
+      phase == :capture_artifacts and user_plane_ping_failure?(change) ->
+        "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
+
       phase == :observe and control_plane_scope?(change) ->
         "Control-plane replacement observe confirms that association state diverged from the planned cutover lane."
 
@@ -838,6 +849,9 @@ defmodule RanActionGateway.Runner do
     cond do
       ngap_scope?(replacement) and ngap_registration_failure?(change) ->
         "core_failure"
+
+      user_plane_ping_failure?(change) ->
+        "user_plane_failure"
 
       change.scope == "replacement_cutover" and
           (phase in [:observe, :capture_artifacts, :rollback] or status == "failed") ->
@@ -1017,6 +1031,175 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp maybe_put_user_plane_semantics(payload, phase, %Change{} = change, replacement) do
+    if user_plane_scope?(replacement) do
+      payload
+      |> maybe_put_user_plane_status(phase, change)
+      |> maybe_put_session_status(phase, change, replacement)
+      |> maybe_put_user_plane_interfaces(phase, change)
+      |> maybe_put_user_plane_rollback_status(phase, change)
+    else
+      payload
+    end
+  end
+
+  defp user_plane_scope?(replacement) do
+    required = replacement["required_interfaces"] || []
+    gates = replacement["acceptance_gates"] || []
+
+    Enum.any?(required, &(&1 in ["f1_u", "gtpu"])) or
+      Enum.any?(gates, &(&1 in ["pdu_session", "ping"]))
+  end
+
+  defp maybe_put_user_plane_status(payload, phase, %Change{} = change)
+       when phase in [:verify, :observe, :capture_artifacts] do
+    base = Map.get(payload, :plane_status, %{})
+
+    user_plane =
+      cond do
+        phase == :verify and not user_plane_ping_failure?(change) ->
+          %{
+            status: "ok",
+            evidence_ref: replacement_evidence_ref(:verify, change, "user-plane"),
+            reason: nil
+          }
+
+        user_plane_ping_failure?(change) and phase == :observe ->
+          %{
+            status: "degraded",
+            evidence_ref: replacement_evidence_ref(:observe, change, "user-plane"),
+            reason: "user-plane confidence is incomplete after ping failed on the declared route"
+          }
+
+        user_plane_ping_failure?(change) and phase == :capture_artifacts ->
+          %{
+            status: "degraded",
+            evidence_ref: replacement_evidence_ref(:capture_artifacts, change, "user-plane"),
+            reason: "captured evidence shows the declared user-plane route is not yet trusted"
+          }
+
+        true ->
+          nil
+      end
+
+    if user_plane do
+      Map.put(payload, :plane_status, Map.put(base, :u_plane, user_plane))
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_user_plane_status(payload, _phase, _change), do: payload
+
+  defp maybe_put_session_status(payload, phase, %Change{} = change, replacement)
+       when phase in [:verify, :observe, :capture_artifacts] do
+    session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
+
+    Map.put(payload, :session_status, %{
+      status:
+        if(user_plane_ping_failure?(change),
+          do: "established_but_ping_failed",
+          else: "established"
+        ),
+      pdu_type: session_profile["pdu_type"],
+      ping_target: session_profile["expect_ping_target"],
+      evidence_ref: replacement_evidence_ref(phase, change, "session"),
+      reason:
+        if(user_plane_ping_failure?(change),
+          do: "PDU session exists, but the declared route did not complete a successful ping",
+          else: nil
+        )
+    })
+  end
+
+  defp maybe_put_session_status(payload, _phase, _change, _replacement), do: payload
+
+  defp maybe_put_user_plane_interfaces(payload, phase, %Change{} = change)
+       when phase in [:verify, :observe, :capture_artifacts] do
+    interface_status = Map.get(payload, :interface_status, %{})
+
+    {f1_u, gtpu} =
+      cond do
+        phase == :verify and not user_plane_ping_failure?(change) ->
+          {
+            %{
+              status: "ok",
+              evidence_ref: replacement_evidence_ref(:verify, change, "f1_u"),
+              reason: nil
+            },
+            %{
+              status: "ok",
+              evidence_ref: replacement_evidence_ref(:verify, change, "gtpu"),
+              reason: nil
+            }
+          }
+
+        user_plane_ping_failure?(change) ->
+          {
+            %{
+              status: "degraded",
+              evidence_ref: replacement_evidence_ref(phase, change, "f1_u"),
+              reason: "forwarding state does not yet prove the declared attach-plus-ping path"
+            },
+            %{
+              status: "degraded",
+              evidence_ref: replacement_evidence_ref(phase, change, "gtpu"),
+              reason: "tunnel evidence exists, but end-to-end reachability did not complete"
+            }
+          }
+
+        true ->
+          {nil, nil}
+      end
+
+    interface_status =
+      interface_status
+      |> maybe_put_user_plane_interface("f1_u", f1_u)
+      |> maybe_put_user_plane_interface("gtpu", gtpu)
+
+    Map.put(payload, :interface_status, interface_status)
+  end
+
+  defp maybe_put_user_plane_interfaces(payload, _phase, _change), do: payload
+
+  defp maybe_put_user_plane_interface(interface_status, _name, nil), do: interface_status
+
+  defp maybe_put_user_plane_interface(interface_status, name, value),
+    do: Map.put(interface_status, name, value)
+
+  defp maybe_put_user_plane_rollback_status(payload, :observe, %Change{} = change) do
+    if user_plane_ping_failure?(change) do
+      Map.put(payload, :rollback_status, %{
+        status: "pending",
+        evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
+        reason: "rollback is available while the user-plane route remains unresolved"
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_user_plane_rollback_status(payload, _phase, _change), do: payload
+
+  defp user_plane_ping_failure?(%Change{verify_window: %{"checks" => checks}})
+       when is_list(checks),
+       do: Enum.member?(checks, "ping_failed")
+
+  defp user_plane_ping_failure?(%Change{verify_window: %{checks: checks}}) when is_list(checks),
+    do: Enum.member?(checks, "ping_failed")
+
+  defp user_plane_ping_failure?(%Change{} = change) do
+    signal =
+      [change.reason, change.incident_id, Enum.join(requested_check_names(change), " ")]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.join(" ")
+      |> String.downcase()
+
+    String.contains?(signal, "ping failed")
+  end
+
+  defp user_plane_ping_failure?(_change), do: false
+
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
     if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
       Map.put(payload, :attach_status, %{
@@ -1041,7 +1224,13 @@ defmodule RanActionGateway.Runner do
     payload
     |> Map.put(
       :summary,
-      "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+      if(
+        user_plane_ping_failure?(change),
+        do:
+          "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
+        else:
+          "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+      )
     )
     |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
     |> put_optional(:rollback_target, rollback_target)
