@@ -712,6 +712,8 @@ defmodule RanActionGateway.Runner do
         :interface_status,
         replacement_interface_status(phase, change, replacement, base_status)
       )
+      |> maybe_put_ngap_procedure_trace(phase, change, replacement, base_status)
+      |> maybe_put_release_status(phase, change, replacement, base_status)
       |> maybe_put_plane_status(phase, change, replacement, base_status)
       |> maybe_put_rollback_status(phase, change, base_status)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
@@ -784,6 +786,92 @@ defmodule RanActionGateway.Runner do
     do: "replacement evidence for this interface is not yet fully surfaced by the control surface"
 
   defp replacement_interface_reason(_status), do: nil
+
+  defp maybe_put_ngap_procedure_trace(payload, phase, %Change{} = change, replacement, status) do
+    if ngap_scope?(replacement) do
+      Map.put(payload, :ngap_procedure_trace, %{
+        last_observed: "UE Context Release",
+        procedures: replacement_ngap_procedures(phase, change, status)
+      })
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_release_status(payload, phase, %Change{} = change, replacement, _status) do
+    if ngap_scope?(replacement) do
+      Map.put(payload, :release_status, %{
+        status: "ok",
+        evidence_ref: replacement_evidence_ref(phase, change, "ue-context-release"),
+        reason: nil
+      })
+    else
+      payload
+    end
+  end
+
+  defp replacement_ngap_procedures(phase, %Change{} = change, status) do
+    ngap_failure? = ngap_registration_failure?(change)
+
+    [
+      {"NG Setup", replacement_ngap_status(:ng_setup, status, ngap_failure?),
+       replacement_evidence_ref(phase, change, "ngap-setup"),
+       replacement_ngap_detail(:ng_setup, status)},
+      {"Initial UE Message", replacement_ngap_status(:initial_ue_message, status, ngap_failure?),
+       replacement_evidence_ref(phase, change, "initial-ue-message"),
+       replacement_ngap_detail(:initial_ue_message, status)},
+      {"Uplink NAS Transport",
+       replacement_ngap_status(:uplink_nas_transport, status, ngap_failure?),
+       replacement_evidence_ref(phase, change, "uplink-nas-transport"),
+       replacement_ngap_detail(:uplink_nas_transport, status)},
+      {"Downlink NAS Transport",
+       replacement_ngap_status(:downlink_nas_transport, status, ngap_failure?),
+       replacement_evidence_ref(phase, change, "downlink-nas-transport"),
+       replacement_ngap_detail(:downlink_nas_transport, status)},
+      {"UE Context Release", replacement_ngap_status(:ue_context_release, status, ngap_failure?),
+       replacement_evidence_ref(phase, change, "ue-context-release"),
+       replacement_ngap_detail(:ue_context_release, status)}
+    ]
+    |> Enum.map(fn {name, proc_status, evidence_ref, detail} ->
+      %{name: name, status: proc_status, evidence_ref: evidence_ref, detail: detail}
+    end)
+  end
+
+  defp replacement_ngap_status(:downlink_nas_transport, _status, true), do: "failed"
+  defp replacement_ngap_status(_procedure, _status, _ngap_failure?), do: "ok"
+
+  defp replacement_ngap_detail(:ng_setup, "failed"),
+    do: "the declared Open5GS AMF accepted NG setup before registration diverged"
+
+  defp replacement_ngap_detail(:ng_setup, _status),
+    do: "the declared Open5GS AMF accepted the NG setup handshake"
+
+  defp replacement_ngap_detail(:initial_ue_message, _status),
+    do: "the first UE-originated NAS message reached the declared NGAP-facing lane"
+
+  defp replacement_ngap_detail(:uplink_nas_transport, _status),
+    do: "uplink NAS transport carried the registration request toward the declared core profile"
+
+  defp replacement_ngap_detail(:downlink_nas_transport, "failed"),
+    do: "downlink NAS transport returned a registration rejection from the declared core profile"
+
+  defp replacement_ngap_detail(:downlink_nas_transport, _status),
+    do: "downlink NAS transport carried the registration acceptance back toward the UE"
+
+  defp replacement_ngap_detail(:ue_context_release, _status),
+    do: "UE context release completed and the cleanup state is auditable"
+
+  defp ngap_registration_failure?(%Change{verify_window: %{"checks" => checks}})
+       when is_list(checks),
+       do: Enum.member?(checks, "ngap_registration_failed")
+
+  defp ngap_registration_failure?(%Change{verify_window: %{checks: checks}}) when is_list(checks),
+    do: Enum.member?(checks, "ngap_registration_failed")
+
+  defp ngap_registration_failure?(_change), do: false
+
+  defp ngap_scope?(replacement),
+    do: Enum.member?(replacement["required_interfaces"] || [], "ngap")
 
   defp maybe_put_plane_status(payload, phase, %Change{} = change, _replacement, status) do
     if phase == :observe and control_plane_scope?(change) do
