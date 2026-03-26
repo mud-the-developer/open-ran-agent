@@ -22,6 +22,7 @@ defmodule RanDuHighTest do
 
   test "cumac scheduler produces an executable slot plan before southbound dispatch" do
     cell_group = RanDuHigh.new_cell_group("cg-001", scheduler: :cumac_scheduler)
+    capabilities = RanSchedulerHost.CumacScheduler.capabilities()
 
     assert {:ok, result} =
              RanDuHigh.run_slot(cell_group, %{
@@ -30,6 +31,21 @@ defmodule RanDuHighTest do
                ue_ref: "ue-cumac-001",
                metadata: %{trace_id: "trace-cumac-001"}
              })
+
+    assert capabilities.promotion_state == :roadmap_only
+
+    assert capabilities.unsupported_claims == [
+             :external_scheduler_worker_proof,
+             :runtime_timing_proof,
+             :attach_validation_claim
+           ]
+
+    assert capabilities.promotion_requirements == [
+             :declared_scheduler_worker_contract,
+             :failure_domain_evidence,
+             :cutover_and_rollback_coverage,
+             :bounded_scheduler_ownership
+           ]
 
     assert %SlotPlan{scheduler: :cumac_scheduler, status: :planned} = result.slot_plan
     assert result.slot_plan.metadata.scheduler_mode == :cumac_contract_host

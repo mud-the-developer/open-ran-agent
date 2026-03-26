@@ -77,9 +77,15 @@ The following remain future lanes until they have repo-visible proof:
 
 - live replacement runtime ownership on the declared `n79` lane
 - real `Aerial` runtime support
-- real `cuMAC` scheduler support
+- real `cuMAC` scheduler support beyond the contract-host placeholder
 - broader RU, UE, or core profiles beyond the declared `n79` plus real
   `Open5GS` target
+
+For `cuMAC`, current non-claims are explicit:
+
+- no external scheduler worker proof
+- no runtime timing guarantee
+- no attach-validation claim tied to the placeholder adapter alone
 
 For broader profile expansion, current non-claims are explicit:
 

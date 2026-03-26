@@ -11,6 +11,15 @@ They do not, by themselves, claim supported live runtime cutover, `Aerial`
 runtime ownership, `cuMAC` scheduler ownership, or broader interoperability
 beyond the declared `n79` plus real `Open5GS` lane.
 
+For the `cuMAC` scheduler lane specifically, the current contract posture is
+still roadmap-only:
+
+- the host boundary exists
+- the placeholder adapter exists
+- external scheduler worker proof does not yet exist
+- runtime timing proof does not yet exist
+- attach-validation proof does not yet exist
+
 For broader profile expansion specifically, the current contract posture stays
 fixed to the single declared lane:
 

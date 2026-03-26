@@ -16,7 +16,19 @@ defmodule RanSchedulerHost.CumacScheduler do
       adapter: :cumac_scheduler,
       supports_replay: true,
       supports_external_acceleration: true,
-      status: :bootstrap
+      status: :bootstrap,
+      promotion_state: :roadmap_only,
+      unsupported_claims: [
+        :external_scheduler_worker_proof,
+        :runtime_timing_proof,
+        :attach_validation_claim
+      ],
+      promotion_requirements: [
+        :declared_scheduler_worker_contract,
+        :failure_domain_evidence,
+        :cutover_and_rollback_coverage,
+        :bounded_scheduler_ownership
+      ]
     }
   end
 
