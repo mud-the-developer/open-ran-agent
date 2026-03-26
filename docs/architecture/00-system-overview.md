@@ -48,6 +48,9 @@ The first meaningful target is:
 
 Roadmap note:
 
+These future interoperability lanes remain in the roadmap-only set until they
+are explicitly proven.
+
 - Hardened-now support stops at the single-DU, single-cell, single-UE bootstrap
   lane plus contract-level backend and scheduler surfaces.
 - `Aerial interoperability` remains roadmap-only until the `aerial_backend`
