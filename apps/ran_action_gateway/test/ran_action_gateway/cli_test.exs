@@ -392,17 +392,37 @@ defmodule RanActionGateway.CLITest do
       assert observe.gate_class == "degraded"
       assert observe.failure_class == "cutover_or_rollback_failure"
 
+      assert get_in(observe, [:plane_status, :c_plane, :status]) == "degraded"
+
+      assert get_in(observe, [:plane_status, :c_plane, :reason]) =~
+               "partially healthy but not ready for leave-running"
+
       assert get_in(observe, [:plane_status, :c_plane, :evidence_ref]) =~
                "artifacts/replacement/observe/"
+
+      assert get_in(observe, [:interface_status, "f1_c", :status]) == "degraded"
 
       assert get_in(observe, [:interface_status, "f1_c", :evidence_ref]) =~
                "artifacts/replacement/observe/"
 
+      assert get_in(observe, [:interface_status, "f1_c", :reason]) =~
+               "association or configuration state diverged"
+
+      assert get_in(observe, [:interface_status, "e1ap", :status]) == "degraded"
+
       assert get_in(observe, [:interface_status, "e1ap", :evidence_ref]) =~
                "artifacts/replacement/observe/"
 
+      assert get_in(observe, [:interface_status, "e1ap", :reason]) =~
+               "bearer or activity-state coordination diverged"
+
+      assert get_in(observe, [:rollback_status, :status]) == "pending"
+
       assert get_in(observe, [:rollback_status, :evidence_ref]) =~
                "/rollback-evidence"
+
+      assert get_in(observe, [:rollback_status, :reason]) =~
+               "rollback is available but not yet executed"
     end)
   end
 
