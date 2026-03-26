@@ -72,6 +72,7 @@
   ],
   "rollback_target": "oai_reference",
   "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane.",
+  "summary": "Registration review diverged after Downlink NAS Transport and points to a real Open5GS core rejection on the declared lane.",
   "failure_class": "core_failure",
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",

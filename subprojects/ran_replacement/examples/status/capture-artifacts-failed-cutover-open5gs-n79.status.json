@@ -12,7 +12,7 @@
     "evidence_tier": "standards_subset",
     "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   },
-  "summary": "Artifact capture for the failed cutover is complete and the rollback decision can be replayed from the evidence set.",
+  "summary": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
   "approval_required": false,
@@ -23,31 +23,114 @@
     "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json"
   ],
   "suggested_next": [
-    "review rollback evidence",
-    "execute rollback if the lane remains degraded",
-    "preserve the compare report with the incident bundle"
+    "inspect the compare report before another replacement mutation",
+    "confirm the rollback target and cleanup evidence remain explicit",
+    "retry only after the captured mismatch is explained"
   ],
   "checks": [
     {
       "name": "compare_report_ready",
       "status": "ok",
-      "detail": "compare report fixtures are attached"
+      "detail": "the compare report is preserved for review"
     },
     {
-      "name": "rollback_evidence_ready",
+      "name": "rollback_target_known",
       "status": "ok",
-      "detail": "rollback evidence fixture is attached"
+      "detail": "rollback target remains explicit for recovery"
     },
     {
-      "name": "incident_bundle_complete",
+      "name": "UE Context Release",
       "status": "ok",
-      "detail": "the cutover incident can be replayed from artifacts"
+      "detail": "cleanup evidence remains explicit in the preserved review bundle"
+    },
+    {
+      "name": "registration_reviewed",
+      "status": "ok",
+      "detail": "registration-path evidence is part of the review bundle"
+    },
+    {
+      "name": "pdu_session_reviewed",
+      "status": "ok",
+      "detail": "session-path evidence remains attached to the review bundle"
+    },
+    {
+      "name": "ping_reviewed",
+      "status": "ok",
+      "detail": "probe evidence remains attached to the review bundle"
     }
   ],
   "rollback_status": {
     "status": "pending",
-    "evidence_ref": "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
-    "reason": "rollback decision is prepared from the captured evidence"
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/rollback-evidence.json",
+    "reason": "rollback is available but has not yet been executed"
+  },
+  "gate_class": "blocked",
+  "release_status": {
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ue-context-release.json",
+    "reason": null
+  },
+  "ngap_procedure_trace": {
+    "last_observed": "UE Context Release",
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ngap-setup.json",
+        "detail": "the declared Open5GS AMF accepted the NG setup handshake"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/uplink-nas-transport.json",
+        "detail": "uplink NAS transport carried the registration request toward the declared core profile"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/downlink-nas-transport.json",
+        "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ue-context-release.json",
+        "detail": "UE context release completed and the cleanup state is auditable"
+      }
+    ]
+  },
+  "interface_status": {
+    "ngap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ngap.json",
+      "reason": null
+    },
+    "f1_c": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/f1_c.json",
+      "reason": null
+    },
+    "e1ap": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/e1ap.json",
+      "reason": null
+    },
+    "f1_u": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/f1_u.json",
+      "reason": null
+    },
+    "gtpu": {
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/gtpu.json",
+      "reason": null
+    }
   },
   "failure_class": "cutover_or_rollback_failure",
   "ngap_subset": {

@@ -57,6 +57,7 @@
   ],
   "rollback_target": "oai_reference",
   "operator_next_step": "Inspect the user-plane route, tunnel binding, and forwarding evidence before retrying the same attach path.",
+  "summary": "Ping review diverged after successful registration and points to a user-plane failure on the declared route.",
   "failure_class": "user_plane_failure",
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
