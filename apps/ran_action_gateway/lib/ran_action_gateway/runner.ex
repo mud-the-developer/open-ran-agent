@@ -730,6 +730,7 @@ defmodule RanActionGateway.Runner do
       |> maybe_put_failure_class(phase, change, replacement, base_status)
       |> maybe_put_plane_status(phase, change, replacement, base_status)
       |> maybe_put_rollback_status(phase, change, base_status)
+      |> maybe_put_control_plane_interface_semantics(phase, change)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
       |> maybe_put_replacement_review_semantics(phase, change, replacement)
       |> ReplacementReview.enrich(phase, change, checks)
@@ -929,13 +930,9 @@ defmodule RanActionGateway.Runner do
     if phase == :observe and control_plane_scope?(change) do
       Map.put(payload, :plane_status, %{
         c_plane: %{
-          status: if(status == "failed", do: "degraded", else: "ok"),
+          status: control_plane_observe_status(change, status),
           evidence_ref: replacement_evidence_ref(:observe, change, "cutover-control-plane"),
-          reason:
-            if(status == "failed",
-              do: "control-plane association or coordination diverged from the planned lane",
-              else: nil
-            )
+          reason: control_plane_observe_reason(change, status)
         }
       })
     else
@@ -946,10 +943,14 @@ defmodule RanActionGateway.Runner do
   defp maybe_put_rollback_status(payload, phase, %Change{} = change, status) do
     if phase == :observe and control_plane_scope?(change) do
       Map.put(payload, :rollback_status, %{
-        status: if(status == "failed", do: "pending", else: "ok"),
+        status:
+          if(control_plane_cutover_review?(change) or status == "failed",
+            do: "pending",
+            else: "ok"
+          ),
         evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
         reason:
-          if(status == "failed",
+          if(control_plane_cutover_review?(change) or status == "failed",
             do: "rollback is available but not yet executed",
             else: nil
           )
@@ -962,6 +963,58 @@ defmodule RanActionGateway.Runner do
   defp control_plane_scope?(%Change{} = change) do
     required = replacement_metadata(change)["required_interfaces"] || []
     Enum.any?(required, &(&1 in ["f1_c", "e1ap"]))
+  end
+
+  defp maybe_put_control_plane_interface_semantics(payload, :observe, %Change{} = change) do
+    if control_plane_cutover_review?(change) do
+      update_in(payload, [:interface_status], fn interface_status ->
+        interface_status
+        |> maybe_put_control_plane_interface("f1_c", %{
+          status: "degraded",
+          evidence_ref: replacement_evidence_ref(:observe, change, "f1_c"),
+          reason: "association or configuration state diverged from the planned lane"
+        })
+        |> maybe_put_control_plane_interface("e1ap", %{
+          status: "degraded",
+          evidence_ref: replacement_evidence_ref(:observe, change, "e1ap"),
+          reason: "bearer or activity-state coordination diverged from the compare report"
+        })
+      end)
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_control_plane_interface_semantics(payload, _phase, _change), do: payload
+
+  defp maybe_put_control_plane_interface(nil, _name, _value), do: nil
+
+  defp maybe_put_control_plane_interface(interface_status, name, value) do
+    if Map.has_key?(interface_status, name) do
+      Map.put(interface_status, name, value)
+    else
+      interface_status
+    end
+  end
+
+  defp control_plane_cutover_review?(%Change{} = change),
+    do: change.scope == "replacement_cutover" and control_plane_scope?(change)
+
+  defp control_plane_observe_status(%Change{} = change, _status) do
+    if control_plane_cutover_review?(change), do: "degraded", else: "ok"
+  end
+
+  defp control_plane_observe_reason(%Change{} = change, status) do
+    cond do
+      control_plane_cutover_review?(change) ->
+        "control-plane state is partially healthy but not ready for leave-running"
+
+      status == "failed" ->
+        "control-plane association or coordination diverged from the planned lane"
+
+      true ->
+        nil
+    end
   end
 
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
