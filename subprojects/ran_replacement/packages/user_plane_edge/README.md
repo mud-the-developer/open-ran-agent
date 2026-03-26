@@ -7,6 +7,31 @@ Intended contract:
 - Cover tunnel establishment, TEID association, forwarding state, and ping-relevant user-plane evidence.
 - Stay aligned with the standards subset and procedure matrices before any implementation work starts.
 
+## Vocabulary Boundaries
+
+Repo-visible package docs, fixtures, and tests must use one user-plane
+standards-subset vocabulary.
+
+### Required vocabulary
+
+The current milestone may positively claim:
+
+- `F1-U` forwarding path
+- `GTP-U` tunnel and `TEID` association
+- session-to-tunnel association for the declared UE session
+- ping proof on the declared route
+
+### Deferred or out-of-scope vocabulary
+
+The package must not imply support for broader user-plane behaviors such as:
+
+- mobility or handover-driven tunnel changes
+- roaming or multi-UE session orchestration
+- advanced traffic shaping or QoS feature parity
+
+If later milestones expand the subset, update this README and the replacement
+example smoke test in the same patch.
+
 ## Ownership Freeze
 
 - Runtime owner(s): `ran_cu_up` owns tunnel and session lifecycle state. `ran_du_high` owns DU-local forwarding orchestration. Native contract gateways own the timing-sensitive forwarding and drain/resume behavior beneath the package boundary.

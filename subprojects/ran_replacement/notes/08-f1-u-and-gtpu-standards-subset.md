@@ -83,6 +83,8 @@ This note does not claim:
 - multi-UE data-plane scaling
 - multi-cell or multi-RU data-plane behavior
 - handover
+- roaming
+- advanced traffic shaping
 - production timing guarantees
 - vendor-specific internals
 - replacing the real `Open5GS` core in this track
@@ -94,4 +96,3 @@ The milestone 1 promise is only:
 - one real `Open5GS` core
 - one `n79` profile
 - ping on the declared user-plane path
-
