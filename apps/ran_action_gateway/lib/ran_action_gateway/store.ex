@@ -5,6 +5,7 @@ defmodule RanActionGateway.Store do
 
   @artifact_root "artifacts"
   @json_artifact_kinds ~w(
+    prechecks
     plans
     changes
     verify
@@ -34,6 +35,9 @@ defmodule RanActionGateway.Store do
 
   @spec plan_path(String.t()) :: String.t()
   def plan_path(change_id), do: Path.join([@artifact_root, "plans", "#{change_id}.json"])
+
+  @spec precheck_path(String.t()) :: String.t()
+  def precheck_path(change_id), do: Path.join([@artifact_root, "prechecks", "#{change_id}.json"])
 
   @spec change_state_path(String.t()) :: String.t()
   def change_state_path(change_id),

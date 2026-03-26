@@ -87,6 +87,7 @@ bin/ranctl apply --json '{"scope":"cell_group","cell_group":"cg-001","change_id"
 
 Bootstrap `ranctl` persists deterministic outputs under `artifacts/`:
 
+- `artifacts/prechecks/<change_id>.json`
 - `artifacts/plans/<change_id>.json`
 - `artifacts/changes/<change_id>.json`
 - `artifacts/verify/<change_id>.json`
@@ -109,6 +110,7 @@ For runtime-enabled changes, the plan, state, verify, and approval artifacts als
 ## Execution Rules
 
 - `precheck` must validate target existence, health, drain readiness, and config completeness.
+- replacement `target_host` precheck keeps the declared `target_ref`, `target_profile`, and rollback baseline visible and blocks until layout, timing, and RU-readiness assumptions are explicitly proven.
 - `plan` must produce an ordered action list plus rollback intent.
 - `apply` must reject requests missing `change_id`, `reason`, or approval state when required.
 - `verify` must use bounded checks with explicit failure criteria.

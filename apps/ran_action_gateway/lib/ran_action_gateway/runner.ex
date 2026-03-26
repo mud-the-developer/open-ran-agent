@@ -16,6 +16,8 @@ defmodule RanActionGateway.Runner do
   @phases [:precheck, :plan, :apply, :verify, :rollback, :observe, :capture_artifacts]
   @change_commands [:precheck, :plan, :apply, :verify, :rollback]
   @scopes ~w(backend cell_group association incident gnb target_host ue_session ru_link core_link replacement_cutover)
+  @replacement_scopes ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+  @replacement_backends ~w(oai_reference replacement_shadow replacement_primary)
   @ngap_failure_hints [
     "downlink nas transport",
     "downlink_nas_transport",
@@ -30,6 +32,9 @@ defmodule RanActionGateway.Runner do
 
   @spec phases() :: [atom()]
   def phases, do: @phases
+
+  @spec replacement_scopes() :: [String.t()]
+  def replacement_scopes, do: @replacement_scopes
 
   @spec execute(atom(), Change.t()) :: {:ok, map()} | {:error, map()}
   def execute(command, %Change{} = change) when command in @phases do
@@ -56,14 +61,16 @@ defmodule RanActionGateway.Runner do
       []
       |> require(:scope, change.scope)
       |> validate_scope(change.scope)
+      |> validate_target_ref(change)
       |> validate_cell_group(change)
-      |> validate_target_backend(change.target_backend)
+      |> validate_target_backend(change.target_backend, change.scope)
       |> validate_verify_window(change.verify_window)
       |> validate_change_id(command, change.change_id)
       |> validate_reason(change.reason)
       |> validate_idempotency_key(change.idempotency_key)
       |> validate_observe_or_capture_identifiers(command, change)
       |> validate_approval_contract(command, change)
+      |> validate_replacement_contract(command, change)
       |> RuntimeContract.validate(command, change)
 
     case errors do
@@ -100,7 +107,7 @@ defmodule RanActionGateway.Runner do
       check("scope_valid", true),
       check(
         "target_backend_known",
-        is_nil(change.target_backend) or change.target_backend in RanCore.supported_backends()
+        target_backend_known?(change)
       ),
       check("verify_window_valid", valid_verify_window?(change.verify_window)),
       check("config_shape_present", config_report.status == :ok),
@@ -115,25 +122,30 @@ defmodule RanActionGateway.Runner do
 
     failed? = Enum.any?(checks, &(&1["status"] == "failed"))
 
-    {:ok,
-     %{
-       status: if(failed?, do: "failed", else: "ok"),
-       command: "precheck",
-       scope: change.scope,
-       cell_group: change.cell_group,
-       change_id: change.change_id,
-       incident_id: change.incident_id,
-       target_backend: maybe_to_string(change.target_backend),
-       checks: checks,
-       config_report: config_report,
-       policy: format_policy(switch_policy),
-       control_state: control_state,
-       native_probe: native_probe,
-       runtime_contract: runtime_contract,
-       runtime: runtime_payload(runtime_precheck),
-       next: if(failed?, do: ["observe"], else: ["plan"])
-     }
-     |> maybe_put_replacement_status(:precheck, change, checks)}
+    payload =
+      %{
+        status: if(failed?, do: "failed", else: "ok"),
+        command: "precheck",
+        scope: change.scope,
+        target_ref: change.target_ref,
+        cell_group: change.cell_group,
+        change_id: change.change_id,
+        incident_id: change.incident_id,
+        target_backend: maybe_to_string(change.target_backend),
+        checks: checks,
+        config_report: config_report,
+        policy: format_policy(switch_policy),
+        control_state: control_state,
+        native_probe: native_probe,
+        runtime_contract: runtime_contract,
+        runtime: runtime_payload(runtime_precheck),
+        next: if(failed?, do: ["observe"], else: ["plan"])
+      }
+      |> maybe_add_precheck_artifact(change)
+      |> maybe_put_replacement_status(:precheck, change, checks)
+      |> persist_precheck(change)
+
+    {:ok, payload}
   end
 
   defp do_execute(:plan, change) do
@@ -152,6 +164,7 @@ defmodule RanActionGateway.Runner do
           status: "planned",
           command: "plan",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -192,6 +205,7 @@ defmodule RanActionGateway.Runner do
           status: "applied",
           command: "apply",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -243,6 +257,7 @@ defmodule RanActionGateway.Runner do
           status: if(failed?, do: "failed", else: "verified"),
           command: "verify",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -276,6 +291,7 @@ defmodule RanActionGateway.Runner do
           status: "rolled_back",
           command: "rollback",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -319,6 +335,7 @@ defmodule RanActionGateway.Runner do
          status: "observed",
          command: "observe",
          scope: change.scope,
+         target_ref: change.target_ref,
          cell_group: change.cell_group,
          change_id: change.change_id,
          incident_id: change.incident_id,
@@ -360,6 +377,7 @@ defmodule RanActionGateway.Runner do
           status: "captured",
           command: "capture-artifacts",
           scope: change.scope,
+          target_ref: change.target_ref,
           cell_group: change.cell_group,
           change_id: change.change_id,
           incident_id: change.incident_id,
@@ -373,6 +391,20 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp maybe_add_precheck_artifact(payload, %Change{change_id: change_id})
+       when is_binary(change_id) do
+    Map.put(payload, :artifacts, [Store.precheck_path(change_id)])
+  end
+
+  defp maybe_add_precheck_artifact(payload, _change), do: payload
+
+  defp persist_precheck(payload, %Change{change_id: change_id}) when is_binary(change_id) do
+    Store.write_json(Store.precheck_path(change_id), payload)
+    payload
+  end
+
+  defp persist_precheck(payload, _change), do: payload
+
   defp require(errors, field, value) do
     if present?(value), do: errors, else: [{field, "is required"} | errors]
   end
@@ -383,23 +415,45 @@ defmodule RanActionGateway.Runner do
   defp validate_scope(errors, _scope),
     do: [{:scope, "must be one of #{@scopes |> Enum.join(", ")}"} | errors]
 
+  defp validate_target_ref(errors, %Change{scope: scope, target_ref: target_ref})
+       when scope in @replacement_scopes do
+    require(errors, :target_ref, target_ref)
+  end
+
+  defp validate_target_ref(errors, _change), do: errors
+
   defp validate_cell_group(errors, %Change{scope: "cell_group", cell_group: cell_group}) do
     require(errors, :cell_group, cell_group)
   end
 
   defp validate_cell_group(errors, _change), do: errors
 
-  defp validate_target_backend(errors, nil), do: errors
+  defp validate_target_backend(errors, nil, scope) when scope in @replacement_scopes do
+    [
+      {:target_backend, "must be one of #{Enum.join(@replacement_backends, ", ")}"}
+      | errors
+    ]
+  end
 
-  defp validate_target_backend(errors, backend) do
-    if backend in RanCore.supported_backends() do
-      errors
-    else
-      [
-        {:target_backend,
-         "must be one of #{Enum.join(Enum.map(RanCore.supported_backends(), &Atom.to_string/1), ", ")}"}
-        | errors
-      ]
+  defp validate_target_backend(errors, nil, _scope), do: errors
+
+  defp validate_target_backend(errors, backend, scope) do
+    cond do
+      scope in @replacement_scopes and replacement_backend?(backend) ->
+        errors
+
+      backend in RanCore.supported_backends() ->
+        errors
+
+      scope in @replacement_scopes ->
+        [{:target_backend, "must be one of #{Enum.join(@replacement_backends, ", ")}"} | errors]
+
+      true ->
+        [
+          {:target_backend,
+           "must be one of #{Enum.join(Enum.map(RanCore.supported_backends(), &Atom.to_string/1), ", ")}"}
+          | errors
+        ]
     end
   end
 
@@ -450,6 +504,22 @@ defmodule RanActionGateway.Runner do
   end
 
   defp validate_approval_contract(errors, _command, _change), do: errors
+
+  defp validate_replacement_contract(errors, command, %Change{} = change)
+       when change.scope in @replacement_scopes do
+    replacement = replacement_metadata(change)
+
+    errors
+    |> require_replacement_field("target_profile", replacement["target_profile"])
+    |> require_replacement_field("core_profile", replacement["core_profile"])
+    |> require_replacement_field("action", replacement["action"])
+    |> require_replacement_field("target_role", replacement["target_role"])
+    |> require_replacement_field("required_interfaces", replacement["required_interfaces"])
+    |> require_replacement_field("acceptance_gates", replacement["acceptance_gates"])
+    |> validate_replacement_rollback_target(command, change)
+  end
+
+  defp validate_replacement_contract(errors, _command, _change), do: errors
 
   defp load_plan(change_id) do
     case Store.read_json(Store.plan_path(change_id)) do
@@ -591,7 +661,10 @@ defmodule RanActionGateway.Runner do
   end
 
   defp approval_required?(command, %Change{} = change) when command in [:apply, :rollback] do
-    not change.dry_run and change.scope in ["backend", "cell_group", "association"]
+    replacement_destructive? = truthy?(replacement_metadata(change)["destructive"])
+
+    not change.dry_run and
+      (change.scope in ["backend", "cell_group", "association"] or replacement_destructive?)
   end
 
   defp approval_required?(_command, _change), do: false
@@ -659,6 +732,19 @@ defmodule RanActionGateway.Runner do
 
   defp normalize_evidence_refs(_evidence), do: []
 
+  defp infer_rollback_target(%Change{rollback_target: rollback_target}, _policy)
+       when is_binary(rollback_target) and rollback_target != "",
+       do: rollback_target
+
+  defp infer_rollback_target(%Change{current_backend: current_backend}, _policy)
+       when is_binary(current_backend) do
+    if replacement_backend?(current_backend) do
+      current_backend
+    else
+      infer_rollback_target(%Change{target_backend: current_backend}, nil)
+    end
+  end
+
   defp infer_rollback_target(%Change{current_backend: current_backend}, _policy)
        when not is_nil(current_backend) do
     if current_backend in RanCore.supported_backends() do
@@ -677,6 +763,11 @@ defmodule RanActionGateway.Runner do
 
   defp infer_rollback_target(%Change{target_backend: :aerial_fapi_profile}, _policy),
     do: :local_fapi_profile
+
+  defp infer_rollback_target(%Change{target_backend: target_backend}, _policy)
+       when is_binary(target_backend) do
+    if replacement_backend?(target_backend), do: target_backend, else: :stub_fapi_profile
+  end
 
   defp infer_rollback_target(%Change{}, _policy), do: :stub_fapi_profile
 
@@ -714,6 +805,7 @@ defmodule RanActionGateway.Runner do
 
       payload
       |> maybe_replace_status(phase)
+      |> maybe_put_replacement_identity(change, replacement)
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, base_status))
       |> Map.put(:core_profile, replacement["core_profile"])
@@ -734,17 +826,228 @@ defmodule RanActionGateway.Runner do
       |> maybe_put_control_plane_interface_semantics(phase, change)
       |> maybe_put_attach_status(phase, change, replacement, base_status)
       |> maybe_put_replacement_review_semantics(phase, change, replacement)
+      |> maybe_put_target_host_precheck_semantics(phase, change, replacement)
       |> ReplacementReview.enrich(phase, change, checks)
     else
       payload
     end
   end
 
-  defp replacement_scope?(scope),
-    do: scope in ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+  defp replacement_scope?(scope), do: scope in @replacement_scopes
 
   defp replacement_metadata(%Change{metadata: metadata}) do
     metadata[:replacement] || metadata["replacement"] || %{}
+  end
+
+  defp maybe_put_replacement_identity(payload, %Change{} = change, replacement) do
+    payload
+    |> put_optional(:target_ref, change.target_ref)
+    |> put_optional(:target_profile, replacement["target_profile"])
+    |> put_optional(:target_backend, replacement_target_backend(change))
+    |> put_optional(:rollback_target, replacement_rollback_target(change))
+  end
+
+  defp maybe_put_target_host_precheck_semantics(
+         payload,
+         :precheck,
+         %Change{scope: "target_host"} = change,
+         replacement
+       ) do
+    profile = replacement_target_profile_contract(change)
+    overlay = replacement_target_profile_overlay(change)
+    core_profile = replacement["open5gs_core"] || %{}
+    target_backend = replacement_target_backend(change)
+    rollback_target = replacement_rollback_target(change)
+
+    layout =
+      get_in(overlay, ["target_host", "deployment_layout"]) ||
+        get_in(profile, ["host_boundary", "deployment_layout"])
+
+    host_evidence = get_in(profile, ["host_boundary", "preflight_evidence_ref"])
+    ru_evidence = get_in(profile, ["ru_boundary", "readiness_evidence_ref"])
+
+    core_evidence =
+      get_in(profile, ["core_boundary", "registration_evidence_ref"]) ||
+        replacement_evidence_ref(:precheck, change, "core-link")
+
+    host_resources = get_in(replacement, ["native_probe", "required_resources"]) || []
+
+    status = if(layout && rollback_target, do: "blocked", else: "failed")
+
+    payload
+    |> Map.put(:status, status)
+    |> Map.put(
+      :summary,
+      "Target-host precheck is blocked because the declared timing, layout, and fronthaul dependencies are not yet proven."
+    )
+    |> Map.put(:gate_class, "blocked")
+    |> put_optional(:target_backend, target_backend)
+    |> put_optional(:rollback_target, rollback_target)
+    |> Map.put(:rollback_available, not is_nil(rollback_target))
+    |> Map.put(:approval_required, false)
+    |> Map.put(:core_profile, core_profile["profile"] || replacement["core_profile"])
+    |> Map.put(
+      :conformance_claim,
+      %{
+        profile: "oai_visible_5g_standards_baseline_v1",
+        evidence_tier: "standards_subset",
+        baseline_ref:
+          "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+      }
+    )
+    |> Map.put(
+      :core_endpoint,
+      %{
+        profile: core_profile["profile"] || replacement["core_profile"],
+        release_ref: get_in(profile, ["core_boundary", "release_ref"]),
+        n2: get_in(core_profile, ["n2"]),
+        n3: get_in(core_profile, ["n3"])
+      }
+    )
+    |> Map.put(
+      :checks,
+      [
+        %{
+          "name" => "host_preflight",
+          "status" => "blocked",
+          "detail" =>
+            "host readiness is not yet proven for #{Enum.join(host_resources, ", ")} and layout #{layout || "unknown"}"
+        },
+        %{
+          "name" => "ru_sync",
+          "status" => "blocked",
+          "detail" => "RU sync has not been demonstrated for the declared profile"
+        },
+        %{
+          "name" => "core_link_reachable",
+          "status" => if(core_profile["profile"], do: "ok", else: "blocked"),
+          "detail" =>
+            if(core_profile["profile"],
+              do:
+                "Open5GS endpoint #{get_in(core_profile, ["n2", "amf_host"])}:#{get_in(core_profile, ["n2", "amf_port"])} for profile #{core_profile["profile"]} is declared and reachable from the target profile",
+              else: "the declared Open5GS core profile is still missing"
+            )
+        }
+      ]
+    )
+    |> Map.put(
+      :plane_status,
+      %{
+        s_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "ptp-state"),
+          reason: "timing source is not yet proven for the declared lane"
+        },
+        m_plane: %{
+          status: if(layout, do: "ok", else: "blocked"),
+          evidence_ref: replacement_evidence_ref(:precheck, change, "host-inventory"),
+          reason:
+            if(layout, do: nil, else: "deployment layout is missing from the declared profile")
+        },
+        c_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "core-link"),
+          reason: "cutover to the replacement lane is not yet allowed"
+        },
+        u_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "user-plane"),
+          reason: "user-plane path is not yet declared ready"
+        }
+      }
+    )
+    |> Map.put(
+      :ru_status,
+      %{
+        status: "blocked",
+        evidence_ref: replacement_evidence_ref(:precheck, change, "ru-sync"),
+        reason: "RU sync has not been confirmed"
+      }
+    )
+    |> Map.put(
+      :core_link_status,
+      %{
+        status: "ok",
+        evidence_ref: core_evidence,
+        reason: nil,
+        profile: core_profile["profile"] || replacement["core_profile"]
+      }
+    )
+    |> Map.put(:failure_class, "ru_failure")
+    |> put_optional(:ngap_subset, replacement["ngap_subset"])
+    |> Map.put(
+      :artifacts,
+      Enum.reject(
+        [
+          List.first(payload[:artifacts] || []),
+          host_evidence || replacement_evidence_ref(:precheck, change, "host-inventory"),
+          ru_evidence || replacement_evidence_ref(:precheck, change, "ru-sync"),
+          core_evidence
+        ],
+        &is_nil/1
+      )
+    )
+    |> Map.put(
+      :suggested_next,
+      [
+        "inspect host timing and RU link blockers",
+        "confirm rollback target remains known",
+        "rerun precheck after RF and sync assumptions are corrected"
+      ]
+    )
+  end
+
+  defp maybe_put_target_host_precheck_semantics(payload, _phase, _change, _replacement),
+    do: payload
+
+  defp replacement_target_backend(%Change{} = change) do
+    maybe_to_string(change.target_backend) || "replacement_shadow"
+  end
+
+  defp replacement_rollback_target(%Change{} = change) do
+    replacement_review_rollback_target(change) || "oai_reference"
+  end
+
+  defp replacement_target_profile_contract(%Change{} = change) do
+    case change |> replacement_metadata() |> Map.get("target_profile") do
+      nil -> %{}
+      profile -> load_replacement_profile_json(profile, ".example.json")
+    end
+  end
+
+  defp replacement_target_profile_overlay(%Change{} = change) do
+    case change |> replacement_metadata() |> Map.get("target_profile") do
+      nil -> %{}
+      profile -> load_replacement_profile_json(profile, ".lab-owner-overlay.example.json")
+    end
+  end
+
+  defp load_replacement_profile_json(profile_name, suffix) do
+    repo_root = Path.expand("../../../../", __DIR__)
+
+    path =
+      Path.join(repo_root, "subprojects/ran_replacement/contracts/examples/*#{suffix}")
+      |> Path.wildcard()
+      |> Enum.find(fn candidate ->
+        case File.read(candidate) do
+          {:ok, body} ->
+            case JSON.decode(body) do
+              {:ok, payload} -> payload["profile"] == profile_name
+              _ -> false
+            end
+
+          _ ->
+            false
+        end
+      end)
+
+    with path when is_binary(path) <- path,
+         {:ok, body} <- File.read(path),
+         {:ok, payload} <- JSON.decode(body) do
+      payload
+    else
+      _ -> %{}
+    end
   end
 
   defp replacement_gate_class(:precheck, "failed"), do: "blocked"
@@ -1468,6 +1771,51 @@ defmodule RanActionGateway.Runner do
      }}
   end
 
+  defp target_backend_known?(%Change{scope: scope, target_backend: backend})
+       when scope in @replacement_scopes,
+       do: replacement_backend?(backend)
+
+  defp target_backend_known?(%Change{target_backend: nil}), do: true
+
+  defp target_backend_known?(%Change{target_backend: backend}),
+    do: backend in RanCore.supported_backends()
+
+  defp replacement_backend?(backend) when is_atom(backend),
+    do: Atom.to_string(backend) in @replacement_backends
+
+  defp replacement_backend?(backend) when is_binary(backend), do: backend in @replacement_backends
+  defp replacement_backend?(_backend), do: false
+
+  defp require_replacement_field(errors, field, value) when is_list(value) do
+    if value == [] do
+      [{String.to_atom(field), "replacement metadata must include #{field}"} | errors]
+    else
+      errors
+    end
+  end
+
+  defp require_replacement_field(errors, field, value) do
+    if present?(value) do
+      errors
+    else
+      [{String.to_atom(field), "replacement metadata must include #{field}"} | errors]
+    end
+  end
+
+  defp validate_replacement_rollback_target(errors, :precheck, _change), do: errors
+
+  defp validate_replacement_rollback_target(errors, _command, %Change{} = change) do
+    if present?(replacement_review_rollback_target(change)) do
+      errors
+    else
+      [
+        {:rollback_target,
+         "replacement lifecycle commands require rollback_target or current_backend"}
+        | errors
+      ]
+    end
+  end
+
   defp present?(value), do: value not in [nil, "", false]
 
   defp truthy?(value), do: value in [true, "true", 1, "1", true]
@@ -1832,6 +2180,7 @@ defmodule RanActionGateway.Runner do
         artifact_root: Store.artifact_root()
       },
       workflow: %{
+        precheck: existing_path(change.change_id && Store.precheck_path(change.change_id)),
         plan: existing_path(change.change_id && Store.plan_path(change.change_id)),
         change_state:
           existing_path(change.change_id && Store.change_state_path(change.change_id)),
@@ -1884,7 +2233,7 @@ defmodule RanActionGateway.Runner do
   end
 
   defp recent_change_refs(limit) do
-    ["plans", "changes", "verify", "captures", "approvals", "rollback_plans"]
+    ["prechecks", "plans", "changes", "verify", "captures", "approvals", "rollback_plans"]
     |> Enum.flat_map(fn kind ->
       Path.wildcard(Path.join([Store.artifact_root(), kind, "*.json"]))
     end)
@@ -2169,6 +2518,7 @@ defmodule RanActionGateway.Runner do
 
   defp native_probe_snapshot(%Change{change_id: change_id}) do
     [
+      Store.precheck_path(change_id),
       Store.verify_path(change_id),
       Store.change_state_path(change_id),
       Store.plan_path(change_id)

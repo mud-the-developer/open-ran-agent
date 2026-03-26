@@ -21,6 +21,11 @@ Runbook alignment:
 Current draft files:
 
 - [precheck-target-host-open5gs-n79.json](precheck-target-host-open5gs-n79.json)
+- [plan-target-host-open5gs-n79.json](plan-target-host-open5gs-n79.json)
+- [apply-target-host-open5gs-n79.json](apply-target-host-open5gs-n79.json)
+- [verify-target-host-open5gs-n79.json](verify-target-host-open5gs-n79.json)
+- [capture-artifacts-target-host-open5gs-n79.json](capture-artifacts-target-host-open5gs-n79.json)
+- [rollback-target-host-open5gs-n79.json](rollback-target-host-open5gs-n79.json)
 - [plan-gnb-bringup-open5gs-n79.json](plan-gnb-bringup-open5gs-n79.json)
 - [verify-attach-ping-open5gs-n79.json](verify-attach-ping-open5gs-n79.json)
 - [rollback-gnb-cutover-open5gs-n79.json](rollback-gnb-cutover-open5gs-n79.json)
