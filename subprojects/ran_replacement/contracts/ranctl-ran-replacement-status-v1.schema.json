@@ -10,7 +10,9 @@
     "command",
     "scope",
     "conformance_claim",
-    "summary"
+    "summary",
+    "failure_class",
+    "ngap_subset"
   ],
   "properties": {
     "status": {
@@ -99,9 +101,15 @@
         null
       ]
     },
+    "failure_class": {
+      "$ref": "#/$defs/failureClass"
+    },
     "summary": {
       "type": "string",
       "minLength": 1
+    },
+    "ngap_subset": {
+      "$ref": "#/$defs/ngapSubset"
     },
     "target_backend": {
       "type": [
@@ -238,6 +246,80 @@
     }
   },
   "$defs": {
+    "failureClass": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ru_failure",
+        "core_failure",
+        "user_plane_failure",
+        "cutover_or_rollback_failure",
+        null
+      ]
+    },
+    "ngapSubset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standards_subset_ref",
+        "procedure_matrix_ref",
+        "required_procedures",
+        "optional_procedures",
+        "deferred_procedures"
+      ],
+      "properties": {
+        "standards_subset_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+        },
+        "procedure_matrix_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+        },
+        "required_procedures": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "NG Setup",
+              "Initial UE Message",
+              "Uplink NAS Transport",
+              "Downlink NAS Transport",
+              "UE Context Release"
+            ]
+          }
+        },
+        "optional_procedures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Error Indication",
+              "Reset"
+            ]
+          }
+        },
+        "deferred_procedures": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Paging",
+              "Handover Preparation",
+              "Path Switch Request"
+            ]
+          }
+        }
+      }
+    },
     "conformance_claim": {
       "type": "object",
       "additionalProperties": false,
