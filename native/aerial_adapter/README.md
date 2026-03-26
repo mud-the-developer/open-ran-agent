@@ -14,3 +14,11 @@ Rules:
 - do not assume vendor internals here
 - implement only the shared canonical backend contract
 - keep vendor-specific behavior behind the native adapter boundary
+- keep support posture at roadmap-only until target-host proof, verify/rollback evidence,
+  and a stable runtime health model exist
+
+Current non-claims:
+
+- no vendor device bring-up claim
+- no attach-plus-ping proof claim
+- no production timing guarantee claim
