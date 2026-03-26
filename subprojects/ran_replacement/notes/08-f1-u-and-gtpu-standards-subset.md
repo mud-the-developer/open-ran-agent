@@ -17,6 +17,17 @@ The target is narrow:
 The point of this note is not broad user-plane parity.
 The point is a standards-correct user-plane baseline for the declared lab target.
 
+## Conformance Frame
+
+This subset is judged against:
+
+- `3GPP TS 38.415` as the declared NG / PDU-session user-plane frame for the
+  repo-owned supported subset
+- `subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md`
+  for required procedures and explicit non-goals
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+  for the repo-wide conformance and evidence mapping
+
 ## Required Path Ownership
 
 The replacement lane must own the path needed for a successful ping after registration and PDU session setup.
@@ -75,7 +86,7 @@ For milestone 1, allowed deviations include:
 These deviations are not allowed to hide unsupported behavior.
 If the replacement lane depends on a deviation, the deviation must be named in precheck, plan, verify, or incident evidence.
 
-## Non-Goals
+## Negative Space
 
 This note does not claim:
 
@@ -94,4 +105,3 @@ The milestone 1 promise is only:
 - one real `Open5GS` core
 - one `n79` profile
 - ping on the declared user-plane path
-

@@ -7,6 +7,11 @@
   "target_ref": "gnb-n79-lab-01",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "conformance_claim": {
+    "profile": "oai_visible_5g_standards_baseline_v1",
+    "evidence_tier": "standards_subset",
+    "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+  },
   "gate_class": "pass",
   "summary": "Rollback returned the lane to the declared OAI reference target after a failed cutover.",
   "target_backend": "oai_reference",
@@ -81,5 +86,26 @@
       "evidence_ref": "artifacts/replacement/rollback/ptp.json",
       "reason": null
     }
+  },
+  "failure_class": "cutover_or_rollback_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
   }
 }

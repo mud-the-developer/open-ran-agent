@@ -188,5 +188,25 @@
     "ping_result": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
     "rollback_target_ref": "oai_reference",
     "rollback_evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+  },
+  "compatibility_surface": {
+    "compatibility_profile": "open5gs_public_surface_ran_visible_v1",
+    "required_nf_set": [
+      "AMF",
+      "SMF",
+      "UPF"
+    ],
+    "required_io_surfaces": [
+      "NGAP",
+      "GTP-U",
+      "metrics",
+      "info_api",
+      "config_render"
+    ],
+    "declared_deviations": [
+      "public-surface compatibility is broader than the milestone-1 standards subset",
+      "management adapters may satisfy compatibility claims before full internal runtime parity"
+    ],
+    "evidence_ref": "docs/adr/0006-open5gs-public-surface-compatibility-baseline.md"
   }
 }

@@ -45,6 +45,18 @@ defmodule RanActionGateway.Store do
   @spec capture_path(String.t()) :: String.t()
   def capture_path(ref), do: Path.join([@artifact_root, "captures", "#{ref}.json"])
 
+  @spec capture_compare_report_path(String.t()) :: String.t()
+  def capture_compare_report_path(ref),
+    do: Path.join([@artifact_root, "captures", "#{ref}-compare-report.json"])
+
+  @spec capture_request_snapshot_path(String.t()) :: String.t()
+  def capture_request_snapshot_path(ref),
+    do: Path.join([@artifact_root, "captures", "#{ref}-request.json"])
+
+  @spec capture_rollback_evidence_path(String.t()) :: String.t()
+  def capture_rollback_evidence_path(ref),
+    do: Path.join([@artifact_root, "captures", "#{ref}-rollback-evidence.json"])
+
   @spec approval_path(String.t(), String.t()) :: String.t()
   def approval_path(change_id, command \\ "apply") do
     Path.join([@artifact_root, "approvals", "#{change_id}-#{command}.json"])

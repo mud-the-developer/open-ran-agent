@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/compare-report-v1.schema.json",
   "title": "RAN Replacement Compare Report v1",
-  "description": "Draft schema for replacement-track compare-report artifacts. The report summarizes expected versus observed state for a declared milestone-1 scope and must stay readable without SSH access.",
+  "description": "Draft schema for replacement-track compare-report artifacts. The report summarizes expected versus observed state for a declared milestone-1 scope, records the conformance tier being claimed, and must stay readable without SSH access.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -11,11 +11,14 @@
     "incident_id",
     "target_profile",
     "core_profile",
+    "conformance_claim",
     "core_endpoint",
     "comparison_scope",
     "expected_state",
     "observed_state",
     "gate_class",
+    "failure_class",
+    "ngap_subset",
     "diff_summary",
     "evidence_refs",
     "rollback_target",
@@ -41,6 +44,9 @@
     "core_profile": {
       "type": "string",
       "minLength": 1
+    },
+    "conformance_claim": {
+      "$ref": "#/$defs/conformance_claim"
     },
     "core_endpoint": {
       "$ref": "#/$defs/core_endpoint"
@@ -76,6 +82,12 @@
         "pass"
       ]
     },
+    "failure_class": {
+      "$ref": "#/$defs/failureClass"
+    },
+    "ngap_subset": {
+      "$ref": "#/$defs/ngapSubset"
+    },
     "diff_summary": {
       "type": "array",
       "minItems": 1,
@@ -96,12 +108,116 @@
       "type": "string",
       "minLength": 1
     },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
     "operator_next_step": {
       "type": "string",
       "minLength": 1
     }
   },
   "$defs": {
+    "failureClass": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ru_failure",
+        "core_failure",
+        "user_plane_failure",
+        "cutover_or_rollback_failure",
+        null
+      ]
+    },
+    "ngapSubset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standards_subset_ref",
+        "procedure_matrix_ref",
+        "required_procedures",
+        "optional_procedures",
+        "deferred_procedures"
+      ],
+      "properties": {
+        "standards_subset_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+        },
+        "procedure_matrix_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+        },
+        "required_procedures": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "NG Setup",
+              "Initial UE Message",
+              "Uplink NAS Transport",
+              "Downlink NAS Transport",
+              "UE Context Release"
+            ]
+          }
+        },
+        "optional_procedures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Error Indication",
+              "Reset"
+            ]
+          }
+        },
+        "deferred_procedures": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Paging",
+              "Handover Preparation",
+              "Path Switch Request"
+            ]
+          }
+        }
+      }
+    },
+    "conformance_claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "evidence_tier",
+        "baseline_ref"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_tier": {
+          "type": "string",
+          "enum": [
+            "milestone_proof",
+            "standards_subset"
+          ]
+        },
+        "baseline_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
     "core_endpoint": {
       "type": "object",
       "additionalProperties": false,

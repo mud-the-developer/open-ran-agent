@@ -4,6 +4,11 @@
   "incident_id": "inc-ran-repl-registration-001",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "conformance_claim": {
+    "profile": "oai_visible_5g_standards_baseline_v1",
+    "evidence_tier": "standards_subset",
+    "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+  },
   "core_endpoint": {
     "profile": "open5gs_nsa_lab_v1",
     "release_ref": "open5gs-sanitized-lab-release-1",
@@ -66,5 +71,27 @@
     "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
   ],
   "rollback_target": "oai_reference",
-  "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane."
+  "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane.",
+  "summary": "Registration review diverged after Downlink NAS Transport and points to a real Open5GS core rejection on the declared lane.",
+  "failure_class": "core_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  }
 }

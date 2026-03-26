@@ -15,6 +15,15 @@ This package owns the declared `NGAP` edge of the milestone-1 replacement lane:
 
 It does not own RU timing, scheduler decisions, or user-plane forwarding.
 
+## Conformance Frame
+
+This package is judged against:
+
+- `3GPP TS 38.413`
+- `subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md`
+- `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+
 ## Runtime Owner
 
 Primary runtime owner for milestone 1: `ran_cu_cp`.
@@ -75,6 +84,8 @@ The package must eventually emit enough state for `ranctl`, dashboard, and evide
 
 Expected evidence fields:
 
+- `failure_class`
+- `ngap_subset`
 - `interface_status.ngap`
 - `core_endpoint`
 - `core_link_status`
@@ -89,6 +100,7 @@ Expected evidence fields:
 - Keep all mutating actions routed through `bin/ranctl`.
 - Keep package fixtures schema-backed by the existing replacement request/status schemas.
 - Treat `registration rejected`, `NG setup failed`, and `release cleanup incomplete` as first-class package incidents.
+- Keep deferred procedures explicit via the documented NGAP subset instead of implying broad support from a healthy status summary.
 - Keep the rollback target explicit whenever NGAP-facing attach progress is not trusted.
 
 ## Non-Goals

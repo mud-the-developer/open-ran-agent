@@ -84,8 +84,27 @@
           "pdu_type": "ipv4",
           "expect_ping_target": "8.8.8.8"
         }
+      },
+      "ngap_subset": {
+        "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+        "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+        "required_procedures": [
+          "NG Setup",
+          "Initial UE Message",
+          "Uplink NAS Transport",
+          "Downlink NAS Transport",
+          "UE Context Release"
+        ],
+        "optional_procedures": [
+          "Error Indication",
+          "Reset"
+        ],
+        "deferred_procedures": [
+          "Paging",
+          "Handover Preparation",
+          "Path Switch Request"
+        ]
       }
     }
   }
 }
-
