@@ -16,6 +16,17 @@ defmodule RanActionGateway.Runner do
   @phases [:precheck, :plan, :apply, :verify, :rollback, :observe, :capture_artifacts]
   @change_commands [:precheck, :plan, :apply, :verify, :rollback]
   @scopes ~w(backend cell_group association incident gnb target_host ue_session ru_link core_link replacement_cutover)
+  @ngap_failure_hints [
+    "downlink nas transport",
+    "downlink_nas_transport",
+    "downlink-nas-transport",
+    "registration rejected",
+    "registration_rejected",
+    "registration rejection",
+    "registration_failure",
+    "registration failed",
+    "ngap_registration_failed"
+  ]
 
   @spec phases() :: [atom()]
   def phases, do: @phases
@@ -866,11 +877,26 @@ defmodule RanActionGateway.Runner do
     do: "UE context release completed and the cleanup state is auditable"
 
   defp ngap_registration_failure?(%Change{verify_window: %{"checks" => checks}})
-       when is_list(checks),
-       do: Enum.member?(checks, "ngap_registration_failed")
+       when is_list(checks) do
+    Enum.member?(checks, "ngap_registration_failed") or
+      Enum.member?(checks, "registration_rejected")
+  end
 
-  defp ngap_registration_failure?(%Change{verify_window: %{checks: checks}}) when is_list(checks),
-    do: Enum.member?(checks, "ngap_registration_failed")
+  defp ngap_registration_failure?(%Change{verify_window: %{checks: checks}})
+       when is_list(checks) do
+    Enum.member?(checks, "ngap_registration_failed") or
+      Enum.member?(checks, "registration_rejected")
+  end
+
+  defp ngap_registration_failure?(%Change{} = change) do
+    signal =
+      [change.reason, change.incident_id, Enum.join(requested_check_names(change), " ")]
+      |> Enum.reject(&is_nil/1)
+      |> Enum.join(" ")
+      |> String.downcase()
+
+    Enum.any?(@ngap_failure_hints, &String.contains?(signal, &1))
+  end
 
   defp ngap_registration_failure?(_change), do: false
 

@@ -259,8 +259,21 @@ defmodule RanActionGateway.CLITest do
                "/attach.json"
 
       assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
-      assert Enum.at(verify.ngap_procedure_trace.procedures, 0).name == "NG Setup"
-      assert Enum.at(verify.ngap_procedure_trace.procedures, 3).name == "Downlink NAS Transport"
+
+      assert Enum.map(verify.ngap_procedure_trace.procedures, & &1.name) == [
+               "NG Setup",
+               "Initial UE Message",
+               "Uplink NAS Transport",
+               "Downlink NAS Transport",
+               "UE Context Release"
+             ]
+
+      assert Enum.all?(verify.ngap_procedure_trace.procedures, &(&1.status == "ok"))
+
+      refute Enum.any?(verify.ngap_procedure_trace.procedures, fn procedure ->
+               procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
+             end)
+
       assert get_in(verify, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
     end)
   end
@@ -293,8 +306,51 @@ defmodule RanActionGateway.CLITest do
                "/attach.json"
 
       assert observe.ngap_procedure_trace.last_observed == "UE Context Release"
-      assert Enum.at(observe.ngap_procedure_trace.procedures, 3).status == "failed"
+
+      assert Map.new(observe.ngap_procedure_trace.procedures, &{&1.name, &1.status}) == %{
+               "NG Setup" => "ok",
+               "Initial UE Message" => "ok",
+               "Uplink NAS Transport" => "ok",
+               "Downlink NAS Transport" => "failed",
+               "UE Context Release" => "ok"
+             }
+
+      refute Enum.any?(observe.ngap_procedure_trace.procedures, fn procedure ->
+               procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
+             end)
+
       assert get_in(observe, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+    end)
+  end
+
+  test "replacement capture-artifacts surfaces deterministic ngap procedure evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      capture_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/capture-artifacts-registration-rejected-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.ngap_procedure_trace.last_observed == "UE Context Release"
+
+      assert Map.new(capture.ngap_procedure_trace.procedures, &{&1.name, &1.status}) == %{
+               "NG Setup" => "ok",
+               "Initial UE Message" => "ok",
+               "Uplink NAS Transport" => "ok",
+               "Downlink NAS Transport" => "failed",
+               "UE Context Release" => "ok"
+             }
+
+      refute Enum.any?(capture.ngap_procedure_trace.procedures, fn procedure ->
+               procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
+             end)
     end)
   end
 
@@ -355,6 +411,18 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
                "/attach.json"
+
+      assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
+
+      assert Enum.map(verify.ngap_procedure_trace.procedures, & &1.name) == [
+               "NG Setup",
+               "Initial UE Message",
+               "Uplink NAS Transport",
+               "Downlink NAS Transport",
+               "UE Context Release"
+             ]
+
+      assert Enum.all?(verify.ngap_procedure_trace.procedures, &(&1.status == "ok"))
     end)
   end
 
