@@ -245,5 +245,40 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     end)
   end
 
+  test "repo-visible docs separate standards-subset claims from compatibility claims" do
+    replacement_readme =
+      repo_path("subprojects/ran_replacement/README.md")
+      |> File.read!()
+
+    notes_readme =
+      repo_path("subprojects/ran_replacement/notes/README.md")
+      |> File.read!()
+
+    artifacts_readme =
+      repo_path("subprojects/ran_replacement/examples/artifacts/README.md")
+      |> File.read!()
+
+    ranctl_readme =
+      repo_path("subprojects/ran_replacement/examples/ranctl/README.md")
+      |> File.read!()
+
+    adr_0006 =
+      repo_path("docs/adr/0006-open5gs-public-surface-compatibility-baseline.md")
+      |> File.read!()
+
+    adr_0008 =
+      repo_path("docs/adr/0008-oai-cu-du-function-and-standards-baseline.md")
+      |> File.read!()
+
+    assert replacement_readme =~ "## Claim Separation"
+    assert replacement_readme =~ "### Standards-subset claims"
+    assert replacement_readme =~ "### Public-surface compatibility claims"
+    assert artifacts_readme =~ "## Claim Boundary"
+    assert ranctl_readme =~ "Claim boundary:"
+    assert notes_readme =~ "## How To Read Claims"
+    assert adr_0006 =~ "compatibility baseline"
+    assert adr_0008 =~ "standards-correct behavior"
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end

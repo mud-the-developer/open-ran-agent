@@ -18,3 +18,9 @@ Use these as operator-facing examples for:
 - rollback evidence captured after a failed cutover
 
 Keep all values sanitized and profile-specific.
+
+## Claim Boundary
+
+These artifact fixtures document standards-subset evidence for the declared
+milestone path. They may support public-surface compatibility review, but they
+must not be read as proof of broader compatibility parity by themselves.

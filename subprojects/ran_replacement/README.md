@@ -8,6 +8,34 @@ The replacement claim here is strict:
 - interoperate with a real `Open5GS` core
 - keep declared external interfaces standards-correct for the supported scope
 
+## Claim Separation
+
+This track uses two different kinds of claims, and repo-visible docs/tests must
+not blur them:
+
+### Standards-subset claims
+
+These are the milestone-1 claims about the declared target-profile path:
+
+- `NGAP`, `F1-C`, `F1-U`, `E1AP`, and `GTP-U` behavior is standards-correct for
+  the documented subset
+- the replacement lane owns the named `CU-CP`, `CU-UP`, and `DU` function chain
+  needed for one real attach-plus-ping path
+- unsupported procedures or broader parity areas are explicitly deferred
+
+### Public-surface compatibility claims
+
+These are broader operator-facing compatibility claims described by ADR 0006:
+
+- the public Open5GS-facing surface remains reviewable and additive
+- compatibility vocabulary can be surfaced in `ranctl`, fixtures, dashboard
+  views, and management adapters
+- compatibility claims do not, by themselves, imply that the narrower
+  standards-subset implementation is already complete
+
+When a document or fixture makes a claim, it should be obvious which of these
+two categories it belongs to.
+
 The target is intentionally narrow and physical:
 
 - one `n79` lab profile first
