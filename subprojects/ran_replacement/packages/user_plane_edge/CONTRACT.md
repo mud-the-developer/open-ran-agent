@@ -83,6 +83,32 @@ Expected evidence fields:
 - `checks[]` for tunnel, forwarding, and rollback-target state
 - compare and rollback evidence references for failed cutover or stale session cleanup
 
+## Vocabulary Rules
+
+Repo-visible user-plane claims must remain explicit about what the milestone does
+and does not prove.
+
+### Required claims
+
+The package may positively claim only:
+
+- `F1-U` forwarding state for the declared route
+- `GTP-U` tunnel and `TEID` association for the declared UE session
+- session-to-tunnel alignment
+- ping proof on the declared route
+
+### Deferred claims
+
+The package must not imply:
+
+- handover-driven tunnel changes
+- roaming or multi-UE session behavior
+- advanced traffic shaping
+- full `GTP-U` feature parity beyond the declared subset
+
+If these concepts appear in docs or evidence, they must be labeled as deferred
+or out of scope rather than supported.
+
 ## Contract Rules
 
 - Keep this package docs/contracts-first until the user-plane subset is explicit enough to implement thin adapters.

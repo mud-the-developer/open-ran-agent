@@ -23,6 +23,13 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     "Reset"
   ]
 
+  @deferred_user_plane_terms [
+    "handover",
+    "roaming",
+    "multi-ue",
+    "traffic shaping"
+  ]
+
   test "failed-cutover capture example uses rollback-review vocabulary" do
     status =
       repo_path(
@@ -181,6 +188,61 @@ defmodule RanActionGateway.ReplacementExamplesTest do
                  check["status"] == "ok"
              end)
     end
+  end
+
+  test "user-plane verify example keeps tunnel/session vocabulary explicit" do
+    status =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert get_in(status, ["interface_status", "f1_u", "evidence_ref"]) =~ "/f1-u.json"
+    assert get_in(status, ["interface_status", "gtpu", "evidence_ref"]) =~ "/gtpu.json"
+    assert get_in(status, ["plane_status", "u_plane", "evidence_ref"]) =~ "/user-plane.json"
+    assert get_in(status, ["pdu_session_status", "evidence_ref"]) =~ "/pdu-session.json"
+    assert get_in(status, ["ping_status", "evidence_ref"]) =~ "/ping.json"
+
+    assert Enum.any?(status["checks"], fn check ->
+             check["name"] == "pdu_session_established" and check["status"] == "ok"
+           end)
+
+    assert Enum.any?(status["checks"], fn check ->
+             check["name"] == "ping_success" and check["status"] == "ok"
+           end)
+  end
+
+  test "user-plane docs keep deferred vocabulary out of supported claims" do
+    package_readme =
+      repo_path("subprojects/ran_replacement/packages/user_plane_edge/README.md")
+      |> File.read!()
+
+    contract =
+      repo_path("subprojects/ran_replacement/packages/user_plane_edge/CONTRACT.md")
+      |> File.read!()
+
+    subset_note =
+      repo_path("subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md")
+      |> File.read!()
+
+    matrix_note =
+      repo_path("subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md")
+      |> File.read!()
+
+    assert package_readme =~ "## Vocabulary Boundaries"
+    assert contract =~ "## Vocabulary Rules"
+    assert package_readme =~ "- `F1-U` forwarding path"
+    assert package_readme =~ "- `GTP-U` tunnel and `TEID` association"
+    assert contract =~ "- `F1-U` forwarding state for the declared route"
+    assert contract =~ "- `GTP-U` tunnel and `TEID` association for the declared UE session"
+
+    Enum.each(@deferred_user_plane_terms, fn term ->
+      assert String.contains?(String.downcase(package_readme), term)
+      assert String.contains?(String.downcase(contract), term)
+      assert String.contains?(String.downcase(subset_note), term)
+      assert String.contains?(String.downcase(matrix_note), term)
+    end)
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

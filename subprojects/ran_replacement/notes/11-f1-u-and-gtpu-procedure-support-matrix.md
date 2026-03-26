@@ -35,6 +35,7 @@ This note does not claim:
 - multi-UE or multi-RU throughput scaling
 - handover
 - roaming
+- advanced traffic shaping
 - production traffic engineering
 - deep vendor-specific implementation details
 - replacing the real `Open5GS` core in this track
