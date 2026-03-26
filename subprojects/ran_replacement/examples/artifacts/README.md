@@ -5,6 +5,10 @@ replacement track.
 
 The files here align with `notes/14-compare-report-and-rollback-evidence-templates.md`.
 
+These fixtures harden the replacement lane's evidence model now. They remain
+review artifacts, not a claim that the repo already supports live replacement
+runtime cutover or future interoperability lanes.
+
 Current fixtures:
 
 - [compare-report-registration-rejected-open5gs-n79.json](compare-report-registration-rejected-open5gs-n79.json)

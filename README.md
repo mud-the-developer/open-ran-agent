@@ -6,14 +6,14 @@
 
 ![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
 ![Status: Design--First](https://img.shields.io/badge/status-design--first-blue.svg)
-![Stage: Bootstrap](https://img.shields.io/badge/stage-bootstrap-orange.svg)
+![Stage: Ops--Hardening](https://img.shields.io/badge/stage-ops--hardening-orange.svg)
 
-Open RAN Agent is a design-first bootstrap repository for a **5G SA RAN control and operations architecture** centered on **CU-CP**, **CU-UP**, **DU-high**, **split 7.2x southbound integration**, a **native low-PHY / fronthaul runtime boundary**, and **deterministic operations through `bin/ranctl`**.
+Open RAN Agent is a design-first repository for a **5G SA RAN control and operations architecture** centered on **CU-CP**, **CU-UP**, **DU-high**, **split 7.2x southbound integration**, a **native low-PHY / fronthaul runtime boundary**, and **deterministic operations through `bin/ranctl`**. The current phase hardens production-facing control, deploy, evidence, and recovery workflows while keeping runtime expansion and broader interoperability claims explicit and bounded.
 
 > **Status**  
-> This repository is intentionally **architecture-first**. It prioritizes system boundaries, OTP application boundaries, failure domains, southbound contracts, and operational workflows before full live protocol stacks or real-time data paths.
+> This repository is intentionally **architecture-first**. It already exposes reviewable production-facing operator flows for deploy, evidence, and recovery, while full live protocol stacks, real-time datapaths, and broader interoperability lanes remain future work until they have repo-visible proof.
 
-**Jump to:** [Why this repo](#why-this-repo) · [Architecture](#architecture-at-a-glance) · [What works today](#what-works-today) · [Getting started](#getting-started) · [Project layout](#project-layout) · [Advanced workflows](#advanced-workflows) · [Roadmap](#roadmap)
+**Jump to:** [Why this repo](#why-this-repo) · [Architecture](#architecture-at-a-glance) · [What works today](#what-works-today) · [Hardened now vs future lanes](#hardened-now-vs-future-lanes) · [Getting started](#getting-started) · [Project layout](#project-layout) · [Advanced workflows](#advanced-workflows) · [Roadmap](#roadmap)
 
 ## Why this repo
 
@@ -63,12 +63,22 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 | --- | --- | --- |
 | Architecture docs and ADRs | ✅ | System overview and design decisions are first-class repository content |
 | `ranctl` control lifecycle | ✅ | `precheck -> plan -> apply -> verify -> rollback` with file-backed outputs |
+| Production-facing control / evidence / recovery loop | ✅ | Approval, rollback intent, target-host deploy, remote `ranctl`, fetchback, and debug evidence are explicit and reviewable |
 | Dashboard / Deploy Studio | ✅ | Local UI for topology preview, actions, readiness, and evidence |
 | OAI DU runtime bridge | ✅ | Real OpenAirInterface DU orchestration via generated Docker Compose assets |
-| Bootstrap packaging | ✅ | Source-first bundle generation and stricter topology validation |
+| Source bundle packaging | ✅ | Source-first bundle generation and stricter topology validation |
 | Target-host deploy chain | ✅ | Ship, preflight, remote `ranctl`, and evidence fetch workflows |
 | Native runtime boundary | ⚠️ | Contracts and placeholders exist; real RT backends are still staged |
 | End-to-end live protocol stacks | 🚧 | Deliberately deferred at this phase |
+
+## Hardened now vs future lanes
+
+The current support split is deliberate:
+
+- **Hardened now:** `ranctl` control lifecycle, target-host deploy and fetchback, reviewable debug/evidence artifacts, and replacement-track contract/evidence schemas.
+- **Future lanes:** live replacement runtime cutover, real NVIDIA Aerial runtime support, real cuMAC scheduler integration, and broader RU/core/profile interoperability beyond the declared `n79` plus real `Open5GS` lane.
+
+Use [docs/architecture/15-production-control-evidence-and-interoperability-lanes.md](docs/architecture/15-production-control-evidence-and-interoperability-lanes.md) for the parent-level posture map that ties those categories together.
 
 ## Deliberately not production-complete yet
 
@@ -94,6 +104,7 @@ The current phase does **not** aim to deliver a complete production RAN stack. T
 | Understand target-host deployment | [docs/architecture/12-target-host-deployment.md](docs/architecture/12-target-host-deployment.md) |
 | Understand ops profiles | [docs/architecture/13-ocudu-inspired-ops-profiles.md](docs/architecture/13-ocudu-inspired-ops-profiles.md) |
 | Understand debugging and evidence | [docs/architecture/14-debug-and-evidence-workflow.md](docs/architecture/14-debug-and-evidence-workflow.md) |
+| Understand current support posture | [docs/architecture/15-production-control-evidence-and-interoperability-lanes.md](docs/architecture/15-production-control-evidence-and-interoperability-lanes.md) |
 
 Read ADRs in order under [docs/adr](docs/adr). Use [AGENTS.md](AGENTS.md) for persistent repository rules.
 
@@ -129,13 +140,14 @@ bin/ranctl plan --file examples/ranctl/core/plan-core-cutover-scp.json
 
 Core `ranctl` request examples now live under [examples/ranctl/core](/home/mud/repo/open_ran_agent/examples/ranctl/core) for the current `NRF` and `SCP` pilot lanes, gated `AMF` planning, and `NRF` shadow verification.
 
-### 3) Know what the current bootstrap tests already cover
+### 3) Know what the current validation already covers
 
 - `ranctl` lifecycle, approval handling, and config-aware prechecks
 - `ran_du_high -> ran_scheduler_host -> ran_fapi_core -> stub backend`
 - controlled failover policy based on configured `backend` and `failover_targets`
 - reusable switch/rollback integration harness in `ran_test_support`
 - OAI DU runtime orchestration through generated Docker Compose assets and mocked Docker lifecycle checks
+- replacement-track schema validation for status, compare-report, rollback-evidence, and target-profile fixtures
 - thin skill wrapper scripts under `ops/skills/*/scripts/run.sh`
 - native boundary placeholders such as `native/fapi_rt_gateway/PORT_PROTOCOL.md`
 
@@ -153,7 +165,7 @@ Core `ranctl` request examples now live under [examples/ranctl/core](/home/mud/r
 | `ops/` | Deploy scripts, skills, and Symphony-facing integration assets |
 | `scripts/` | Regeneration helpers such as README figure export |
 | `subprojects/` | Design-first side workspaces such as the clean-room `elixir_core/` 5GC exploration track |
-| `examples/` | Example `ranctl` requests, incidents, and bootstrap references |
+| `examples/` | Example `ranctl` requests, incidents, and operator/design references |
 | `AGENTS.md` | Persistent repository rules |
 
 <details>
