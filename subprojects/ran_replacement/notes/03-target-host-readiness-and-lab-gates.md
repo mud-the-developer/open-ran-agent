@@ -75,3 +75,14 @@ Every blocked or degraded state should point to:
 
 The operator must be able to see why a run is blocked before touching live runtime.
 
+## Operator Workflow Validation
+
+For live-lab review, target-host readiness must also be understandable as an
+operator workflow rather than only as a gate list.
+
+Repo-visible evidence should let the operator identify:
+
+- the first blocked or degraded readiness layer
+- the rollback target that keeps the lane safe
+- the next artifact or observation to inspect
+- whether the lane is only `ready_for_preflight` or is truly `ready_for_apply`

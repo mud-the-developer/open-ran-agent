@@ -24,6 +24,16 @@ Boundary rule:
 - Keep this package as a docs/contracts-first shell until the target-host control contract, schema, and examples are explicit.
 - Any future implementation here should stay thin and should only adapt the established contract.
 
+## Operator Validation Boundary
+
+Repo-visible host-readiness docs and fixtures should let an operator answer,
+before touching live runtime:
+
+- which readiness layer failed first
+- which rollback target remains explicit
+- which artifact should be opened next
+- whether the lane is ready for preflight only, or ready for apply
+
 Package-local contract and fixtures:
 - [CONTRACT.md](CONTRACT.md)
 - [examples/precheck-target-host.request.json](examples/precheck-target-host.request.json)

@@ -17,6 +17,12 @@ Runbook alignment:
 - use `notes/13-milestone-1-acceptance-runbook.md` as the operator sequence reference
 - keep all example payloads sanitized and profile-specific
 
+Operator workflow rule:
+
+- every live-lab precheck, verify, and rollback payload should stay traceable to
+  the first failed layer, the rollback target, and the next artifact an
+  operator should inspect
+
 Current draft files:
 
 - [precheck-target-host-open5gs-n79.json](precheck-target-host-open5gs-n79.json)

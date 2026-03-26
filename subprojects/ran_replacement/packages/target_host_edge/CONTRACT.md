@@ -79,6 +79,17 @@ Expected evidence fields:
 - `core_link_status`
 - artifact references for host inventory, timing state, RU readiness, and user-plane readiness
 
+## Operator Workflow Rules
+
+The package must keep the go/no-go workflow explicit for operator review.
+
+Repo-visible evidence should always make it possible to identify:
+
+- the first blocked or degraded readiness layer
+- the named rollback target
+- the next artifact to inspect
+- whether the lane is `ready_for_preflight` or `ready_for_apply`
+
 ## Contract Rules
 
 - Keep this package read-mostly until the explicit preflight contract is stable.
