@@ -6,6 +6,27 @@
   "rollback_target": "oai_reference",
   "rollback_reason": "The failed cutover left the replacement lane in a state that was less explainable than the known-good OAI reference lane.",
   "triggering_gate": "blocked",
+  "failure_class": "cutover_or_rollback_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  },
   "pre_rollback_state": {
     "compare_report_ref": "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
     "gate_class": "degraded",
@@ -28,6 +49,8 @@
   "evidence_refs": [
     "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json",
     "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json",
+    "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md",
     "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
   ],

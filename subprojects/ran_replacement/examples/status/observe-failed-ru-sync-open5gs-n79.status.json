@@ -8,6 +8,27 @@
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
   "gate_class": "degraded",
+  "failure_class": "ru_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  },
   "summary": "RU sync is degraded; the lane is visible, but the declared sync target is not stable enough for attach.",
   "target_backend": "replacement_shadow",
   "rollback_target": "oai_reference",

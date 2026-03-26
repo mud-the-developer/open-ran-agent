@@ -76,6 +76,7 @@ What to inspect:
 
 - affected resource
 - expected interfaces
+- `ngap_subset` references plus required, optional, and deferred procedure lists when `ngap` is declared
 - expected artifacts
 - approval requirement
 - rollback path
@@ -124,7 +125,9 @@ Purpose:
 What to inspect:
 
 - latest per-interface gate class
+- `failure_class`
 - `core_endpoint`
+- `ngap_subset`
 - `core_link_status`
 - `ngap_procedure_trace`
 - `release_status`
@@ -155,6 +158,8 @@ What to capture:
 - `plan` output
 - `apply` output
 - `verify` output
+- the declared `ngap_subset`
+- the resolved `failure_class`
 - interface-specific logs or snapshots
 - rollback evidence when the gate is not `pass`
 
@@ -220,6 +225,13 @@ The exact soak duration belongs in the target profile and the request payload.
 This runbook only says that the soak window must exist and must be captured.
 
 ## Failure Classes
+
+Every failure-facing status or artifact should expose one explicit value from:
+
+- `ru_failure`
+- `core_failure`
+- `user_plane_failure`
+- `cutover_or_rollback_failure`
 
 ### RU Failure
 

@@ -7,6 +7,28 @@
   "target_ref": "gnb-n79-lab-01",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
+  "gate_class": "degraded",
+  "failure_class": "cutover_or_rollback_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  },
   "summary": "F1E1-control-edge observe confirms that control-plane association diverged from the planned cutover lane.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",

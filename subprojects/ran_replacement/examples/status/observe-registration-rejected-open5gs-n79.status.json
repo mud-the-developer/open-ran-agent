@@ -47,7 +47,7 @@
       "Path Switch Request"
     ]
   },
-  "summary": "NGAP-edge observe confirms that registration is blocked by a real Open5GS rejection on the declared lane.",
+  "summary": "Observe confirms that registration is blocked by a real Open5GS rejection on the declared lane.",
   "target_backend": "replacement_shadow",
   "rollback_target": "oai_reference",
   "approval_required": false,
