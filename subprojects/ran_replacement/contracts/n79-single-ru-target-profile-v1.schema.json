@@ -15,7 +15,8 @@
     "host_boundary",
     "standards_subset",
     "acceptance_chain",
-    "evidence_paths"
+    "evidence_paths",
+    "compatibility_surface"
   ],
   "properties": {
     "profile": {
@@ -409,7 +410,7 @@
       ],
       "properties": {
         "ngap": {
-          "$ref": "#/$defs/ngap_procedure_subset"
+          "$ref": "#/$defs/procedure_subset"
         },
         "f1_c": {
           "$ref": "#/$defs/procedure_subset"
@@ -510,70 +511,53 @@
           "minLength": 1
         }
       }
-    }
-  },
-  "$defs": {
-    "ngap_procedure_subset": {
+    },
+    "compatibility_surface": {
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "standards_subset_ref",
-        "procedure_matrix_ref",
-        "required_procedures",
-        "optional_procedures",
-        "deferred_procedures"
+        "compatibility_profile",
+        "required_nf_set",
+        "required_io_surfaces",
+        "declared_deviations",
+        "evidence_ref"
       ],
       "properties": {
-        "standards_subset_ref": {
+        "compatibility_profile": {
           "type": "string",
-          "const": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+          "const": "open5gs_public_surface_ran_visible_v1"
         },
-        "procedure_matrix_ref": {
-          "type": "string",
-          "const": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
-        },
-        "required_procedures": {
-          "type": "array",
-          "minItems": 5,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "enum": [
-              "NG Setup",
-              "Initial UE Message",
-              "Uplink NAS Transport",
-              "Downlink NAS Transport",
-              "UE Context Release"
-            ]
-          }
-        },
-        "optional_procedures": {
-          "type": "array",
-          "minItems": 2,
-          "uniqueItems": true,
-          "items": {
-            "type": "string",
-            "enum": [
-              "Error Indication",
-              "Reset"
-            ]
-          }
-        },
-        "deferred_procedures": {
+        "required_nf_set": {
           "type": "array",
           "minItems": 3,
-          "uniqueItems": true,
           "items": {
             "type": "string",
-            "enum": [
-              "Paging",
-              "Handover Preparation",
-              "Path Switch Request"
-            ]
+            "minLength": 1
           }
+        },
+        "required_io_surfaces": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "declared_deviations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_ref": {
+          "type": "string",
+          "minLength": 1
         }
       }
-    },
+    }
+  },
+  "$defs": {
     "procedure_subset": {
       "type": "object",
       "additionalProperties": false,

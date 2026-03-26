@@ -90,5 +90,25 @@
     "subprojects/ran_replacement/notes/03-target-host-readiness-and-lab-gates.md",
     "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md",
     "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
-  ]
+  ],
+  "compatibility_alignment": {
+    "compatibility_profile": "open5gs_public_surface_ran_visible_v1",
+    "required_nf_set": [
+      "AMF",
+      "SMF",
+      "UPF"
+    ],
+    "required_io_surfaces": [
+      "NGAP",
+      "GTP-U",
+      "metrics",
+      "info_api",
+      "config_render"
+    ],
+    "operator_surfaces": [
+      "dashboard mission cards",
+      "remote-run summary",
+      "rollback evidence bundle"
+    ]
+  }
 }

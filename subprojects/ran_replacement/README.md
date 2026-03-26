@@ -8,6 +8,17 @@ The replacement claim here is strict:
 - interoperate with a real `Open5GS` core
 - keep declared external interfaces standards-correct for the supported scope
 
+## Public-Surface Compatibility Profile
+
+The milestone-3 planning baseline for operator-visible compatibility is:
+
+- `open5gs_public_surface_ran_visible_v1`
+
+This compatibility profile is broader than the milestone standards-subset
+claims. It names the repo-visible NF set and external/operator-facing I/O
+surfaces that must remain explicit while the narrower standards subset continues
+to govern what the replacement lane can honestly claim as implemented today.
+
 The target is intentionally narrow and physical:
 
 - one `n79` lab profile first
@@ -61,7 +72,6 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - [notes/10-f1-c-and-e1ap-procedure-support-matrix.md](notes/10-f1-c-and-e1ap-procedure-support-matrix.md)
 - [notes/11-f1-u-and-gtpu-procedure-support-matrix.md](notes/11-f1-u-and-gtpu-procedure-support-matrix.md)
 - [notes/12-standards-evidence-and-acceptance-gates.md](notes/12-standards-evidence-and-acceptance-gates.md)
-- [notes/16-oai-visible-5g-standards-conformance-baseline.md](notes/16-oai-visible-5g-standards-conformance-baseline.md)
 - [notes/13-milestone-1-acceptance-runbook.md](notes/13-milestone-1-acceptance-runbook.md)
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
 - [notes/README.md](notes/README.md)
@@ -96,7 +106,3 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 ## Replacement Rule
 
 If a milestone cannot honestly say "the replacement lane owns the required target-profile `CU/DU` behavior and the declared external interfaces behave standards-correctly for that scope", then it is not yet a replacement milestone.
-
-The repo-wide standards-conformance frame for that claim is kept in:
-
-- [notes/16-oai-visible-5g-standards-conformance-baseline.md](notes/16-oai-visible-5g-standards-conformance-baseline.md)
