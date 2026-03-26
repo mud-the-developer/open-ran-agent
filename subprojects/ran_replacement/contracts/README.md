@@ -20,6 +20,20 @@ still roadmap-only:
 - runtime timing proof does not yet exist
 - attach-validation proof does not yet exist
 
+For broader profile expansion specifically, the current contract posture stays
+fixed to the single declared lane:
+
+- one `n79` profile
+- one real RU
+- one real UE
+- one real `Open5GS` core
+
+These contracts do not yet claim:
+
+- multi-cell parity
+- multi-DU parity
+- broad RU/core/vendor/profile parity outside that declared lane
+
 Current schema set:
 
 - `ranctl-ran-replacement-request-v1.schema.json`

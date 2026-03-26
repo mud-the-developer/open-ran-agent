@@ -45,3 +45,19 @@ The first meaningful target is:
 - exact ASN.1 and NGAP/F1AP/E1AP codec strategy
 - exact transport libraries for SCTP and GTP-U
 - real DU-low and Aerial runtime implementations
+
+Roadmap note:
+
+These future interoperability lanes remain in the roadmap-only set until they
+are explicitly proven.
+
+- Hardened-now support stops at the single-DU, single-cell, single-UE bootstrap
+  lane plus contract-level backend and scheduler surfaces.
+- `Aerial interoperability` remains roadmap-only until the `aerial_backend`
+  lane has real external proof. Track promotion work in `YON-58`.
+- `cuMAC scheduler interoperability` remains roadmap-only until the
+  `cumac_scheduler` lane has real external proof. Track promotion work in
+  `YON-59`.
+- `Broader profile expansion` remains roadmap-only until any multi-cell,
+  multi-DU, or broader vendor/profile lane is separately proven. Track that
+  decomposition in `YON-60`.
