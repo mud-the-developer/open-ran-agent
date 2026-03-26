@@ -31,6 +31,12 @@ pretend it is first-class evidence.
 Mission cards should answer one question quickly: "what is the lane trying to
 prove right now?"
 
+Every mission card should also declare its claim category:
+
+- `standards-subset`
+- `compatibility-baseline`
+- `live-lab acceptance dossier`
+
 ### `precheck-target-host-open5gs-n79.status.json`
 
 Mission card:
@@ -53,6 +59,7 @@ Expected card fields:
 Mission card:
 
 - milestone-1 attach-plus-ping proof
+- claim category: `standards-subset`
 
 Expected card fields:
 
@@ -74,6 +81,7 @@ Mission card:
 - failed registration
 - failed ping
 - failed cutover
+- claim category: `live-lab acceptance dossier` when the run is operator-facing
 
 Expected card fields:
 
@@ -113,6 +121,13 @@ Artifact fixtures should populate the inspector with:
 The inspector should not flatten these into a generic blob. It should keep the
 artifact family visible so the operator can tell whether the run failed in
 `precheck`, `verify`, `observe`, `rollback`, or `capture-artifacts`.
+
+It should also keep the claim category visible so a reviewer can tell whether a
+panel is proving:
+
+- standards-subset conformance
+- compatibility-baseline coverage
+- live-lab validation context
 
 ## Remote-Run Summary Mapping
 
@@ -158,6 +173,8 @@ The dashboard should follow these rules when rendering replacement fixtures:
 - `rollback_target` should always be visible when the lane is mutable
 - live-lab acceptance dossiers should keep operator-facing summaries separate
   from raw artifact blobs
+- mission cards and remote-run summaries should show the claim category without
+  forcing a reviewer to infer it from surrounding prose
 
 ## Non-Goals
 
