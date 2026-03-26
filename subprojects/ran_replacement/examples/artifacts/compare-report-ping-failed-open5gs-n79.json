@@ -51,5 +51,6 @@
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
   ],
   "rollback_target": "oai_reference",
-  "operator_next_step": "Inspect the user-plane route, tunnel binding, and forwarding evidence before retrying the same attach path."
+  "operator_next_step": "Inspect the user-plane route, tunnel binding, and forwarding evidence before retrying the same attach path.",
+  "summary": "Ping review diverged after successful registration and points to a user-plane failure on the declared route."
 }
