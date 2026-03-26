@@ -160,6 +160,12 @@ Use the dashboard when:
 - you want preview, readiness, handoff, and debug evidence in one place
 - you want to compare multiple recent failures quickly
 
+Operator-facing surfaces should also keep the support claim explicit:
+
+- `bootstrap-only`
+- `production-hardened`
+- `future roadmap`
+
 Use the CLI when:
 
 - you are on a server without the dashboard running

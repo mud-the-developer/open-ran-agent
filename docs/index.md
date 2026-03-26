@@ -78,6 +78,16 @@ The site groups the repo into three operator-friendly surfaces:
 - operator-oriented deployment and evidence workflows
 - a static documentation site that can be deployed without adding a backend
 
+## Operator-Facing Claim Categories
+
+Repo-visible operator surfaces should make it explicit whether they are showing:
+
+- `bootstrap-only` guidance
+- `production-hardened` support
+- `future roadmap` expectations
+
+Reviewers should not have to infer that category from surrounding prose.
+
 <div class="doc-callout">
   This site is intentionally documentation-centric. It explains the current bootstrap honestly, including what is working today and what still remains synthetic or deferred.
 </div>

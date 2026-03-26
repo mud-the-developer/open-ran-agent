@@ -135,5 +135,22 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert overview =~ "roadmap-only set"
   end
 
+  test "operator-facing docs keep hardened support claims explicit" do
+    docs_index =
+      repo_path("docs/index.md")
+      |> File.read!()
+
+    debug_workflow =
+      repo_path("docs/architecture/14-debug-and-evidence-workflow.md")
+      |> File.read!()
+
+    assert docs_index =~ "## Operator-Facing Claim Categories"
+    assert docs_index =~ "`bootstrap-only`"
+    assert docs_index =~ "`production-hardened`"
+    assert docs_index =~ "`future roadmap`"
+    assert debug_workflow =~ "support claim explicit"
+    assert debug_workflow =~ "`production-hardened`"
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end
