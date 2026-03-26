@@ -97,7 +97,7 @@ lanes, not be described as current support.
 | Lane | Current repo posture | What must be proven before support claims expand |
 | --- | --- | --- |
 | `Aerial` backend | Contract-only native adapter boundary plus host/device probe scaffolding | target-host deploy path, verify/rollback evidence, health model, and stable runtime evidence on a declared profile |
-| `cuMAC` scheduler | Scheduler host boundary and future adapter placeholder | external worker contract, failure-domain behavior, cutover/rollback coverage, and evidence that scheduler ownership stays bounded |
+| `cuMAC` scheduler | Scheduler host boundary and future adapter placeholder; roadmap-only contract host | external worker contract, failure-domain evidence, cutover/rollback coverage, and proof that scheduler ownership stays bounded without claiming attach validation or runtime timing before that evidence exists |
 | Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target profile, explicit core-link contract, schema-backed fixtures, and attach-plus-ping plus rollback evidence for that exact lane |
 | Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope |
 
@@ -110,6 +110,9 @@ lanes, not be described as current support.
 - Treat `Aerial`, `cuMAC`, and broader interoperability profiles as future lanes
   until they have declared target profiles, repo-visible validation, and
   deterministic rollback evidence.
+- Treat `cumac_scheduler` specifically as a roadmap-only scheduler host until
+  an external worker contract, failure-domain evidence, and cutover/rollback
+  proof exist without hidden ownership handoffs.
 
 ## Cross References
 
