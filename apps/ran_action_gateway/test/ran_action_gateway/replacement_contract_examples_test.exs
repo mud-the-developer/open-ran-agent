@@ -88,5 +88,39 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "rollback evidence bundle" in operator_surfaces
   end
 
+  test "target-host workflow docs keep first-failure and rollback review explicit" do
+    readiness_note =
+      repo_path("subprojects/ran_replacement/notes/03-target-host-readiness-and-lab-gates.md")
+      |> File.read!()
+
+    package_readme =
+      repo_path("subprojects/ran_replacement/packages/target_host_edge/README.md")
+      |> File.read!()
+
+    contract =
+      repo_path("subprojects/ran_replacement/packages/target_host_edge/CONTRACT.md")
+      |> File.read!()
+
+    ranctl_readme =
+      repo_path("subprojects/ran_replacement/examples/ranctl/README.md")
+      |> File.read!()
+
+    fixture =
+      repo_path(
+        "subprojects/ran_replacement/packages/target_host_edge/examples/precheck-target-host.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert readiness_note =~ "## Operator Workflow Validation"
+    assert package_readme =~ "## Operator Validation Boundary"
+    assert contract =~ "## Operator Workflow Rules"
+    assert ranctl_readme =~ "Operator workflow rule:"
+    assert fixture["rollback_target"] == "oai_reference"
+    assert fixture["gate_class"] == "blocked"
+    assert Enum.at(fixture["checks"], 0)["name"] == "host_preflight"
+    assert List.first(fixture["suggested_next"]) =~ "inspect host timing"
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end
