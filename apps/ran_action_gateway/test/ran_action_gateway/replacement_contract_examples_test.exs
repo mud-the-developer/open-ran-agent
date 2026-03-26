@@ -118,5 +118,22 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
            ]
   end
 
+  test "interoperability roadmap docs keep future lanes explicit" do
+    roadmap =
+      repo_path("docs/architecture/07-mvp-scope-and-roadmap.md")
+      |> File.read!()
+
+    overview =
+      repo_path("docs/architecture/00-system-overview.md")
+      |> File.read!()
+
+    assert roadmap =~ "roadmap-only interoperability lanes"
+    assert roadmap =~ "`Aerial interoperability`"
+    assert roadmap =~ "`cuMAC scheduler interoperability`"
+    assert roadmap =~ "`broader profile expansion`"
+    assert overview =~ "future interoperability lanes"
+    assert overview =~ "roadmap-only set"
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end
