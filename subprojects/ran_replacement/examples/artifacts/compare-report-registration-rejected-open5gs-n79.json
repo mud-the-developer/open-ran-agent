@@ -71,5 +71,26 @@
     "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
   ],
   "rollback_target": "oai_reference",
-  "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane."
+  "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane.",
+  "failure_class": "core_failure",
+  "ngap_subset": {
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  }
 }
