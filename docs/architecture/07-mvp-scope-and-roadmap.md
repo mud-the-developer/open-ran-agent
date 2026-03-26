@@ -24,6 +24,9 @@
 
 ## Later
 
+These items are roadmap-only interoperability lanes. They are not current
+support claims:
+
 - multi-cell and multi-DU orchestration
 - handover support
 - advanced scheduling coordination
@@ -31,6 +34,12 @@
 - real NVIDIA Aerial adapter
 - real cuMAC scheduler adapter
 - live SCTP, NGAP, F1AP, E1AP, and GTP-U integration
+
+For roadmap review, treat them as separate future lanes:
+
+- `Aerial interoperability`
+- `cuMAC scheduler interoperability`
+- `broader profile expansion`
 
 ## Out Of Scope For This Bootstrap
 

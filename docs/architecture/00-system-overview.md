@@ -45,3 +45,9 @@ The first meaningful target is:
 - exact ASN.1 and NGAP/F1AP/E1AP codec strategy
 - exact transport libraries for SCTP and GTP-U
 - real DU-low and Aerial runtime implementations
+
+Roadmap note:
+
+- `aerial_backend`, `cumac_scheduler`, and broader profile expansion remain
+  future interoperability lanes until explicitly proven and promoted out of the
+  roadmap-only set.
