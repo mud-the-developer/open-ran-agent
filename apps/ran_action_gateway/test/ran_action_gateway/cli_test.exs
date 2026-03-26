@@ -257,6 +257,11 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(verify, [:attach_status, :evidence_ref]) =~
                "/attach.json"
+
+      assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
+      assert Enum.at(verify.ngap_procedure_trace.procedures, 0).name == "NG Setup"
+      assert Enum.at(verify.ngap_procedure_trace.procedures, 3).name == "Downlink NAS Transport"
+      assert get_in(verify, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
     end)
   end
 
@@ -286,6 +291,10 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(observe, [:attach_status, :evidence_ref]) =~
                "/attach.json"
+
+      assert observe.ngap_procedure_trace.last_observed == "UE Context Release"
+      assert Enum.at(observe.ngap_procedure_trace.procedures, 3).status == "failed"
+      assert get_in(observe, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
     end)
   end
 
