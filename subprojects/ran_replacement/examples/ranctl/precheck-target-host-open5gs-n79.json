@@ -2,6 +2,7 @@
   "scope": "target_host",
   "target_ref": "host-n79-lab-01",
   "target_backend": "oai_reference",
+  "rollback_target": "oai_reference",
   "change_id": "chg-ran-repl-precheck-001",
   "reason": "precheck n79 target host and real open5gs interop assumptions",
   "idempotency_key": "ran-repl-precheck-001",

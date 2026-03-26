@@ -76,6 +76,9 @@ If `artifacts/deploy_preview/etc` exists, the dry-run and apply paths also sync:
 
 - `topology.single_du.target_host.rfsim.json`
 - `requests/precheck-target-host.json`
+- `requests/plan-gnb-bringup.json`
+- `requests/verify-attach-ping.json`
+- `requests/rollback-gnb-cutover.json`
 - `ran-dashboard.env`
 - `ran-host-preflight.env`
 - `deploy.profile.json`
@@ -98,6 +101,8 @@ includes a score, blockers, warnings, and the next recommended operator action.
 - `artifacts/deploy_preview/quick_install/*/install.preview.sh`
 - `artifacts/deploy_preview/quick_install/*/install.apply.sh`
 - `artifacts/deploy_preview/quick_install/*/remote.precheck.sh`
+- `artifacts/deploy_preview/quick_install/*/remote.lifecycle.sh`
+- `artifacts/deploy_preview/quick_install/*/remote.fetch.sh`
 - `artifacts/deploy_preview/quick_install/*/debug-summary.txt`
 - `artifacts/deploy_preview/quick_install/*/debug-pack.txt`
 
@@ -111,14 +116,20 @@ bin/ran-install --target-host ran-lab-01 --apply --remote-precheck
 RAN_REMOTE_APPLY=1 bin/ran-ship-bundle ./artifacts/releases/<bundle_id>/open_ran_agent-<bundle_id>.tar.gz ran-lab-01
 ```
 
-Run a remote `ranctl` command and store the local transcript under `artifacts/remote_runs/*`:
+Run the declared remote lifecycle and store the local transcript under `artifacts/remote_runs/*`:
 
 ```bash
 RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 precheck ./artifacts/deploy_preview/etc/requests/precheck-target-host.json
+RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 plan ./artifacts/deploy_preview/etc/requests/plan-gnb-bringup.json
+RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 apply ./artifacts/deploy_preview/etc/requests/plan-gnb-bringup.json
+RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 verify ./artifacts/deploy_preview/etc/requests/verify-attach-ping.json
+RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 capture-artifacts ./artifacts/deploy_preview/etc/requests/verify-attach-ping.json
+RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl ran-lab-01 rollback ./artifacts/deploy_preview/etc/requests/rollback-gnb-cutover.json
 ```
 
 `bin/ran-remote-ranctl` now auto-fetches matching remote evidence into
 `artifacts/remote_runs/*/fetch` unless `RAN_REMOTE_FETCH=0` is set.
+The fetchback bundle now mirrors any `artifacts/replacement/<phase>/<change_id>` proof tree alongside the core lifecycle artifacts.
 
 Each `ship`, `remote ranctl`, and `fetch` run now also leaves:
 
@@ -138,6 +149,9 @@ Re-sync the same evidence later on demand:
 
 ```bash
 RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts ran-lab-01 ./artifacts/deploy_preview/etc/requests/precheck-target-host.json
+RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts ran-lab-01 ./artifacts/deploy_preview/etc/requests/plan-gnb-bringup.json
+RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts ran-lab-01 ./artifacts/deploy_preview/etc/requests/verify-attach-ping.json
+RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts ran-lab-01 ./artifacts/deploy_preview/etc/requests/rollback-gnb-cutover.json
 ```
 
 ## Artifact layout for debugging

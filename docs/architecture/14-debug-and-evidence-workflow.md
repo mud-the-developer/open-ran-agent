@@ -43,6 +43,8 @@ For the fastest path:
 - `artifacts/deploy_preview/quick_install/<run_stamp>/install.preview.sh`
 - `artifacts/deploy_preview/quick_install/<run_stamp>/install.apply.sh`
 - `artifacts/deploy_preview/quick_install/<run_stamp>/remote.precheck.sh`
+- `artifacts/deploy_preview/quick_install/<run_stamp>/remote.lifecycle.sh`
+- `artifacts/deploy_preview/quick_install/<run_stamp>/remote.fetch.sh`
 - `artifacts/deploy_preview/quick_install/<run_stamp>/debug-summary.txt`
 - `artifacts/deploy_preview/quick_install/<run_stamp>/debug-pack.txt`
 
@@ -53,6 +55,7 @@ Read these in order:
 - `INSTALL.md`
 - `wizard-result.json`
 - `artifacts/deploy_preview/etc/deploy.readiness.json`
+- `artifacts/deploy_preview/etc/requests/*`
 
 ### Bundle handoff
 
@@ -82,6 +85,9 @@ If automatic fetchback is enabled, it also writes:
 - `artifacts/remote_runs/<host>/<run_stamp>-<command>/fetch/debug-pack.txt`
 - `artifacts/remote_runs/<host>/<run_stamp>-<command>/fetch/remote-evidence.tar.gz`
 - `artifacts/remote_runs/<host>/<run_stamp>-<command>/fetch/extracted/*`
+
+The fetched archive now carries both the generic workflow roots and any matching
+replacement-proof trees under `artifacts/replacement/*`.
 
 ### Runtime evidence
 
@@ -213,7 +219,10 @@ For day-to-day bring-up and rollback:
 3. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> precheck <request-file>`
 4. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> plan <request-file>`
 5. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> apply <request-file>`
-6. if anything fails, immediately run `bin/ran-debug-latest --failures-only`
+6. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> verify <request-file>`
+7. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> capture-artifacts <request-file>`
+8. `RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl <host> rollback <request-file>` when verification or capture says the rollback path is safer than leaving the lane active
+9. if anything fails, immediately run `bin/ran-debug-latest --failures-only`
 
 ## Current limits
 

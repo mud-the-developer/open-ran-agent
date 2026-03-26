@@ -78,6 +78,13 @@ defmodule RanActionGateway.Store do
   def probe_snapshot_path(ref),
     do: Path.join([@artifact_root, "probe_snapshots", "#{ref}.json"])
 
+  @spec replacement_dir(String.t(), String.t()) :: String.t()
+  def replacement_dir(phase, ref), do: Path.join([@artifact_root, "replacement", phase, ref])
+
+  @spec replacement_path(String.t(), String.t(), String.t()) :: String.t()
+  def replacement_path(phase, ref, filename),
+    do: Path.join([replacement_dir(phase, ref), filename])
+
   @spec control_state_path(String.t()) :: String.t()
   def control_state_path(cell_group_id),
     do: Path.join([@artifact_root, "control_state", "#{cell_group_id}.json"])
@@ -109,6 +116,16 @@ defmodule RanActionGateway.Store do
     |> File.mkdir_p!()
 
     File.write!(path, JSON.encode!(payload))
+    path
+  end
+
+  @spec write_text(String.t(), String.t()) :: String.t()
+  def write_text(path, content) when is_binary(content) do
+    path
+    |> Path.dirname()
+    |> File.mkdir_p!()
+
+    File.write!(path, content)
     path
   end
 
