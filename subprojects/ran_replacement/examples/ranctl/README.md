@@ -15,6 +15,7 @@ Runbook alignment:
 
 - keep the examples aligned with `notes/12-standards-evidence-and-acceptance-gates.md`
 - use `notes/13-milestone-1-acceptance-runbook.md` as the operator sequence reference
+- for requests that declare `ngap`, keep `metadata.replacement.ngap_subset` aligned with `notes/06-ngap-and-registration-standards-subset.md` and `notes/09-ngap-procedure-support-matrix.md`
 - keep all example payloads sanitized and profile-specific
 
 Current draft files:

@@ -42,6 +42,7 @@ Mission card:
 Expected card fields:
 
 - `gate_class`
+- `failure_class`
 - `target_profile`
 - `core_profile`
 - `ru_status`
@@ -78,6 +79,7 @@ Mission card:
 Expected card fields:
 
 - `gate_class`
+- `failure_class`
 - `summary`
 - `checks`
 - `suggested_next`
@@ -128,6 +130,7 @@ They should always surface:
 - `command`
 - `status`
 - `gate_class`
+- `failure_class`
 - `rollback_target`
 - `artifacts`
 - `suggested_next`

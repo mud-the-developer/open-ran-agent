@@ -84,6 +84,8 @@ The package must eventually emit enough state for `ranctl`, dashboard, and evide
 
 Expected evidence fields:
 
+- `failure_class`
+- `ngap_subset`
 - `interface_status.ngap`
 - `core_endpoint`
 - `core_link_status`
@@ -98,6 +100,7 @@ Expected evidence fields:
 - Keep all mutating actions routed through `bin/ranctl`.
 - Keep package fixtures schema-backed by the existing replacement request/status schemas.
 - Treat `registration rejected`, `NG setup failed`, and `release cleanup incomplete` as first-class package incidents.
+- Keep deferred procedures explicit via the documented NGAP subset instead of implying broad support from a healthy status summary.
 - Keep the rollback target explicit whenever NGAP-facing attach progress is not trusted.
 
 ## Non-Goals
