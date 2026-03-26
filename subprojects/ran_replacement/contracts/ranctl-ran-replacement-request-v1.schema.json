@@ -270,6 +270,108 @@
           }
         }
       }
+    },
+    "ngapSubsetRule": {
+      "if": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "properties": {
+                  "required_interfaces": {
+                    "contains": {
+                      "const": "ngap"
+                    }
+                  }
+                },
+                "required": [
+                  "required_interfaces"
+                ]
+              }
+            },
+            "required": [
+              "replacement"
+            ]
+          }
+        },
+        "required": [
+          "metadata"
+        ]
+      },
+      "then": {
+        "properties": {
+          "metadata": {
+            "properties": {
+              "replacement": {
+                "required": [
+                  "ngap_subset"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "ngapSubset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standards_subset_ref",
+        "procedure_matrix_ref",
+        "required_procedures",
+        "optional_procedures",
+        "deferred_procedures"
+      ],
+      "properties": {
+        "standards_subset_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+        },
+        "procedure_matrix_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+        },
+        "required_procedures": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "NG Setup",
+              "Initial UE Message",
+              "Uplink NAS Transport",
+              "Downlink NAS Transport",
+              "UE Context Release"
+            ]
+          }
+        },
+        "optional_procedures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Error Indication",
+              "Reset"
+            ]
+          }
+        },
+        "deferred_procedures": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Paging",
+              "Handover Preparation",
+              "Path Switch Request"
+            ]
+          }
+        }
+      }
     }
   },
   "type": "object",
@@ -590,6 +692,9 @@
                 ]
               }
             },
+            "ngap_subset": {
+              "$ref": "#/$defs/ngapSubset"
+            },
             "open5gs_core": {
               "$ref": "open5gs-core-link-profile-v1.schema.json"
             },
@@ -671,6 +776,9 @@
     },
     {
       "$ref": "#/$defs/replacementCutoverScopeRule"
+    },
+    {
+      "$ref": "#/$defs/ngapSubsetRule"
     }
   ]
 }
