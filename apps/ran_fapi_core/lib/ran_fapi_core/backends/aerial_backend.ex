@@ -14,8 +14,22 @@ defmodule RanFapiCore.Backends.AerialBackend do
   def capabilities do
     PortBackedBackend.capabilities(:aerial_fapi_profile, :aerial,
       metadata: %{
+        adapter_owner: "clean_room_scaffold",
         integration_boundary: "clean_room_vendor_profile",
-        vendor_surface: "opaque"
+        vendor_surface: "opaque",
+        promotion_state: "roadmap_only",
+        unsupported_claims: [
+          "vendor_device_bringup",
+          "attach_plus_ping_proof",
+          "production_timing_guarantee"
+        ],
+        promotion_requirements: [
+          "declared_target_profile",
+          "host_probe_evidence",
+          "target_host_deploy_path",
+          "verify_and_rollback_evidence",
+          "stable_runtime_health_model"
+        ]
       }
     )
   end

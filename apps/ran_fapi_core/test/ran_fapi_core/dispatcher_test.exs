@@ -57,6 +57,23 @@ defmodule RanFapiCore.DispatcherTest do
 
     assert {:ok, aerial_capabilities} = RanFapiCore.capabilities(:aerial_fapi_profile)
     assert %Capability{status: :bootstrap, profile: :aerial_fapi_profile} = aerial_capabilities
+    assert aerial_capabilities.metadata[:adapter_owner] == "clean_room_scaffold"
+    assert aerial_capabilities.metadata[:integration_boundary] == "clean_room_vendor_profile"
+    assert aerial_capabilities.metadata[:promotion_state] == "roadmap_only"
+
+    assert aerial_capabilities.metadata[:unsupported_claims] == [
+             "vendor_device_bringup",
+             "attach_plus_ping_proof",
+             "production_timing_guarantee"
+           ]
+
+    assert aerial_capabilities.metadata[:promotion_requirements] == [
+             "declared_target_profile",
+             "host_probe_evidence",
+             "target_host_deploy_path",
+             "verify_and_rollback_evidence",
+             "stable_runtime_health_model"
+           ]
   end
 
   test "invalid IR is rejected before backend submission" do

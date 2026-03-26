@@ -96,7 +96,7 @@ lanes, not be described as current support.
 
 | Lane | Current repo posture | What must be proven before support claims expand |
 | --- | --- | --- |
-| `Aerial` backend | Contract-only native adapter boundary plus host/device probe scaffolding | target-host deploy path, verify/rollback evidence, health model, and stable runtime evidence on a declared profile |
+| `Aerial` backend | Contract-only native adapter boundary plus host/device probe scaffolding; roadmap-only clean-room profile | target-host deploy path, verify/rollback evidence, stable runtime health model, and declared-profile evidence without claiming vendor device bring-up, attach-plus-ping proof, or production timing before that proof exists |
 | `cuMAC` scheduler | Scheduler host boundary and future adapter placeholder | external worker contract, failure-domain behavior, cutover/rollback coverage, and evidence that scheduler ownership stays bounded |
 | Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target profile, explicit core-link contract, schema-backed fixtures, and attach-plus-ping plus rollback evidence for that exact lane |
 | Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope before any multi-cell or multi-DU parity claim is allowed |
@@ -110,6 +110,9 @@ lanes, not be described as current support.
 - Treat `Aerial`, `cuMAC`, and broader interoperability profiles as future lanes
   until they have declared target profiles, repo-visible validation, and
   deterministic rollback evidence.
+- Treat `aerial_fapi_profile` specifically as a roadmap-only clean-room adapter
+  until host-probe evidence, target-host execution, and stable runtime health
+  are reviewable without relying on vendor-internal claims.
 - Treat broader profile expansion specifically as roadmap-only until each new
   RU/core/profile family is declared separately; do not promote the current
   single-`n79` lane into multi-cell, multi-DU, or broad profile parity claims.
