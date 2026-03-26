@@ -24,6 +24,7 @@ defmodule RanActionGateway.Request do
        cell_group: fetch_string(payload, "cell_group"),
        target_backend: fetch_backend(payload, "target_backend"),
        current_backend: fetch_backend(payload, "current_backend"),
+       rollback_target: fetch_string(payload, "rollback_target"),
        change_id: fetch_string(payload, "change_id"),
        incident_id: fetch_string(payload, "incident_id"),
        reason: fetch_string(payload, "reason"),

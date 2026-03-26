@@ -358,6 +358,71 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement capture-artifacts and rollback surface review semantics for rollback evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      capture_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-cutover-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.gate_class == "blocked"
+      assert capture.rollback_target == "oai_reference"
+      assert capture.rollback_available == true
+      assert capture.summary =~ "failed replacement evidence bundle"
+
+      assert "inspect the compare report before another replacement mutation" in capture.suggested_next
+
+      assert get_in(capture, [:interface_status, "ngap", :evidence_ref]) =~
+               "artifacts/replacement/capture/"
+
+      assert get_in(capture, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+      assert get_in(capture, [:rollback_status, :status]) == "pending"
+      assert get_in(capture, [:rollback_status, :evidence_ref]) =~ "/rollback-evidence.json"
+      assert get_in(capture, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
+
+      assert Enum.any?(
+               capture.checks,
+               &(&1["name"] == "compare_report_ready" and &1["status"] == "ok")
+             )
+
+      rollback_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, rollback} = CLI.run(["rollback", "--json", rollback_payload])
+      assert rollback.gate_class == "pass"
+      assert rollback.rollback_target == "oai_reference"
+      assert rollback.rollback_available == true
+      assert rollback.approval_required == true
+      assert rollback.summary =~ "declared oai_reference target"
+      assert "review the compare report that triggered rollback" in rollback.suggested_next
+      assert get_in(rollback, [:rollback_status, :status]) == "ok"
+      assert get_in(rollback, [:rollback_status, :evidence_ref]) =~ "/post-rollback-verify.json"
+
+      assert get_in(rollback, [:interface_status, "ngap", :evidence_ref]) =~
+               "artifacts/replacement/rollback/"
+
+      assert get_in(rollback, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
+
+      assert Enum.any?(rollback.checks, fn check ->
+               check["name"] == "approval_evidence_present" and check["status"] == "ok"
+             end)
+    end)
+  end
+
   test "precheck includes config validation and cell-group existence", %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
       payload = JSON.encode!(base_payload())
