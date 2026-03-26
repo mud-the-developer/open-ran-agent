@@ -273,6 +273,23 @@ For milestone 1, a captured artifact set should let a reviewer reconstruct:
 - the rollback target
 - the recovery result
 
+## Operator-Facing Evidence Bundle
+
+The compare report and rollback evidence should also be readable as one
+operator-facing evidence bundle for live-lab review.
+
+Minimum bundle sections:
+
+- acceptance summary
+- compare report reference
+- rollback evidence reference when applicable
+- first failed or first passed interface family
+- compatibility-profile context when the run is being reviewed against the
+  broader public surface
+
+This bundle is not a new runtime concept. It is the review shape operators use
+to understand what the live-lab run actually proved.
+
 ## Operator Use
 
 Operators should use the templates in this order:

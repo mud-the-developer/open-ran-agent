@@ -36,5 +36,33 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "remote-run summary" in compatibility["operator_surfaces"]
   end
 
+  test "live-lab operator-facing evidence docs define an acceptance dossier" do
+    runbook =
+      repo_path("subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md")
+      |> File.read!()
+
+    templates =
+      repo_path(
+        "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
+      )
+      |> File.read!()
+
+    dashboard =
+      repo_path("subprojects/ran_replacement/notes/15-dashboard-fixture-mapping.md")
+      |> File.read!()
+
+    incidents =
+      repo_path("subprojects/ran_replacement/examples/incidents/README.md")
+      |> File.read!()
+
+    assert runbook =~ "## Live-Lab Acceptance Dossier"
+    assert runbook =~ "operator-facing acceptance dossier"
+    assert templates =~ "## Operator-Facing Evidence Bundle"
+    assert templates =~ "acceptance summary"
+    assert dashboard =~ "combined live-lab acceptance dossier"
+    assert incidents =~ "operator-facing"
+    assert incidents =~ "acceptance dossier"
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
 end

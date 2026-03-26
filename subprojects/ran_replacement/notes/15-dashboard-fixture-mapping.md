@@ -141,6 +141,12 @@ about:
 - ping
 - rollback after failed cutover
 
+The summary should also say whether the run is being presented as:
+
+- standards-subset evidence
+- compatibility-baseline evidence
+- a combined live-lab acceptance dossier
+
 ## Dashboard Rules
 
 The dashboard should follow these rules when rendering replacement fixtures:
@@ -150,6 +156,8 @@ The dashboard should follow these rules when rendering replacement fixtures:
 - compare reports and rollback evidence should be linked, not merged
 - failed runs should show the first failed interface before the final summary
 - `rollback_target` should always be visible when the lane is mutable
+- live-lab acceptance dossiers should keep operator-facing summaries separate
+  from raw artifact blobs
 
 ## Non-Goals
 

@@ -16,3 +16,11 @@ Each incident note should stay operator-friendly and point to:
 - the evidence artifact or verify output that failed
 - the first debug pack or capture artifact to inspect
 - the rollback decision and outcome
+
+For live-lab review, each incident note should also fit into the operator-facing
+acceptance dossier by naming:
+
+- the first failed interface family
+- the evidence bundle entry point
+- whether the incident blocks standards-subset acceptance, compatibility review,
+  or both

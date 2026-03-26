@@ -204,6 +204,24 @@ evidence categories:
 The first run is not complete unless each category can be traced to a request,
 an artifact, or a sanitized log reference.
 
+## Live-Lab Acceptance Dossier
+
+For operator review, every milestone-1 run should be reducible to one
+operator-facing acceptance dossier.
+
+Minimum dossier contents:
+
+- target profile and compatibility profile
+- request payload used for the run
+- latest `precheck`, `plan`, `verify`, `capture-artifacts`, and `rollback`
+  outputs
+- compare report and rollback evidence references
+- the first failed interface or first passed acceptance gate
+- operator-ready summary of whether the run proved standards-subset conformance,
+  compatibility baseline evidence, or both
+
+The dossier exists to keep live-lab review readable without SSH archaeology.
+
 ## Soak Expectations
 
 Milestone 1 should not be treated as "passed" by a transient success alone.
