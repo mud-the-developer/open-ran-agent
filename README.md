@@ -68,7 +68,7 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 | OAI DU runtime bridge | ✅ | Real OpenAirInterface DU orchestration via generated Docker Compose assets |
 | Source bundle packaging | ✅ | Source-first bundle generation and stricter topology validation |
 | Target-host deploy chain | ✅ | Ship, preflight, remote `ranctl`, and evidence fetch workflows |
-| Native runtime boundary | ⚠️ | Contracts and placeholders exist; real RT backends are still staged |
+| Native runtime boundary | ⚠️ | Contracts, bootstrap session scaffolds, and host-probe gates exist; real Aerial and cuMAC interoperability remain roadmap-only |
 | End-to-end live protocol stacks | 🚧 | Deliberately deferred at this phase |
 
 ## Hardened now vs future lanes
@@ -76,7 +76,10 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 The current support split is deliberate:
 
 - **Hardened now:** `ranctl` control lifecycle, target-host deploy and fetchback, reviewable debug/evidence artifacts, and replacement-track contract/evidence schemas.
-- **Future lanes:** live replacement runtime cutover, real NVIDIA Aerial runtime support, real cuMAC scheduler integration, and broader RU/core/profile interoperability beyond the declared `n79` plus real `Open5GS` lane.
+- **Future interoperability lanes are explicit and reviewable:**
+  - `Aerial interoperability`: current support stops at `aerial_fapi_profile` contract scaffolding, shared Port bootstrap runtime, session lifecycle scaffolds, and host-probe gating. Promotion to a real interoperability claim is tracked in `YON-58`.
+  - `cuMAC scheduler interoperability`: current support stops at the `ran_scheduler_host` boundary and placeholder `cumac_scheduler` adapter surface. Promotion to a real interoperability claim is tracked in `YON-59`.
+  - `Broader profile expansion`: current support stops at the declared single-DU, single-cell, single-UE bootstrap lane plus contract-only backend surfaces. Expansion to multi-cell, multi-DU, or broader vendor/profile coverage is tracked in `YON-60`.
 
 Use [docs/architecture/15-production-control-evidence-and-interoperability-lanes.md](docs/architecture/15-production-control-evidence-and-interoperability-lanes.md) for the parent-level posture map that ties those categories together.
 
@@ -90,6 +93,7 @@ The current phase does **not** aim to deliver a complete production RAN stack. T
 - real local DU-low implementation
 - real NVIDIA Aerial integration
 - real cuMAC integration
+- broader profile expansion beyond the declared single-DU, single-cell, single-UE bootstrap lane
 - production Symphony hooks
 
 ## Getting started
@@ -520,7 +524,7 @@ If you maintain local lab files such as `OAI_config_WE_flexric.conf`, `srsran_co
 - SA-only deployment is sufficient for the MVP.
 - One DU, one cell group, and one UE path are enough to shape the initial contracts.
 - RU-side low-PHY exists outside the BEAM core.
-- Aerial integration can be represented through backend capabilities and profile selection without assuming internal Aerial implementation details.
+- Aerial-style contract paths can be represented through backend capabilities and profile selection without claiming proven Aerial interoperability today.
 
 ## Roadmap
 
@@ -529,6 +533,12 @@ If you maintain local lab files such as `OAI_config_WE_flexric.conf`, `srsran_co
 3. Replace contract-only backend paths with real gateway-backed session paths.
 4. Extend integration tests for backend switching, rollback, artifact capture, and target-host flows.
 5. Ship compiled release and container packaging for target hosts.
+
+Roadmap-only interoperability lanes:
+
+- `Aerial interoperability`: current hardened-now support stops at `aerial_fapi_profile` contract scaffolding, session lifecycle scaffolds, and host-probe gating. Promotion to a real interoperability claim is tracked in `YON-58`.
+- `cuMAC scheduler interoperability`: current hardened-now support stops at the `ran_scheduler_host` boundary and placeholder `cumac_scheduler` adapter surface. Promotion to a real interoperability claim is tracked in `YON-59`.
+- `Broader profile expansion`: current hardened-now support stops at the declared single-DU, single-cell, single-UE bootstrap lane and contract-only backend surfaces. Expansion to multi-cell, multi-DU, or broader vendor/profile coverage is tracked in `YON-60`.
 
 ## License
 
