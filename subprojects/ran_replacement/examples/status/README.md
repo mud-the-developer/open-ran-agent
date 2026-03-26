@@ -19,3 +19,42 @@ Fixture set:
 Use these as mock dashboard and runner responses only. They are sanitized and
 intended to match the replacement track's `precheck`, `verify`, `observe`,
 `rollback`, and `capture-artifacts` control shapes.
+
+## Claim Boundaries
+
+These fixtures are allowed to claim only the milestone-1 NGAP subset that the
+replacement track has made explicit.
+
+### Required procedure claims
+
+The repo-visible status fixtures may show:
+
+- `NG Setup`
+- `Initial UE Message`
+- `Uplink NAS Transport`
+- `Downlink NAS Transport`
+- `UE Context Release`
+
+These are the only NGAP procedures that may appear as attach-path progress in
+the current fixtures.
+
+### Optional recovery claims
+
+The fixtures may also show evidence about optional recovery-oriented behavior:
+
+- `Error Indication`
+- `Reset`
+
+These are not attach-path success criteria. If they appear, they must remain
+diagnostic or recovery-only.
+
+### Deferred procedure claims
+
+The fixtures must not imply active support for deferred milestone-1 procedures:
+
+- `Paging`
+- `Handover Preparation`
+- `Path Switch Request`
+
+If later milestones bring these procedures into scope, this README and the
+replacement example smoke tests must be updated in the same patch.
