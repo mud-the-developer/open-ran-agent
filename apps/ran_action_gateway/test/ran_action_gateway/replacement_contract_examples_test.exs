@@ -16,6 +16,14 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "NGAP" in compatibility["required_io_surfaces"]
     assert "GTP-U" in compatibility["required_io_surfaces"]
 
+    assert "the current target profile does not claim multi-cell or multi-DU parity" in compatibility[
+             "declared_deviations"
+           ]
+
+    assert "the current target profile does not claim broader RU/core/vendor/profile parity outside n79_single_ru_single_ue_lab_v1" in compatibility[
+             "declared_deviations"
+           ]
+
     assert compatibility["evidence_ref"] =~
              "0006-open5gs-public-surface-compatibility-baseline"
   end

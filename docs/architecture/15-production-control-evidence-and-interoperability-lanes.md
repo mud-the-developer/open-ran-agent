@@ -87,7 +87,7 @@ themselves, claim that runtime cutover is already supported.
 | Live replacement runtime cutover | Future lane | real target-host attach-plus-ping proof on the declared lane |
 | Aerial backend runtime | Future lane | vendor-independent adapter contract exists, but no supported runtime path yet |
 | cuMAC scheduler integration | Future lane | scheduler boundary exists, but no supported external worker path yet |
-| Broader interoperability profiles | Future lane | current contracts stay fixed to the declared `n79` plus real `Open5GS` scope |
+| Broader interoperability profiles | Future lane | current contracts stay fixed to the declared `n79` plus real `Open5GS` scope; no multi-cell, multi-DU, or broad profile parity claim yet |
 
 ## Future Interoperability Lanes
 
@@ -99,7 +99,7 @@ lanes, not be described as current support.
 | `Aerial` backend | Contract-only native adapter boundary plus host/device probe scaffolding | target-host deploy path, verify/rollback evidence, health model, and stable runtime evidence on a declared profile |
 | `cuMAC` scheduler | Scheduler host boundary and future adapter placeholder | external worker contract, failure-domain behavior, cutover/rollback coverage, and evidence that scheduler ownership stays bounded |
 | Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target profile, explicit core-link contract, schema-backed fixtures, and attach-plus-ping plus rollback evidence for that exact lane |
-| Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope |
+| Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope before any multi-cell or multi-DU parity claim is allowed |
 
 ## Reviewer Rules
 
@@ -110,6 +110,9 @@ lanes, not be described as current support.
 - Treat `Aerial`, `cuMAC`, and broader interoperability profiles as future lanes
   until they have declared target profiles, repo-visible validation, and
   deterministic rollback evidence.
+- Treat broader profile expansion specifically as roadmap-only until each new
+  RU/core/profile family is declared separately; do not promote the current
+  single-`n79` lane into multi-cell, multi-DU, or broad profile parity claims.
 
 ## Cross References
 

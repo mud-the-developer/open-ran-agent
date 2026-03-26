@@ -81,6 +81,12 @@ The following remain future lanes until they have repo-visible proof:
 - broader RU, UE, or core profiles beyond the declared `n79` plus real
   `Open5GS` target
 
+For broader profile expansion, current non-claims are explicit:
+
+- no multi-cell parity claim
+- no multi-DU parity claim
+- no broad vendor/profile parity claim outside the declared `n79_single_ru_single_ue_lab_v1` lane
+
 ## Current Deliverables
 
 - [task.md](task.md)
