@@ -40,6 +40,20 @@
       "type": "string",
       "minLength": 1
     },
+    "support_tier": {
+      "type": "string",
+      "enum": [
+        "bootstrap",
+        "production_hardened",
+        "future"
+      ]
+    },
+    "evidence_bundle_class": {
+      "type": "string",
+      "enum": [
+        "operator_facing_recovery_bundle"
+      ]
+    },
     "rollback_reason": {
       "type": "string",
       "minLength": 1
