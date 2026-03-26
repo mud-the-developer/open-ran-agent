@@ -15,7 +15,8 @@
     "host_boundary",
     "standards_subset",
     "acceptance_chain",
-    "evidence_paths"
+    "evidence_paths",
+    "compatibility_surface"
   ],
   "properties": {
     "profile": {
@@ -506,6 +507,50 @@
           "minLength": 1
         },
         "rollback_evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "compatibility_surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "compatibility_profile",
+        "required_nf_set",
+        "required_io_surfaces",
+        "declared_deviations",
+        "evidence_ref"
+      ],
+      "properties": {
+        "compatibility_profile": {
+          "type": "string",
+          "const": "open5gs_public_surface_ran_visible_v1"
+        },
+        "required_nf_set": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required_io_surfaces": {
+          "type": "array",
+          "minItems": 3,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "declared_deviations": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_ref": {
           "type": "string",
           "minLength": 1
         }

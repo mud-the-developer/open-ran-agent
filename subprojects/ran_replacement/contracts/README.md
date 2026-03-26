@@ -18,6 +18,21 @@ The immediate rule is simple:
 - keep the contracts additive to the existing `ranctl` model
 - do not hide runtime-only assumptions in unversioned notes
 
+## Compatibility Fields
+
+The target-profile and lab-overlay contracts now carry explicit compatibility
+metadata:
+
+- `compatibility_surface` in the canonical target profile example
+- `compatibility_alignment` in the lab-owner overlay example
+
+These fields name:
+
+- the compatibility profile
+- the required NF set
+- the required I/O surfaces
+- the operator-facing surfaces or declared deviations tied to that profile
+
 Current draft files:
 
 - [ranctl-ran-replacement-request-v1.schema.json](ranctl-ran-replacement-request-v1.schema.json)

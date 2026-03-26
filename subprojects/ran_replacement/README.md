@@ -8,6 +8,17 @@ The replacement claim here is strict:
 - interoperate with a real `Open5GS` core
 - keep declared external interfaces standards-correct for the supported scope
 
+## Public-Surface Compatibility Profile
+
+The milestone-3 planning baseline for operator-visible compatibility is:
+
+- `open5gs_public_surface_ran_visible_v1`
+
+This compatibility profile is broader than the milestone standards-subset
+claims. It names the repo-visible NF set and external/operator-facing I/O
+surfaces that must remain explicit while the narrower standards subset continues
+to govern what the replacement lane can honestly claim as implemented today.
+
 The target is intentionally narrow and physical:
 
 - one `n79` lab profile first
