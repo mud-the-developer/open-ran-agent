@@ -41,6 +41,20 @@ The bundle now also carries a target-host preflight path through:
 - `ops/deploy/preflight.sh`
 - `ops/deploy/systemd/*.service`
 
+## Production-Facing Hardening Boundary
+
+The repo now needs to distinguish bootstrap-only behavior from production-facing
+support claims.
+
+Current production-facing hardening expectations are:
+
+- deploy and rollback flows must stay replayable from committed docs/contracts
+- evidence bundles must remain operator-readable after remote execution
+- rollback targets and recovery results must be explicit in the retained
+  artifacts
+- any remaining bootstrap-only assumptions must be called out as such rather
+  than implied to be production-ready
+
 ## Release-time sanity checks
 
 `mix ran.package_bootstrap` rejects topologies that are not ready for controlled failover packaging.

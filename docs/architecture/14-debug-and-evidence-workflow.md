@@ -130,6 +130,19 @@ It should answer:
 
 The `Inspect next` section is intentionally short so operators do not have to scan the whole artifact tree.
 
+## Production-Facing Recovery Bundle
+
+For production-facing workflows, the retained evidence should read like one
+operator-facing recovery bundle rather than a loose pile of files.
+
+Minimum bundle anchors:
+
+- deploy or remote-run summary
+- rollback target and recovery result
+- first failed step and first failed interface family
+- next artifact to inspect
+- fetched evidence bundle location when the failure was remote
+
 ## Dashboard surfaces
 
 `Deploy Studio` now exposes:

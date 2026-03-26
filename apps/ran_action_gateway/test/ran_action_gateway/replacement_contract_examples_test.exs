@@ -88,6 +88,51 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "rollback evidence bundle" in operator_surfaces
   end
 
+  test "production-facing hardening docs and rollback schema stay explicit" do
+    release_bootstrap =
+      repo_path("docs/architecture/10-ci-and-release-bootstrap.md")
+      |> File.read!()
+
+    debug_workflow =
+      repo_path("docs/architecture/14-debug-and-evidence-workflow.md")
+      |> File.read!()
+
+    rollback_schema =
+      repo_path("subprojects/ran_replacement/contracts/rollback-evidence-v1.schema.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert release_bootstrap =~ "## Production-Facing Hardening Boundary"
+    assert release_bootstrap =~ "bootstrap-only assumptions"
+    assert debug_workflow =~ "## Production-Facing Recovery Bundle"
+    assert debug_workflow =~ "operator-facing recovery bundle"
+
+    assert get_in(rollback_schema, ["properties", "support_tier", "enum"]) == [
+             "bootstrap",
+             "production_hardened",
+             "future"
+           ]
+
+    assert get_in(rollback_schema, ["properties", "evidence_bundle_class", "enum"]) == [
+             "operator_facing_recovery_bundle"
+           ]
+  end
+
+  test "interoperability roadmap docs keep future lanes explicit" do
+    roadmap =
+      repo_path("docs/architecture/07-mvp-scope-and-roadmap.md")
+      |> File.read!()
+
+    overview =
+      repo_path("docs/architecture/00-system-overview.md")
+      |> File.read!()
+
+    assert roadmap =~ "roadmap-only interoperability lanes"
+    assert roadmap =~ "`Aerial interoperability`"
+    assert roadmap =~ "`cuMAC scheduler interoperability`"
+    assert roadmap =~ "`broader profile expansion`"
+    assert overview =~ "future interoperability lanes"
+    assert overview =~ "roadmap-only set"
   test "target-host workflow docs keep first-failure and rollback review explicit" do
     readiness_note =
       repo_path("subprojects/ran_replacement/notes/03-target-host-readiness-and-lab-gates.md")
