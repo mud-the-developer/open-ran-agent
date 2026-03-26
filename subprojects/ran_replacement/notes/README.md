@@ -17,6 +17,7 @@ Current notes:
 - [10-f1-c-and-e1ap-procedure-support-matrix.md](10-f1-c-and-e1ap-procedure-support-matrix.md)
 - [11-f1-u-and-gtpu-procedure-support-matrix.md](11-f1-u-and-gtpu-procedure-support-matrix.md)
 - [12-standards-evidence-and-acceptance-gates.md](12-standards-evidence-and-acceptance-gates.md)
+- [16-oai-visible-5g-standards-conformance-baseline.md](16-oai-visible-5g-standards-conformance-baseline.md)
 - [13-milestone-1-acceptance-runbook.md](13-milestone-1-acceptance-runbook.md)
 - [14-compare-report-and-rollback-evidence-templates.md](14-compare-report-and-rollback-evidence-templates.md)
 - [15-dashboard-fixture-mapping.md](15-dashboard-fixture-mapping.md)
@@ -32,6 +33,7 @@ Reading order:
 7. per-interface standards subsets
 8. procedure support matrices
 9. standards evidence gates
-10. milestone-1 acceptance runbook
-11. compare-report and rollback-evidence templates
-12. dashboard fixture mapping
+10. repo-wide standards conformance baseline
+11. milestone-1 acceptance runbook
+12. compare-report and rollback-evidence templates
+13. dashboard fixture mapping

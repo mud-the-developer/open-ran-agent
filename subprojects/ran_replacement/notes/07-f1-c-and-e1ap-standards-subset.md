@@ -16,6 +16,17 @@ This note is intentionally narrow:
 
 The purpose is not to claim broad `F1-C` or `E1AP` parity. The purpose is to make the required control-plane subset explicit before implementation expands.
 
+## Conformance Frame
+
+This subset is judged against:
+
+- `3GPP TS 38.473` for the declared `F1-C` behavior
+- `3GPP TS 37.483` for the declared `E1AP` behavior
+- `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`
+  for required procedures and explicit deferrals
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+  for the repo-wide conformance and evidence mapping
+
 ## Required Procedure Subset
 
 The milestone 1 control-plane subset should cover the procedures needed to complete and hold a real-lab attach path:
@@ -111,7 +122,7 @@ Temporary deviations are not acceptable if they:
 - erase rollback evidence
 - blur the ownership line between the replacement lane and the real core
 
-## Non-Goals
+## Negative Space
 
 This note does not claim:
 
@@ -126,4 +137,3 @@ This note does not claim:
 ## Boundary Rule
 
 If the milestone 1 attach path cannot be explained in terms of standards-correct `F1-C` and `E1AP` state transitions, then the replacement track is not ready to own the control-plane function chain yet.
-

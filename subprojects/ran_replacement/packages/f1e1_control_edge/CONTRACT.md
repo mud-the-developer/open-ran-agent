@@ -16,6 +16,16 @@ This package owns the declared control-plane coordination edge for milestone 1:
 
 It does not own NGAP-facing core registration, user-plane forwarding, or RT scheduler behavior.
 
+## Conformance Frame
+
+This package is judged against:
+
+- `3GPP TS 38.473` for the declared `F1-C` subset
+- `3GPP TS 37.483` for the declared `E1AP` subset
+- `subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md`
+- `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`
+- `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
+
 ## Runtime Owner
 
 Primary runtime owner for milestone 1: `ran_cu_cp`.
