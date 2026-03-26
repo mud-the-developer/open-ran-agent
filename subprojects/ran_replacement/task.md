@@ -87,6 +87,8 @@ This effort is only considered successful when all of the following hold for the
 - `subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md`
 - `subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md`
 - `subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md`
+- `subprojects/ran_replacement/notes/15-dashboard-fixture-mapping.md`
+- `subprojects/ran_replacement/notes/16-milestone-3-live-lab-validation-lanes.md`
 
 ## Current Code Touchpoints
 
@@ -465,8 +467,20 @@ DoD:
 Goal:
 Define the real final proof for milestone 1.
 
+Milestone boundary:
+
+- milestone-2 standards-baseline inputs live in notes `05` through `12` and
+  define the public-surface claim set
+- milestone-3 live-lab validation inputs live in notes `13` through `16` and
+  define how those claims are proven, reviewed, and surfaced to operators
+- this phase should now be executed as explicit validation lanes rather than as
+  one monolithic acceptance block
+
+### Lane A: Target-Host And Operator Workflow Validation
+
 Tasks:
-- [ ] Write an executable runbook for:
+
+- [ ] Refine the executable runbook for:
   - host preflight
   - RU readiness
   - gNB bring-up
@@ -474,13 +488,7 @@ Tasks:
   - UE registration against real `Open5GS`
   - PDU session against real `Open5GS`
   - ping through the live user-plane path
-- [ ] Define acceptance evidence:
-  - RU sync state
-  - protocol health markers
-  - attach evidence
-  - registration and PDU session evidence
-  - ping result
-  - rollback evidence
+- [ ] Define per-step go or no-go evidence and first debug artifact rules.
 - [ ] Define soak expectations:
   - minimum runtime
   - acceptable error budget
@@ -488,11 +496,57 @@ Tasks:
 - [ ] Define failure classes and first debug artifacts to inspect.
 
 Deliverables:
+
 - acceptance runbook
+- target-host and operator validation checklist
+
+### Lane B: Acceptance Dossier And Operator Evidence Bundle
+
+Tasks:
+
+- [ ] Define acceptance evidence:
+  - RU sync state
+  - protocol health markers
+  - attach evidence
+  - registration and PDU session evidence
+  - ping result
+  - rollback evidence
+- [ ] Define how each live-lab proof maps back to the declared public-surface
+  compatibility claim.
+- [ ] Define the reviewer-ready dossier structure for `pass`, `degraded`, and
+  rollback outcomes.
+
+Deliverables:
+
 - milestone 1 evidence bundle checklist
+- acceptance dossier template
+
+### Lane C: Dashboard And Remote-Run Claim Surface Review
+
+Tasks:
+
+- [ ] Define which mission cards, inspector sections, and remote-run summaries
+  may say `compatibility-defined` versus `live-lab validated`.
+- [ ] Define the minimum operator-facing fields that must remain visible for
+  `blocked`, `degraded`, and `pass` outcomes.
+- [ ] Define how `rollback_target` and the first-failed interface stay visible
+  in operator-facing summaries.
+
+Deliverables:
+
+- dashboard claim-surface checklist
+- remote-run summary checklist
+
+Phase deliverables:
+
+- milestone-3 live-lab validation lane note
 
 DoD:
-- "Works" means one real RU, one real UE, `n79`, attach, and ping, with captured evidence.
+
+- each milestone-3 lane has explicit evidence expectations and a review path
+- "Works" means one real RU, one real UE, `n79`, attach, and ping, with
+  captured evidence and no ambiguity between compatibility claims and live-lab
+  proof
 
 ## Phase 10: Explicit Non-Goals Until Milestone 1 Lands
 
