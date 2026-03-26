@@ -156,6 +156,15 @@ The dispatcher still supports the original short-lived bootstrap path, but the s
 
 `local_fapi_profile` and `aerial_fapi_profile` now share the same Port-backed bootstrap contract path as `stub_fapi_profile`, implemented through a common native runtime plus adapter-local transport/session timing scaffolds. They remain non-RT adapters, but they are no longer empty placeholders.
 
+That shared bootstrap path is a contract-validation surface, not a claim of
+proven external interoperability. In this repository, hardened-now support for
+the southbound boundary stops at canonical IR validation, session lifecycle
+scaffolding, and host-probe gating. Promotion to a real `Aerial`
+interoperability claim remains roadmap-only in `YON-58`; promotion to a real
+`cuMAC` scheduler interoperability claim remains roadmap-only in `YON-59`; any
+expansion beyond the current bootstrap profile set remains roadmap-only in
+`YON-60`.
+
 The shared native runtime lives under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md). Adapter-local state machines live under:
 
 - [native/local_du_low_adapter/src](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/local_du_low_adapter/src/README.md)
