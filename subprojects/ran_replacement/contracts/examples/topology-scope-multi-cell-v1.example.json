@@ -1,0 +1,82 @@
+{
+  "profile": "n79_multi_cell_single_du_lab_v1",
+  "scope_class": "multi_cell",
+  "status": "profile_defined_not_runtime_proven",
+  "based_on_profile": "n79_single_ru_single_ue_lab_v1",
+  "topology": {
+    "band": "n79",
+    "du_count": 1,
+    "cell_count": 2,
+    "ue_count": 1,
+    "mobility_required": false,
+    "summary": "Two declared cells share one DU; one UE attach-plus-ping path is reviewed per cell."
+  },
+  "blast_radius": {
+    "max_change_scope": "two named cell groups on one declared DU",
+    "isolated_failure_domains": [
+      "cell_group:cg-001",
+      "cell_group:cg-002",
+      "du:du-bootstrap-001"
+    ],
+    "operator_impact": "A bad change may degrade both declared cells on the shared DU, but it must not widen past the named DU and cell pair.",
+    "blocked_until": [
+      "per-cell rollback target is visible",
+      "shared-DU saturation assumptions are reviewed",
+      "precheck and verify can report each cell separately"
+    ]
+  },
+  "approval": {
+    "required": true,
+    "approval_scope": "shared-du multi-cell cutover or verification trial",
+    "required_checks": [
+      "the declared cell pair matches the profile",
+      "each cell has an explicit rollback path",
+      "reviewers can distinguish per-cell success and failure"
+    ],
+    "evidence_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md",
+      "docs/architecture/05-ranctl-action-model.md"
+    ]
+  },
+  "rollback": {
+    "target_ref": "oai_reference",
+    "restore_actions": [
+      "restore the affected cell group to the single-lane reference state",
+      "confirm the sibling cell remains within the declared failure-domain rules"
+    ],
+    "rollback_triggers": [
+      "either declared cell loses verify readiness",
+      "shared-DU health becomes degraded or blocked"
+    ],
+    "rollback_evidence_ref": "artifacts/replacement/topology_scopes/n79_multi_cell_single_du_lab_v1/rollback.json"
+  },
+  "evidence": {
+    "required_artifacts": [
+      "artifacts/replacement/topology_scopes/n79_multi_cell_single_du_lab_v1/precheck.json",
+      "artifacts/replacement/topology_scopes/n79_multi_cell_single_du_lab_v1/verify-cell-a.json",
+      "artifacts/replacement/topology_scopes/n79_multi_cell_single_du_lab_v1/verify-cell-b.json"
+    ],
+    "success_criteria": [
+      "each declared cell has explicit gate-class history",
+      "the shared DU keeps rollback state visible for both cells"
+    ],
+    "review_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md#n79_multi_cell_single_du_lab_v1"
+    ]
+  },
+  "validation": {
+    "repo_tests": [
+      "npm run contracts:ran-replacement",
+      "mix test apps/ran_action_gateway/test/ran_action_gateway/replacement_contract_examples_test.exs"
+    ],
+    "manual_review": [
+      "confirm reviewer notes keep this lane separate from the single-lane runtime claim"
+    ]
+  },
+  "non_claims": [
+    "no multi-DU parity claim",
+    "no multi-UE parity claim",
+    "no mobility parity claim",
+    "no broad topology parity claim outside the declared profile"
+  ]
+}

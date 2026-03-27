@@ -32,6 +32,8 @@ These contracts do not yet claim:
 
 - multi-cell parity
 - multi-DU parity
+- multi-UE parity
+- mobility parity
 - broad RU/core/vendor/profile parity outside that declared lane
 
 Current schema set:
@@ -40,6 +42,7 @@ Current schema set:
 - `ranctl-ran-replacement-status-v1.schema.json`
 - `n79-single-ru-target-profile-v1.schema.json`
 - `n79-single-ru-target-profile-overlay-v1.schema.json`
+- `topology-scope-profile-v1.schema.json`
 - `compare-report-v1.schema.json`
 - `rollback-evidence-v1.schema.json`
 - `open5gs-core-link-profile-v1.schema.json`
@@ -71,8 +74,13 @@ Current draft files:
 - [ranctl-ran-replacement-status-v1.schema.json](ranctl-ran-replacement-status-v1.schema.json)
 - [n79-single-ru-target-profile-v1.schema.json](n79-single-ru-target-profile-v1.schema.json)
 - [n79-single-ru-target-profile-overlay-v1.schema.json](n79-single-ru-target-profile-overlay-v1.schema.json)
+- [topology-scope-profile-v1.schema.json](topology-scope-profile-v1.schema.json)
 - [examples/n79-single-ru-target-profile-v1.example.json](examples/n79-single-ru-target-profile-v1.example.json)
 - [examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
+- [examples/topology-scope-multi-cell-v1.example.json](examples/topology-scope-multi-cell-v1.example.json)
+- [examples/topology-scope-multi-du-v1.example.json](examples/topology-scope-multi-du-v1.example.json)
+- [examples/topology-scope-multi-ue-v1.example.json](examples/topology-scope-multi-ue-v1.example.json)
+- [examples/topology-scope-mobility-v1.example.json](examples/topology-scope-mobility-v1.example.json)
 - [compare-report-v1.schema.json](compare-report-v1.schema.json)
 - [rollback-evidence-v1.schema.json](rollback-evidence-v1.schema.json)
 - [open5gs-core-link-profile-v1.schema.json](open5gs-core-link-profile-v1.schema.json)

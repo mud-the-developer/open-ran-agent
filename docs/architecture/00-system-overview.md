@@ -59,5 +59,5 @@ are explicitly proven.
   `cumac_scheduler` lane has real external proof. Track promotion work in
   `YON-59`.
 - `Broader profile expansion` remains roadmap-only until any multi-cell,
-  multi-DU, or broader vendor/profile lane is separately proven. Track that
-  decomposition in `YON-60`.
+  multi-DU, multi-UE, mobility, or broader vendor/profile lane is separately
+  proven. Track that decomposition in `YON-66`.

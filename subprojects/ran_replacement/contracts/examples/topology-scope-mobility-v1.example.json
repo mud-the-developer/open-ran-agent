@@ -1,0 +1,82 @@
+{
+  "profile": "n79_mobility_handover_lab_v1",
+  "scope_class": "mobility",
+  "status": "profile_defined_not_runtime_proven",
+  "based_on_profile": "n79_single_ru_single_ue_lab_v1",
+  "topology": {
+    "band": "n79",
+    "du_count": 2,
+    "cell_count": 2,
+    "ue_count": 1,
+    "mobility_required": true,
+    "summary": "One declared UE follows one named source-to-target handover path across two named cells and two named DUs."
+  },
+  "blast_radius": {
+    "max_change_scope": "one declared handover path across two named cells and two named DUs",
+    "isolated_failure_domains": [
+      "source-cell:cg-001",
+      "target-cell:cg-002",
+      "handover-path:ue-001"
+    ],
+    "operator_impact": "A bad change may strand the declared UE on the named handover path, but it must not imply broad roaming or generalized mobility support.",
+    "blocked_until": [
+      "source and target readiness are both reviewable",
+      "path-switch state is visible before cutover",
+      "rollback can restore the pre-handover serving path or record a blocked state"
+    ]
+  },
+  "approval": {
+    "required": true,
+    "approval_scope": "declared single-UE handover validation path",
+    "required_checks": [
+      "the source and target cells match the profile",
+      "handover sequencing and path-switch checks are named explicitly",
+      "reviewers can inspect pre-handover and post-handover evidence separately"
+    ],
+    "evidence_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md",
+      "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+    ]
+  },
+  "rollback": {
+    "target_ref": "oai_reference",
+    "restore_actions": [
+      "restore the pre-handover serving path for the declared UE",
+      "capture a blocked-state incident bundle if the serving path cannot be restored cleanly"
+    ],
+    "rollback_triggers": [
+      "handover preparation or path switch loses auditability",
+      "post-handover verify fails for the declared UE"
+    ],
+    "rollback_evidence_ref": "artifacts/replacement/topology_scopes/n79_mobility_handover_lab_v1/rollback.json"
+  },
+  "evidence": {
+    "required_artifacts": [
+      "artifacts/replacement/topology_scopes/n79_mobility_handover_lab_v1/pre-handover.json",
+      "artifacts/replacement/topology_scopes/n79_mobility_handover_lab_v1/path-switch.json",
+      "artifacts/replacement/topology_scopes/n79_mobility_handover_lab_v1/post-handover.json"
+    ],
+    "success_criteria": [
+      "pre-handover and post-handover serving state are both reviewable",
+      "rollback evidence can explain whether the source path was restored"
+    ],
+    "review_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md#n79_mobility_handover_lab_v1"
+    ]
+  },
+  "validation": {
+    "repo_tests": [
+      "npm run contracts:ran-replacement",
+      "mix test apps/ran_action_gateway/test/ran_action_gateway/replacement_contract_examples_test.exs"
+    ],
+    "manual_review": [
+      "confirm the repo still treats mobility as future-lane proof work rather than current support"
+    ]
+  },
+  "non_claims": [
+    "no broad multi-cell parity claim outside the declared handover path",
+    "no broad multi-DU parity claim outside the declared handover path",
+    "no multi-UE parity claim",
+    "no broad topology parity claim outside the declared profile"
+  ]
+}

@@ -1,0 +1,82 @@
+{
+  "profile": "n79_multi_du_single_ue_lab_v1",
+  "scope_class": "multi_du",
+  "status": "profile_defined_not_runtime_proven",
+  "based_on_profile": "n79_single_ru_single_ue_lab_v1",
+  "topology": {
+    "band": "n79",
+    "du_count": 2,
+    "cell_count": 2,
+    "ue_count": 1,
+    "mobility_required": false,
+    "summary": "Two declared DUs each own one named cell; one UE path is reviewed against the declared DU pair."
+  },
+  "blast_radius": {
+    "max_change_scope": "two named DUs and their declared cells",
+    "isolated_failure_domains": [
+      "du:du-001",
+      "du:du-002",
+      "transport:f1u-shared-link"
+    ],
+    "operator_impact": "A bad change may disrupt the declared DU pair and their transport assumptions, but it must not imply generalized distributed-DU support.",
+    "blocked_until": [
+      "DU ownership and cutover order are reviewable",
+      "rollback target is named for both DUs",
+      "verify can report DU-local state transitions"
+    ]
+  },
+  "approval": {
+    "required": true,
+    "approval_scope": "declared two-DU cutover rehearsal or future proof run",
+    "required_checks": [
+      "the DU pair and transport assumptions match the profile",
+      "the single-UE fallback path remains visible",
+      "reviewers can inspect DU-local failure domains"
+    ],
+    "evidence_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md",
+      "docs/architecture/03-failure-domains.md"
+    ]
+  },
+  "rollback": {
+    "target_ref": "oai_reference",
+    "restore_actions": [
+      "restore the prior DU assignment for the declared UE path",
+      "revert any transport-path changes made for the second DU"
+    ],
+    "rollback_triggers": [
+      "either DU loses association state",
+      "the declared DU pair can no longer explain their verify outcome"
+    ],
+    "rollback_evidence_ref": "artifacts/replacement/topology_scopes/n79_multi_du_single_ue_lab_v1/rollback.json"
+  },
+  "evidence": {
+    "required_artifacts": [
+      "artifacts/replacement/topology_scopes/n79_multi_du_single_ue_lab_v1/precheck.json",
+      "artifacts/replacement/topology_scopes/n79_multi_du_single_ue_lab_v1/verify-du-001.json",
+      "artifacts/replacement/topology_scopes/n79_multi_du_single_ue_lab_v1/verify-du-002.json"
+    ],
+    "success_criteria": [
+      "each declared DU has explicit gate-class and rollback state",
+      "the UE path can be explained without hidden transport assumptions"
+    ],
+    "review_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md#n79_multi_du_single_ue_lab_v1"
+    ]
+  },
+  "validation": {
+    "repo_tests": [
+      "npm run contracts:ran-replacement",
+      "mix test apps/ran_action_gateway/test/ran_action_gateway/replacement_contract_examples_test.exs"
+    ],
+    "manual_review": [
+      "confirm the topology note still describes this as profile-defined and not runtime-proven"
+    ]
+  },
+  "non_claims": [
+    "no multi-cell parity claim beyond the declared DU pair",
+    "no multi-UE parity claim",
+    "no mobility parity claim",
+    "no broad topology parity claim outside the declared profile"
+  ]
+}

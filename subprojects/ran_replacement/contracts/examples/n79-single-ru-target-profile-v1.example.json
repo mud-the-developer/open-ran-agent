@@ -211,7 +211,7 @@
     "declared_deviations": [
       "public-surface compatibility is broader than the milestone-1 standards subset",
       "management adapters may satisfy compatibility claims before full internal runtime parity",
-      "the current target profile does not claim multi-cell or multi-DU parity",
+      "the current target profile does not claim multi-cell, multi-DU, multi-UE, or mobility parity",
       "the current target profile does not claim broader RU/core/vendor/profile parity outside n79_single_ru_single_ue_lab_v1"
     ],
     "evidence_ref": "docs/adr/0006-open5gs-public-surface-compatibility-baseline.md"

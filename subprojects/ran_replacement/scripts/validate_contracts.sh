@@ -36,7 +36,7 @@ npx --yes ajv-cli validate \
   -d "$SUBPROJECT_DIR/examples/status/*.json" \
   -d "$SUBPROJECT_DIR/packages/*/examples/*.status.json"
 
-echo "[4/5] Validating artifact fixtures"
+echo "[4/6] Validating artifact fixtures"
 npx --yes ajv-cli validate \
   --spec=draft2020 \
   --strict=false \
@@ -50,7 +50,7 @@ npx --yes ajv-cli validate \
   -s "$SUBPROJECT_DIR/contracts/rollback-evidence-v1.schema.json" \
   -d "$SUBPROJECT_DIR/examples/artifacts/rollback-evidence-*.json"
 
-echo "[5/5] Validating target-profile and overlay examples"
+echo "[5/6] Validating target-profile and overlay examples"
 npx --yes ajv-cli validate \
   --spec=draft2020 \
   --strict=false \
@@ -63,5 +63,13 @@ npx --yes ajv-cli validate \
   --validate-formats=false \
   -s "$SUBPROJECT_DIR/contracts/n79-single-ru-target-profile-overlay-v1.schema.json" \
   -d "$SUBPROJECT_DIR/contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json"
+
+echo "[6/6] Validating topology-scope profile examples"
+npx --yes ajv-cli validate \
+  --spec=draft2020 \
+  --strict=false \
+  --validate-formats=false \
+  -s "$SUBPROJECT_DIR/contracts/topology-scope-profile-v1.schema.json" \
+  -d "$SUBPROJECT_DIR/contracts/examples/topology-scope-*.example.json"
 
 echo "replacement-contract-validation-ok"

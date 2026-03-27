@@ -163,7 +163,7 @@ scaffolding, and host-probe gating. Promotion to a real `Aerial`
 interoperability claim remains roadmap-only in `YON-58`; promotion to a real
 `cuMAC` scheduler interoperability claim remains roadmap-only in `YON-59`; any
 expansion beyond the current bootstrap profile set remains roadmap-only in
-`YON-60`.
+`YON-66`.
 
 The shared native runtime lives under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md). Adapter-local state machines live under:
 

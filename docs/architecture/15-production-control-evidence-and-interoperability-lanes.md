@@ -87,7 +87,7 @@ themselves, claim that runtime cutover is already supported.
 | Live replacement runtime cutover | Future lane | real target-host attach-plus-ping proof on the declared lane |
 | Aerial backend runtime | Future lane | vendor-independent adapter contract exists, but no supported runtime path yet |
 | cuMAC scheduler integration | Future lane | scheduler boundary exists, but no supported external worker path yet |
-| Broader interoperability profiles | Future lane | current contracts stay fixed to the declared `n79` plus real `Open5GS` scope; no multi-cell, multi-DU, or broad profile parity claim yet |
+| Broader interoperability profiles | Future lane | current contracts stay fixed to the declared `n79` plus real `Open5GS` scope; topology-scale claim profiles for multi-cell, multi-DU, multi-UE, and mobility are reviewable under `YON-66`, but they remain profile-defined and not runtime-proven |
 
 ## Future Interoperability Lanes
 
@@ -99,7 +99,7 @@ lanes, not be described as current support.
 | `Aerial` backend | Contract-only native adapter boundary plus host/device probe scaffolding; roadmap-only clean-room profile | target-host deploy path, verify/rollback evidence, stable runtime health model, and declared-profile evidence without claiming vendor device bring-up, attach-plus-ping proof, or production timing before that proof exists |
 | `cuMAC` scheduler | Scheduler host boundary and future adapter placeholder; roadmap-only contract host | external worker contract, failure-domain evidence, cutover/rollback coverage, and proof that scheduler ownership stays bounded without claiming attach validation or runtime timing before that evidence exists |
 | Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target profile, explicit core-link contract, schema-backed fixtures, and attach-plus-ping plus rollback evidence for that exact lane |
-| Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope before any multi-cell or multi-DU parity claim is allowed |
+| Topology-scale claim lanes | Separate schema-backed profile definitions exist for multi-cell, multi-DU, multi-UE, and mobility, but runtime support remains roadmap-only | action scope, blast-radius rules, approval model, rollback target, evidence semantics, and repo-visible validation for each scope before any topology-scale parity claim is allowed |
 
 ## Reviewer Rules
 
@@ -116,9 +116,13 @@ lanes, not be described as current support.
 - Treat `cumac_scheduler` specifically as a roadmap-only scheduler host until
   an external worker contract, failure-domain evidence, and cutover/rollback
   proof exist without hidden ownership handoffs.
+- Treat topology-scale claim profiles as reviewable prerequisites, not as proof
+  of live runtime ownership; they define what must be proven before support
+  claims expand.
 - Treat broader profile expansion specifically as roadmap-only until each new
   RU/core/profile family is declared separately; do not promote the current
-  single-`n79` lane into multi-cell, multi-DU, or broad profile parity claims.
+  single-`n79` lane into multi-cell, multi-DU, multi-UE, mobility, or broad
+  profile parity claims.
 
 ## Cross References
 
@@ -126,4 +130,5 @@ lanes, not be described as current support.
 - [14-debug-and-evidence-workflow](./14-debug-and-evidence-workflow.md)
 - repo overview: `README.md`
 - replacement-track posture: `subprojects/ran_replacement/README.md`
+- replacement-track topology lanes: `subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md`
 - replacement-track contracts: `subprojects/ran_replacement/contracts/README.md`

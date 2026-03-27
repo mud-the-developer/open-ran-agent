@@ -91,7 +91,17 @@ For broader profile expansion, current non-claims are explicit:
 
 - no multi-cell parity claim
 - no multi-DU parity claim
+- no multi-UE parity claim
+- no mobility parity claim
 - no broad vendor/profile parity claim outside the declared `n79_single_ru_single_ue_lab_v1` lane
+
+Topology-scale decomposition now lives under `YON-66`:
+
+- `notes/17-topology-scale-claim-lanes.md` defines the bounded reviewer rules
+  for multi-cell, multi-DU, multi-UE, and mobility future lanes
+- `contracts/topology-scope-profile-v1.schema.json` and the accompanying
+  examples keep those future lanes schema-backed and testable without claiming
+  runtime support prematurely
 
 ## Current Deliverables
 
@@ -115,12 +125,18 @@ For broader profile expansion, current non-claims are explicit:
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
 - [notes/15-dashboard-fixture-mapping.md](notes/15-dashboard-fixture-mapping.md)
 - [notes/16-milestone-3-live-lab-validation-lanes.md](notes/16-milestone-3-live-lab-validation-lanes.md)
+- [notes/17-topology-scale-claim-lanes.md](notes/17-topology-scale-claim-lanes.md)
 - [notes/README.md](notes/README.md)
 - [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
 - [contracts/n79-single-ru-target-profile-overlay-v1.schema.json](contracts/n79-single-ru-target-profile-overlay-v1.schema.json)
+- [contracts/topology-scope-profile-v1.schema.json](contracts/topology-scope-profile-v1.schema.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.example.json](contracts/examples/n79-single-ru-target-profile-v1.example.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
+- [contracts/examples/topology-scope-multi-cell-v1.example.json](contracts/examples/topology-scope-multi-cell-v1.example.json)
+- [contracts/examples/topology-scope-multi-du-v1.example.json](contracts/examples/topology-scope-multi-du-v1.example.json)
+- [contracts/examples/topology-scope-multi-ue-v1.example.json](contracts/examples/topology-scope-multi-ue-v1.example.json)
+- [contracts/examples/topology-scope-mobility-v1.example.json](contracts/examples/topology-scope-mobility-v1.example.json)
 - [packages/README.md](packages/README.md)
 - [packages/ngap_edge/README.md](packages/ngap_edge/README.md)
 - [packages/ngap_edge/CONTRACT.md](packages/ngap_edge/CONTRACT.md)
