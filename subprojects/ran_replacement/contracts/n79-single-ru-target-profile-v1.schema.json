@@ -7,6 +7,12 @@
   "additionalProperties": false,
   "required": [
     "profile",
+    "profile_family",
+    "ru_family",
+    "core_family",
+    "family_bundle_ref",
+    "support_matrix_delta_refs",
+    "evidence_bundle_root",
     "scope",
     "rf_profile",
     "ru_boundary",
@@ -22,6 +28,34 @@
     "profile": {
       "type": "string",
       "const": "n79_single_ru_single_ue_lab_v1"
+    },
+    "profile_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "ru_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "core_family": {
+      "type": "string",
+      "minLength": 1
+    },
+    "family_bundle_ref": {
+      "type": "string",
+      "minLength": 1
+    },
+    "support_matrix_delta_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_bundle_root": {
+      "type": "string",
+      "minLength": 1
     },
     "scope": {
       "type": "object",

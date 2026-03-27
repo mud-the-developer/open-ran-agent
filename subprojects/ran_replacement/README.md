@@ -57,7 +57,7 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - ranctl request fixtures
 - status fixtures
 - compare-report and rollback-evidence artifacts
-- target-profile and lab-owner overlay examples
+- target-profile, family-bundle, and lab-owner overlay examples
 - package-local request/status fixtures
 
 ## Current Support Posture
@@ -105,6 +105,12 @@ For broader profile expansion, current non-claims are explicit:
 - no mobility parity claim
 - no broad vendor/profile parity claim outside the declared `n79_single_ru_single_ue_lab_v1` lane
 
+Broader profile expansion must now route through a schema-backed family bundle:
+
+- a target-profile contract and example
+- a family-specific support-matrix delta
+- a family-specific evidence bundle
+
 Topology-scale decomposition now lives under `YON-66`:
 
 - `notes/17-topology-scale-claim-lanes.md` defines the bounded reviewer rules
@@ -112,6 +118,8 @@ Topology-scale decomposition now lives under `YON-66`:
 - `contracts/topology-scope-profile-v1.schema.json` and the accompanying
   examples keep those future lanes schema-backed and testable without claiming
   runtime support prematurely
+
+If a future lane cannot name those artifacts separately, it is still roadmap-only.
 
 ## Current Deliverables
 
@@ -135,11 +143,13 @@ Topology-scale decomposition now lives under `YON-66`:
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
 - [notes/15-dashboard-fixture-mapping.md](notes/15-dashboard-fixture-mapping.md)
 - [notes/16-milestone-3-live-lab-validation-lanes.md](notes/16-milestone-3-live-lab-validation-lanes.md)
+- [notes/17-n79-single-ru-open5gs-support-matrix-delta.md](notes/17-n79-single-ru-open5gs-support-matrix-delta.md)
 - [notes/17-topology-scale-claim-lanes.md](notes/17-topology-scale-claim-lanes.md)
 - [notes/README.md](notes/README.md)
 - [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
 - [contracts/n79-single-ru-target-profile-overlay-v1.schema.json](contracts/n79-single-ru-target-profile-overlay-v1.schema.json)
+- [contracts/target-profile-family-bundle-v1.schema.json](contracts/target-profile-family-bundle-v1.schema.json)
 - [contracts/topology-scope-profile-v1.schema.json](contracts/topology-scope-profile-v1.schema.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.example.json](contracts/examples/n79-single-ru-target-profile-v1.example.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
@@ -147,6 +157,8 @@ Topology-scale decomposition now lives under `YON-66`:
 - [contracts/examples/topology-scope-multi-du-v1.example.json](contracts/examples/topology-scope-multi-du-v1.example.json)
 - [contracts/examples/topology-scope-multi-ue-v1.example.json](contracts/examples/topology-scope-multi-ue-v1.example.json)
 - [contracts/examples/topology-scope-mobility-v1.example.json](contracts/examples/topology-scope-mobility-v1.example.json)
+- [contracts/examples/open5gs-core-link-profile-v1.example.json](contracts/examples/open5gs-core-link-profile-v1.example.json)
+- [contracts/examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json](contracts/examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json)
 - [packages/README.md](packages/README.md)
 - [packages/ngap_edge/README.md](packages/ngap_edge/README.md)
 - [packages/ngap_edge/CONTRACT.md](packages/ngap_edge/CONTRACT.md)
@@ -159,6 +171,7 @@ Topology-scale decomposition now lives under `YON-66`:
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/status/README.md](examples/status/README.md)
 - [examples/artifacts/README.md](examples/artifacts/README.md)
+- [examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/README.md](examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/README.md)
 - [examples/incidents/README.md](examples/incidents/README.md)
 - [scripts/validate_contracts.sh](scripts/validate_contracts.sh)
 
