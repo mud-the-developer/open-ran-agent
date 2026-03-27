@@ -105,50 +105,74 @@
       ]
     },
     "f1_c": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
       "required_procedures": [
-        "F1 Setup",
-        "UE Context Setup",
-        "UE Context Release"
+        "Association and setup",
+        "Configuration exchange",
+        "Cell and serving-cell control",
+        "UE context creation",
+        "UE context release"
       ],
       "optional_procedures": [
-        "UE Context Modification",
-        "Reset"
+        "UE context modification",
+        "Reset-driven recovery"
       ],
-      "evidence_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md"
+      "deferred_procedures": [
+        "Handover context transfer",
+        "Multi-DU context coordination"
+      ]
     },
     "f1_u": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md",
       "required_procedures": [
-        "F1-U tunnel establishment",
-        "UE traffic forwarding",
-        "Tunnel release"
+        "Bearer path establishment",
+        "Downlink forwarding path",
+        "Uplink forwarding path",
+        "Failure detection and rollback visibility"
       ],
       "optional_procedures": [
         "Tunnel update"
       ],
-      "evidence_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md"
+      "deferred_procedures": [
+        "Forwarding relocation during handover",
+        "Multi-UE forwarding fan-out"
+      ]
     },
     "e1ap": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
       "required_procedures": [
-        "E1 Setup",
-        "Bearer Context Setup",
-        "Bearer Context Release"
+        "Association and setup",
+        "Bearer or activity-state coordination",
+        "Release and re-establishment"
       ],
       "optional_procedures": [
-        "Bearer Context Modification"
+        "Bearer context modification"
       ],
-      "evidence_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md"
+      "deferred_procedures": [
+        "Multi-CU-UP path re-route",
+        "Handover bearer transfer"
+      ]
     },
     "gtpu": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md",
       "required_procedures": [
-        "Tunnel Create",
-        "Tunnel Bind",
-        "Tunnel Forwarding",
-        "Tunnel Release"
+        "Tunnel establishment and TEID mapping",
+        "Session-to-tunnel association",
+        "Downlink route forwarding",
+        "Uplink route forwarding",
+        "Tunnel release and cleanup"
       ],
       "optional_procedures": [
-        "Tunnel Rebind"
+        "Tunnel rebind"
       ],
-      "evidence_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md"
+      "deferred_procedures": [
+        "Path-switch re-anchoring",
+        "Multi-path tunnel steering"
+      ]
     }
   },
   "acceptance_chain": [

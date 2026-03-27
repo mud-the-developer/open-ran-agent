@@ -13,6 +13,8 @@
     "rollback_target",
     "rollback_reason",
     "triggering_gate",
+    "failure_class",
+    "protocol_claims",
     "pre_rollback_state",
     "post_rollback_state",
     "recovery_check",
@@ -51,6 +53,47 @@
         "degraded",
         "pass"
       ]
+    },
+    "failure_class": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ru_failure",
+        "core_failure",
+        "user_plane_failure",
+        "cutover_or_rollback_failure",
+        null
+      ]
+    },
+    "protocol_claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ngap",
+        "f1_c",
+        "e1ap",
+        "f1_u",
+        "gtpu"
+      ],
+      "properties": {
+        "ngap": {
+          "$ref": "#/$defs/ngapSubset"
+        },
+        "f1_c": {
+          "$ref": "#/$defs/namedProcedureSubset"
+        },
+        "e1ap": {
+          "$ref": "#/$defs/namedProcedureSubset"
+        },
+        "f1_u": {
+          "$ref": "#/$defs/namedProcedureSubset"
+        },
+        "gtpu": {
+          "$ref": "#/$defs/namedProcedureSubset"
+        }
+      }
     },
     "pre_rollback_state": {
       "type": "object",
@@ -98,6 +141,112 @@
     "operator_notes": {
       "type": "string",
       "minLength": 1
+    }
+  },
+  "$defs": {
+    "ngapSubset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standards_subset_ref",
+        "procedure_matrix_ref",
+        "required_procedures",
+        "optional_procedures",
+        "deferred_procedures"
+      ],
+      "properties": {
+        "standards_subset_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+        },
+        "procedure_matrix_ref": {
+          "type": "string",
+          "const": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+        },
+        "required_procedures": {
+          "type": "array",
+          "minItems": 5,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "NG Setup",
+              "Initial UE Message",
+              "Uplink NAS Transport",
+              "Downlink NAS Transport",
+              "UE Context Release"
+            ]
+          }
+        },
+        "optional_procedures": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Error Indication",
+              "Reset"
+            ]
+          }
+        },
+        "deferred_procedures": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "enum": [
+              "Paging",
+              "Handover Preparation",
+              "Path Switch Request"
+            ]
+          }
+        }
+      }
+    },
+    "namedProcedureSubset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "standards_subset_ref",
+        "procedure_matrix_ref",
+        "required_procedures",
+        "optional_procedures",
+        "deferred_procedures"
+      ],
+      "properties": {
+        "standards_subset_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "procedure_matrix_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_procedures": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "optional_procedures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "deferred_procedures": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
     }
   }
 }
