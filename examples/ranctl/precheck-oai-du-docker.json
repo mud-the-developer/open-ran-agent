@@ -18,12 +18,19 @@
       "runtime_mode": "docker_compose_rfsim_f1"
     },
     "oai_runtime": {
-      "repo_root": "/opt/openairinterface5g",
-      "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
-      "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
-      "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf",
+      "repo_root": "examples/oai",
+      "du_conf_path": "examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example",
+      "cucp_conf_path": "examples/oai/gnb-cucp.sa.f1.conf.example",
+      "cuup_conf_path": "examples/oai/gnb-cuup.sa.f1.conf.example",
       "project_name": "ran-oai-du-cg-001",
       "pull_images": true
+    },
+    "oai_simulation": {
+      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
+      "attach_evidence_path": "examples/oai/simulation/attach.json",
+      "registration_evidence_path": "examples/oai/simulation/registration.json",
+      "session_evidence_path": "examples/oai/simulation/session.json",
+      "ping_evidence_path": "examples/oai/simulation/ping.json"
     }
   }
 }

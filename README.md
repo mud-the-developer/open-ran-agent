@@ -426,11 +426,13 @@ bin/ranctl rollback --file examples/ranctl/rollback-drain-cell-group.json
 The repo includes an executable bridge from `ranctl` to a real OpenAirInterface DU runtime:
 
 - runtime spec comes from `metadata.oai_runtime` and optional `cell_group` defaults
+- optional repo-local UE/core/session rehearsal proof comes from `metadata.oai_simulation`
 - `plan` renders `artifacts/runtime/<change_id>/docker-compose.yml`
 - `plan` also renders patched overlay confs under `artifacts/runtime/<change_id>/conf/*.conf`
 - `apply` brings up `CUCP + CUUP + DU` in RFsim F1 split mode
 - `precheck` validates split markers and required patch points in the source confs
-- `verify` inspects container state, captures log tails, and accepts steady-state DU activity for long-running containers
+- `verify` inspects container state, captures log tails, and can surface repo-local simulated UE attach, registration, session, and ping evidence
+- `capture-artifacts` bundles the rendered runtime assets, container logs, and any declared simulation evidence refs
 - `rollback` tears the stack down deterministically
 
 Example flow:
@@ -440,10 +442,13 @@ bin/ranctl precheck --file examples/ranctl/precheck-oai-du-docker.json
 bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 bin/ranctl apply --file examples/ranctl/apply-oai-du-docker.json
 bin/ranctl verify --file examples/ranctl/verify-oai-du-docker.json
+bin/ranctl capture-artifacts --file examples/ranctl/verify-oai-du-docker.json
 bin/ranctl rollback --file examples/ranctl/rollback-oai-du-docker.json
 ```
 
-To run against your own OAI conf set, replace the three `*_conf_path` fields in `examples/ranctl/apply-oai-du-docker-template.json` and reuse the same metadata for `precheck`, `plan`, `apply`, and `verify`.
+The public example requests now point at repo-local split OAI conf fixtures under `examples/oai/` and repo-local simulation evidence under `examples/oai/simulation/`, so the documented `precheck -> plan -> apply -> verify -> capture-artifacts -> rollback` lane works from the checkout without requiring `/opt/openairinterface5g`.
+
+To run against your own OAI conf set, replace the three `*_conf_path` fields in `examples/ranctl/apply-oai-du-docker-template.json` and reuse the same metadata for `precheck`, `plan`, `apply`, and `verify`. Keep `metadata.oai_simulation` only for simulation-only proof; it is intentionally not a live-lab claim.
 
 See [docs/architecture/09-oai-du-runtime-bridge.md](docs/architecture/09-oai-du-runtime-bridge.md) for the current scope and limitations.
 

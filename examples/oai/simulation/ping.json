@@ -1,0 +1,8 @@
+{
+  "kind": "ping",
+  "status": "ok",
+  "summary": "Simulated ping completed across the rehearsal session path.",
+  "target": "198.51.100.10",
+  "packets_tx": 4,
+  "packets_rx": 4
+}
