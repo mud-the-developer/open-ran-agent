@@ -33,15 +33,7 @@
   "gate_class": "degraded",
   "failure_class": "ru_failure",
   "ngap_subset": {
-    "deferred_procedures": [
-      "Paging",
-      "Handover Preparation",
-      "Path Switch Request"
-    ],
-    "optional_procedures": [
-      "Error Indication",
-      "Reset"
-    ],
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
     "required_procedures": [
       "NG Setup",
@@ -50,7 +42,107 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ]
+  },
+  "protocol_claims": {
+    "ngap": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+      "required_procedures": [
+        "NG Setup",
+        "Initial UE Message",
+        "Uplink NAS Transport",
+        "Downlink NAS Transport",
+        "UE Context Release"
+      ],
+      "optional_procedures": [
+        "Error Indication",
+        "Reset"
+      ],
+      "deferred_procedures": [
+        "Paging",
+        "Handover Preparation",
+        "Path Switch Request"
+      ]
+    },
+    "f1_c": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
+      "required_procedures": [
+        "Association and setup",
+        "Configuration exchange",
+        "Cell and serving-cell control",
+        "UE context creation",
+        "UE context release"
+      ],
+      "optional_procedures": [
+        "UE context modification",
+        "Reset-driven recovery"
+      ],
+      "deferred_procedures": [
+        "Handover context transfer",
+        "Multi-DU context coordination"
+      ]
+    },
+    "f1_u": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md",
+      "required_procedures": [
+        "Bearer path establishment",
+        "Downlink forwarding path",
+        "Uplink forwarding path",
+        "Failure detection and rollback visibility"
+      ],
+      "optional_procedures": [
+        "Tunnel update"
+      ],
+      "deferred_procedures": [
+        "Forwarding relocation during handover",
+        "Multi-UE forwarding fan-out"
+      ]
+    },
+    "e1ap": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
+      "required_procedures": [
+        "Association and setup",
+        "Bearer or activity-state coordination",
+        "Release and re-establishment"
+      ],
+      "optional_procedures": [
+        "Bearer context modification"
+      ],
+      "deferred_procedures": [
+        "Multi-CU-UP path re-route",
+        "Handover bearer transfer"
+      ]
+    },
+    "gtpu": {
+      "standards_subset_ref": "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
+      "procedure_matrix_ref": "subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md",
+      "required_procedures": [
+        "Tunnel establishment and TEID mapping",
+        "Session-to-tunnel association",
+        "Downlink route forwarding",
+        "Uplink route forwarding",
+        "Tunnel release and cleanup"
+      ],
+      "optional_procedures": [
+        "Tunnel rebind"
+      ],
+      "deferred_procedures": [
+        "Path-switch re-anchoring",
+        "Multi-path tunnel steering"
+      ]
+    }
   },
   "summary": "RU sync is degraded; the lane is visible, but the declared sync target is not stable enough for attach.",
   "target_backend": "replacement_shadow",

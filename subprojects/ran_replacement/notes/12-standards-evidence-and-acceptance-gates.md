@@ -164,11 +164,11 @@ It must surface, at minimum:
 - `ru_profile`
 - `ue_profile`
 - `rollback_target`
-- `ngap_subset.standards_subset_ref`
-- `ngap_subset.procedure_matrix_ref`
-- `ngap_subset.required_procedures`
-- `ngap_subset.optional_procedures`
-- `ngap_subset.deferred_procedures`
+- `protocol_claims.ngap`
+- `protocol_claims.f1_c`
+- `protocol_claims.e1ap`
+- `protocol_claims.f1_u`
+- `protocol_claims.gtpu`
 - per-interface gate state for `NGAP`, `F1-C`, `E1AP`, `F1-U`, and `GTP-U`
 - a list of reasons for any `blocked` or `degraded` result
 
@@ -189,7 +189,7 @@ It must surface, at minimum:
 - the latest per-interface gate class
 - `failure_class`
 - `core_endpoint`
-- `ngap_subset`
+- `protocol_claims`
 - `core_link_status`
 - `ngap_procedure_trace`
 - the last observed procedure or state transition per interface
@@ -214,7 +214,7 @@ It must capture, at minimum:
 - `precheck` output
 - `plan` output
 - `verify` output
-- the declared `ngap_subset` references and procedure lists
+- the declared `protocol_claims` references and procedure lists
 - the resolved `failure_class` when the gate is not `pass`
 - interface-specific logs or snapshots
 - rollback evidence when the gate was not `pass`
