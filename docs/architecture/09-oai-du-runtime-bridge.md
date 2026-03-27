@@ -10,6 +10,7 @@
 - overlays deterministic bridge networks so upstream OAI example confs can run without editing them in place
 - starts or stops an external OAI stack through `docker compose`
 - lints mounted OAI conf files for expected split and RFsim markers
+- optionally launches one `OAI NR UE` container when `metadata.oai_runtime.ue_conf_path` is present
 - captures logs and container state for verify and rollback
 - surfaces simulation-only attach, registration, session, and ping evidence refs without promoting them to live-lab proof
 
@@ -20,6 +21,7 @@ The first executable path is intentionally narrow:
 - RFsim only
 - F1 split only
 - `CUCP + CUUP + DU`
+- optional `OAI NR UE` on the same RFsim lane
 - official Docker images
 - user-provided or repo-default OAI conf files used as inputs for generated overlay confs
 - generated overlay confs mounted read-only into the runtime containers
@@ -34,6 +36,8 @@ The bridge now has a similar split to the native contract gateways: shared runti
 Runtime orchestration is opt-in through `metadata.oai_runtime`, and runtime-enabled lifecycle commands must also carry `metadata.runtime_contract`.
 
 Repo-local rehearsal proof is opt-in through `metadata.oai_simulation`. It never claims live-lab parity. Its only job is to keep UE attach plus simulated core/session evidence reviewer-visible while the lane is still bounded to RFsim.
+
+Repo-visible UE runtime bring-up is separately opt-in through `metadata.oai_runtime.ue_conf_path`. That path launches a bounded `OAI NR UE` beside the split stack so attach or registration failures can be isolated to a concrete runtime or protocol step.
 
 ```json
 {
@@ -89,6 +93,7 @@ For a runtime-enabled change, `plan` now materializes:
 - `artifacts/runtime/<change_id>/conf/du.conf`
 - `artifacts/runtime/<change_id>/conf/cucp.conf`
 - `artifacts/runtime/<change_id>/conf/cuup.conf`
+- `artifacts/runtime/<change_id>/conf/ue.conf` when `metadata.oai_runtime.ue_conf_path` is present
 
 The plan artifact also persists a `runtime_contract` snapshot with the requested contract fields, the resolved runtime mode, a deterministic runtime digest, and the current release-readiness snapshot. `apply`, `verify`, and `rollback` compare the current request against that planned snapshot before they touch runtime actions.
 
@@ -115,10 +120,12 @@ The generated Compose asset uses absolute host paths for these overlay confs so 
 - DU, CUCP, and CUUP conf presence
 - gNB image presence
 - CUUP image presence or allowed pull-on-apply
+- UE image presence or allowed pull-on-apply when `ue_conf_path` is present
 - DU conf declares `tr_n_preference = "f1"`
 - DU conf declares an `rfsimulator` stanza
 - CUCP conf declares `tr_s_preference = "f1"`
 - CUUP conf declares `gNB_CU_UP_ID`
+- UE conf presence, `/dev/net/tun`, `uicc0`, `pdu_sessions`, and `rfsimulator` markers when `ue_conf_path` is present
 - DU conf exposes patch points for `local_n_address` and `remote_n_address`
 - CUCP conf exposes patch points for `local_s_address`, `ipv4_cucp`, and `GNB_IPV4_ADDRESS_FOR_NG_AMF`
 - CUUP conf exposes patch points for `local_s_address`, `remote_s_address`, `ipv4_cucp`, `ipv4_cuup`, `GNB_IPV4_ADDRESS_FOR_NG_AMF`, and `GNB_IPV4_ADDRESS_FOR_NGU`
@@ -130,6 +137,20 @@ If any required patch point is missing, `plan` fails with `runtime_conf_patch_fa
 ## Using Your Own Conf
 
 To run against a local OAI conf set, point `metadata.oai_runtime.du_conf_path`, `cucp_conf_path`, and `cuup_conf_path` at your files.
+
+To launch the bounded split + UE lane, also set `metadata.oai_runtime.ue_conf_path`. The committed repo-local flow uses:
+
+- `examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example`
+- `examples/oai/gnb-cucp.sa.f1.conf.example`
+- `examples/oai/gnb-cuup.sa.f1.conf.example`
+- `examples/oai/nrue-rfsim-public.conf.example`
+
+and the request set:
+
+- `examples/ranctl/precheck-oai-du-ue-repo-local.json`
+- `examples/ranctl/apply-oai-du-ue-repo-local.json`
+- `examples/ranctl/verify-oai-du-ue-repo-local.json`
+- `examples/ranctl/rollback-oai-du-ue-repo-local.json`
 
 The repo-local public examples already point at `examples/oai/*.example` so the documented RFsim split lane can be exercised from the checkout without `/opt/openairinterface5g`.
 
@@ -151,11 +172,11 @@ Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-t
 - DU log reaches the main loop marker, or reports steady-state RFsim slot activity
 - CUCP log contains an F1 setup response marker
 - CUUP log contains an E1 establishment marker
+- UE log contains the tunnel-configuration marker when the UE lane completes registration/session setup
 
 This matters for long-running containers where startup strings may have rotated out of the captured tail but the DU is still clearly active.
 
-This is enough to prove DU process bring-up and split control-plane wiring.
-
+This is enough to prove DU process bring-up, split control-plane wiring, and a repo-visible OAI UE launch path. It is not, by itself, a full attach-path success claim: if no reachable AMF/core is present, `verify` still captures the CUCP and UE logs so the failure can be pinned to NGAP/registration rather than generic setup.
 When `metadata.oai_simulation` is present, `verify` also exposes:
 
 - UE attach evidence ref
@@ -168,7 +189,7 @@ These simulation refs are intentionally tagged as `repo_local_simulation` and `l
 ## Deferred Work
 
 - source-built `nr-softmodem` path alongside Docker
-- real core readiness verification beyond the simulation-only evidence layer
-- live-lab UE attach and ping verification beyond the repo-local rehearsal lane
+- real core or AMF readiness verification beyond the current repo-local blocker capture
+- bundled core bring-up plus attach/ping success verification beyond the repo-local rehearsal lane
 - config linting for OAI-specific address mismatches beyond the current split and RFsim markers
 - support for USRP and 7.2x FH profiles

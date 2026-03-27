@@ -133,6 +133,8 @@ In the current bootstrap implementation, `precheck` also returns:
 
 The same request may also carry `metadata.oai_simulation` to declare repo-local UE/core/session rehearsal evidence. That simulation metadata is intentionally reviewer-facing only: it augments `precheck`, `verify`, and `capture-artifacts`, but it does not change the live-lab support claim.
 
+Separately, `metadata.oai_runtime.ue_conf_path` asks the runtime bridge to launch a bounded `OAI NR UE` alongside the split `CUCP/CUUP/DU` stack so attach failures can be isolated to a concrete runtime or protocol step.
+
 Runtime-enabled lifecycle commands now also require `metadata.runtime_contract` so the release unit, entrypoint, release reference, and expected runtime mode are explicit on the control surface.
 
 Example:
@@ -174,9 +176,9 @@ With this metadata:
 - `plan` writes a generated Compose asset under `artifacts/runtime/<change_id>/docker-compose.yml`
 - `plan` also writes patched overlay confs under `artifacts/runtime/<change_id>/conf/`
 - source conf files remain untouched and are only used as overlay inputs
-- `apply` runs `docker compose up -d` for `oai-cucp`, `oai-cuup`, and `oai-du`
-- `precheck` validates split markers and required address patch points in the source confs
-- `verify` inspects container liveness, captures log tails, and can surface repo-local simulated attach, registration, session, and ping evidence refs
+- `apply` runs `docker compose up -d` for `oai-cucp`, `oai-cuup`, `oai-du`, and optionally `oai-nr-ue`
+- `precheck` validates split markers and required address patch points in the source confs, plus optional UE conf/image/tun and simulation evidence prerequisites
+- `verify` inspects container liveness, captures log tails, records UE tunnel configuration evidence when the UE lane is enabled, and can surface repo-local simulated attach, registration, session, and ping evidence refs
 - `capture-artifacts` preserves those runtime and simulation refs together in one bundle
 - `rollback` runs `docker compose down -v --remove-orphans`
 
@@ -187,6 +189,10 @@ Reference examples:
 - `examples/ranctl/apply-oai-du-docker-template.json`
 - `examples/ranctl/verify-oai-du-docker.json`
 - `examples/ranctl/rollback-oai-du-docker.json`
+- `examples/ranctl/precheck-oai-du-ue-repo-local.json`
+- `examples/ranctl/apply-oai-du-ue-repo-local.json`
+- `examples/ranctl/verify-oai-du-ue-repo-local.json`
+- `examples/ranctl/rollback-oai-du-ue-repo-local.json`
 
 ## Approval Model
 

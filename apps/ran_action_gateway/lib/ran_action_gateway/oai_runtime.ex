@@ -10,6 +10,7 @@ defmodule RanActionGateway.OaiRuntime do
     "project_name_prefix" => "ran-oai-du",
     "gnb_image" => "oaisoftwarealliance/oai-gnb:develop",
     "cuup_image" => "oaisoftwarealliance/oai-nr-cuup:develop",
+    "ue_image" => "oaisoftwarealliance/oai-nr-ue:develop",
     "pull_images" => true,
     "core_subnet" => "192.168.71.0/24",
     "f1c_subnet" => "10.213.72.0/24",
@@ -25,12 +26,16 @@ defmodule RanActionGateway.OaiRuntime do
     "cucp_e1_ip" => "10.213.77.2",
     "cuup_e1_ip" => "10.213.77.3",
     "du_ue_ip" => "10.213.78.2",
+    "ue_ip" => "10.213.78.5",
+    "ue_bandwidth_prb" => 106,
+    "ue_numerology" => 1,
+    "ue_center_frequency_hz" => 3_619_200_000,
     "du_service_name" => "oai-du",
     "cucp_service_name" => "oai-cucp",
-    "cuup_service_name" => "oai-cuup"
+    "cuup_service_name" => "oai-cuup",
+    "ue_service_name" => "oai-nr-ue"
   }
 
-  @services ~w(oai-cucp oai-cuup oai-du)
   @log_tail_lines "10000"
 
   @type spec_map :: map()
@@ -96,7 +101,7 @@ defmodule RanActionGateway.OaiRuntime do
             "cuup_image_present_or_pull_enabled",
             image_present?(spec["cuup_image"]) or spec["pull_images"]
           )
-        ] ++ conf_checks(spec)
+        ] ++ optional_ue_precheck_checks(spec) ++ conf_checks(spec)
 
       failed? = Enum.any?(checks, &(&1["status"] == "failed"))
 
@@ -129,12 +134,9 @@ defmodule RanActionGateway.OaiRuntime do
          runtime_mode: runtime_mode(runtime_spec),
          compose_path: path,
          project_name: runtime_spec["project_name"],
-         services: @services,
+         services: runtime_services(runtime_spec),
          containers: runtime_containers(runtime_spec),
-         images: %{
-           gnb: runtime_spec["gnb_image"],
-           cuup: runtime_spec["cuup_image"]
-         },
+         images: runtime_images(runtime_spec),
          runtime_spec: public_spec(runtime_spec)
        }}
     end
@@ -320,6 +322,7 @@ defmodule RanActionGateway.OaiRuntime do
     |> Map.put_new("du_service_name", "oai-du")
     |> Map.put_new("cucp_service_name", "oai-cucp")
     |> Map.put_new("cuup_service_name", "oai-cuup")
+    |> Map.put_new("ue_service_name", "oai-nr-ue")
   end
 
   defp put_container_names(spec) do
@@ -329,6 +332,15 @@ defmodule RanActionGateway.OaiRuntime do
     |> Map.put("du_container_name", "#{project_name}-du")
     |> Map.put("cucp_container_name", "#{project_name}-cucp")
     |> Map.put("cuup_container_name", "#{project_name}-cuup")
+    |> maybe_put_ue_container_name(project_name)
+  end
+
+  defp maybe_put_ue_container_name(spec, project_name) do
+    if ue_requested?(spec) do
+      Map.put(spec, "ue_container_name", "#{project_name}-nr-ue")
+    else
+      spec
+    end
   end
 
   defp public_spec(spec) do
@@ -339,15 +351,18 @@ defmodule RanActionGateway.OaiRuntime do
       "du_conf_path",
       "cucp_conf_path",
       "cuup_conf_path",
+      "ue_conf_path",
       "rendered_du_conf_path",
       "rendered_cucp_conf_path",
       "rendered_cuup_conf_path",
       "gnb_image",
       "cuup_image",
+      "ue_image",
       "project_name",
       "du_container_name",
       "cucp_container_name",
       "cuup_container_name",
+      "ue_container_name",
       "pull_images",
       "core_subnet",
       "f1c_subnet",
@@ -362,17 +377,69 @@ defmodule RanActionGateway.OaiRuntime do
       "du_f1u_ip",
       "cucp_e1_ip",
       "cuup_e1_ip",
-      "du_ue_ip"
+      "du_ue_ip",
+      "ue_ip",
+      "ue_bandwidth_prb",
+      "ue_numerology",
+      "ue_center_frequency_hz"
     ])
     |> Map.update("mode", nil, &maybe_to_string/1)
   end
 
   defp runtime_containers(spec) do
-    [
+    containers = [
       spec["cucp_container_name"],
       spec["cuup_container_name"],
       spec["du_container_name"]
     ]
+
+    if ue_requested?(spec) do
+      containers ++ [spec["ue_container_name"]]
+    else
+      containers
+    end
+  end
+
+  defp runtime_services(spec) do
+    services = [
+      spec["cucp_service_name"],
+      spec["cuup_service_name"],
+      spec["du_service_name"]
+    ]
+
+    if ue_requested?(spec) do
+      services ++ [spec["ue_service_name"]]
+    else
+      services
+    end
+  end
+
+  defp runtime_images(spec) do
+    images = %{
+      gnb: spec["gnb_image"],
+      cuup: spec["cuup_image"]
+    }
+
+    if ue_requested?(spec) do
+      Map.put(images, :ue, spec["ue_image"])
+    else
+      images
+    end
+  end
+
+  defp optional_ue_precheck_checks(spec) do
+    if ue_requested?(spec) do
+      [
+        check("ue_conf_present", File.exists?(spec["ue_conf_path"])),
+        check(
+          "ue_image_present_or_pull_enabled",
+          image_present?(spec["ue_image"]) or spec["pull_images"]
+        ),
+        check("ue_tun_device_present", File.exists?("/dev/net/tun"))
+      ]
+    else
+      []
+    end
   end
 
   defp conf_checks(spec) do
@@ -416,7 +483,25 @@ defmodule RanActionGateway.OaiRuntime do
           "GNB_IPV4_ADDRESS_FOR_NGU"
         ])
       )
-    ]
+    ] ++ optional_ue_conf_checks(spec)
+  end
+
+  defp optional_ue_conf_checks(spec) do
+    if ue_requested?(spec) do
+      [
+        check("ue_conf_declares_uicc", body_matches?(spec["ue_conf_path"], ~r/\buicc0\b/)),
+        check(
+          "ue_conf_declares_pdu_session",
+          body_matches?(spec["ue_conf_path"], ~r/\bpdu_sessions\b/)
+        ),
+        check(
+          "ue_conf_declares_rfsimulator",
+          body_matches?(spec["ue_conf_path"], ~r/\brfsimulator\b/)
+        )
+      ]
+    else
+      []
+    end
   end
 
   defp runtime_log_checks(change_id, spec) do
@@ -450,7 +535,23 @@ defmodule RanActionGateway.OaiRuntime do
         "cuup_log_e1_established",
         log_contains?(cuup_log_path, ~r/E1 connection established/)
       )
-    ]
+    ] ++ optional_ue_log_checks(change_id, spec)
+  end
+
+  defp optional_ue_log_checks(change_id, spec) do
+    if ue_requested?(spec) do
+      ue_log_path = Store.runtime_log_path(change_id, spec["ue_container_name"])
+
+      [
+        check("ue_log_started", log_contains?(ue_log_path, ~r/Starting NR UE soft modem/)),
+        check(
+          "ue_log_tun_configured",
+          log_contains?(ue_log_path, ~r/Interface oaitun_ue1 successfully configured/)
+        )
+      ]
+    else
+      []
+    end
   end
 
   defp materialize_runtime_spec(change_id, spec) do
@@ -625,6 +726,7 @@ defmodule RanActionGateway.OaiRuntime do
           timeout: 5s
           retries: 5
 
+    #{render_optional_ue_service(spec)}
     networks:
       core_net:
         driver: bridge
@@ -654,6 +756,44 @@ defmodule RanActionGateway.OaiRuntime do
     """
   end
 
+  defp render_optional_ue_service(spec) do
+    if ue_requested?(spec) do
+      [
+        "  oai-nr-ue:",
+        "    image: #{spec["ue_image"]}",
+        "    container_name: #{spec["ue_container_name"]}",
+        "    cap_drop:",
+        "      - ALL",
+        "    cap_add:",
+        "      - NET_ADMIN",
+        "      - NET_RAW",
+        "    depends_on:",
+        "      - oai-du",
+        "    environment:",
+        "      USE_ADDITIONAL_OPTIONS: --rfsim --log_config.global_log_options level,nocolor,time -r #{spec["ue_bandwidth_prb"]} --numerology #{spec["ue_numerology"]} -C #{spec["ue_center_frequency_hz"]} --rfsimulator.[0].serveraddr #{spec["du_service_name"]}",
+        "      ASAN_OPTIONS: detect_leaks=0",
+        "    networks:",
+        "      ue_net:",
+        "        ipv4_address: #{spec["ue_ip"]}",
+        "    devices:",
+        "      - /dev/net/tun:/dev/net/tun",
+        "    volumes:",
+        "      - \"#{mounted_conf_path(spec, "ue")}:/opt/oai-nr-ue/etc/nr-ue.conf:ro\"",
+        "    healthcheck:",
+        "      test: /bin/bash -c \"pgrep nr-uesoftmodem\"",
+        "      start_period: 10s",
+        "      start_interval: 500ms",
+        "      interval: 10s",
+        "      timeout: 5s",
+        "      retries: 5",
+        ""
+      ]
+      |> Enum.join("\n")
+    else
+      ""
+    end
+  end
+
   defp docker_available? do
     match?({_output, 0}, CommandRunner.run("docker", ["--version"]))
   end
@@ -668,7 +808,9 @@ defmodule RanActionGateway.OaiRuntime do
 
   defp maybe_pull_images(spec) do
     images =
-      [spec["gnb_image"], spec["cuup_image"]]
+      spec
+      |> runtime_images()
+      |> Map.values()
       |> Enum.uniq()
 
     Enum.reduce_while(images, :ok, fn image, :ok ->
@@ -810,6 +952,8 @@ defmodule RanActionGateway.OaiRuntime do
     |> Kernel.||(Map.fetch!(spec, "#{role}_conf_path"))
     |> Path.expand()
   end
+
+  defp ue_requested?(spec), do: spec["ue_conf_path"] not in [nil, ""]
 
   defp conf_keys_present?(path, keys) do
     case File.read(path) do

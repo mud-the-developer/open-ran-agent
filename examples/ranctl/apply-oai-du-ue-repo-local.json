@@ -1,0 +1,37 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-oai-du-ue-local-001",
+  "reason": "bring up OAI split DU/CU/UE docker runtime from repo-local conf set",
+  "idempotency_key": "chg-oai-du-ue-local-001",
+  "approval": {
+    "approved": true,
+    "approved_by": "operator.oai-runtime",
+    "approved_at": "2026-03-28T01:30:00Z",
+    "ticket_ref": "CHG-OAI-DU-UE-LOCAL-001",
+    "source": "example"
+  },
+  "verify_window": {
+    "duration": "30s",
+    "checks": ["gateway_healthy"]
+  },
+  "metadata": {
+    "runtime_contract": {
+      "version": "ranctl.runtime.v1",
+      "release_unit": "bootstrap_source_bundle",
+      "release_ref": "source-checkout@repo-local-oai-rfsim",
+      "entrypoint": "bin/ranctl",
+      "runtime_mode": "docker_compose_rfsim_f1"
+    },
+    "oai_runtime": {
+      "repo_root": ".",
+      "du_conf_path": "examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example",
+      "cucp_conf_path": "examples/oai/gnb-cucp.sa.f1.conf.example",
+      "cuup_conf_path": "examples/oai/gnb-cuup.sa.f1.conf.example",
+      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
+      "project_name": "ran-oai-du-ue-repo-local",
+      "pull_images": true
+    }
+  }
+}
