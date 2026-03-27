@@ -544,6 +544,7 @@ defmodule RanActionGateway.OaiRuntime do
       oai-cucp:
         image: #{spec["gnb_image"]}
         container_name: #{spec["cucp_container_name"]}
+        hostname: oai-cucp
         cap_drop:
           - ALL
         extra_hosts:
@@ -554,10 +555,16 @@ defmodule RanActionGateway.OaiRuntime do
         networks:
           core_net:
             ipv4_address: #{spec["cucp_core_ip"]}
+            aliases:
+              - oai-cucp
           f1c_net:
             ipv4_address: #{spec["cucp_f1c_ip"]}
+            aliases:
+              - oai-cucp
           e1_net:
             ipv4_address: #{spec["cucp_e1_ip"]}
+            aliases:
+              - oai-cucp
         volumes:
           - "#{mounted_conf_path(spec, "cucp")}:/opt/oai-gnb/etc/gnb.conf:ro"
         healthcheck:
@@ -571,6 +578,7 @@ defmodule RanActionGateway.OaiRuntime do
       oai-cuup:
         image: #{spec["cuup_image"]}
         container_name: #{spec["cuup_container_name"]}
+        hostname: oai-cuup
         cap_drop:
           - ALL
         extra_hosts:
@@ -583,10 +591,16 @@ defmodule RanActionGateway.OaiRuntime do
         networks:
           core_net:
             ipv4_address: #{spec["cuup_core_ip"]}
+            aliases:
+              - oai-cuup
           f1u_net:
             ipv4_address: #{spec["cuup_f1u_ip"]}
+            aliases:
+              - oai-cuup
           e1_net:
             ipv4_address: #{spec["cuup_e1_ip"]}
+            aliases:
+              - oai-cuup
         volumes:
           - "#{mounted_conf_path(spec, "cuup")}:/opt/oai-gnb/etc/gnb.conf:ro"
         healthcheck:
@@ -600,21 +614,28 @@ defmodule RanActionGateway.OaiRuntime do
       oai-du:
         image: #{spec["gnb_image"]}
         container_name: #{spec["du_container_name"]}
+        hostname: oai-du
         cap_drop:
           - ALL
         depends_on:
           - oai-cucp
           - oai-cuup
         environment:
-          USE_ADDITIONAL_OPTIONS: --rfsim --log_config.global_log_options level,nocolor,time --MACRLCs.[0].local_n_address #{spec["du_f1c_ip"]} --MACRLCs.[0].remote_n_address oai-cucp --MACRLCs.[0].local_n_address_f1u #{spec["du_f1u_ip"]}
+          USE_ADDITIONAL_OPTIONS: --rfsim --log_config.global_log_options level,nocolor,time --MACRLCs.[0].local_n_address #{spec["du_f1c_ip"]} --MACRLCs.[0].remote_n_address #{spec["cucp_f1c_ip"]} --MACRLCs.[0].local_n_address_f1u #{spec["du_f1u_ip"]}
           ASAN_OPTIONS: detect_leaks=0
         networks:
           f1c_net:
             ipv4_address: #{spec["du_f1c_ip"]}
+            aliases:
+              - oai-du
           f1u_net:
             ipv4_address: #{spec["du_f1u_ip"]}
+            aliases:
+              - oai-du
           ue_net:
             ipv4_address: #{spec["du_ue_ip"]}
+            aliases:
+              - oai-du
         volumes:
           - "#{mounted_conf_path(spec, "du")}:/opt/oai-gnb/etc/gnb.conf:ro"
         healthcheck:
