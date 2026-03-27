@@ -28,4 +28,6 @@ Fixture set:
 Use these as mock dashboard and runner responses only. They are sanitized and
 intended to match the replacement track's `precheck`, `verify`, `observe`,
 `rollback`, and `capture-artifacts` control shapes, including explicit
-`failure_class` and `ngap_subset` metadata for the declared subset.
+`failure_class` and `ngap_subset` metadata for the declared subset. Any future
+RU/core/profile family should add sibling status fixtures plus its own family
+bundle instead of widening these examples.

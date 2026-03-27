@@ -47,30 +47,22 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
   test "replacement compare reports carry explicit summaries" do
     ru_report =
-      repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-failed-ru-sync-open5gs-n79.json"
-      )
+      family_artifact("compare-report-failed-ru-sync-open5gs-n79.json")
       |> File.read!()
       |> JSON.decode!()
 
     registration_report =
-      repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-registration-rejected-open5gs-n79.json"
-      )
+      family_artifact("compare-report-registration-rejected-open5gs-n79.json")
       |> File.read!()
       |> JSON.decode!()
 
     ping_report =
-      repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json"
-      )
+      family_artifact("compare-report-ping-failed-open5gs-n79.json")
       |> File.read!()
       |> JSON.decode!()
 
     cutover_report =
-      repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-failed-cutover-open5gs-n79.json"
-      )
+      family_artifact("compare-report-failed-cutover-open5gs-n79.json")
       |> File.read!()
       |> JSON.decode!()
 
@@ -141,7 +133,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     Enum.each(fixtures, fn {filename, failure_class} ->
       evidence =
-        repo_path("subprojects/ran_replacement/examples/artifacts/#{filename}")
+        family_artifact(filename)
         |> File.read!()
         |> JSON.decode!()
 
@@ -153,9 +145,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     end)
 
     post_rollback_verify =
-      repo_path(
-        "subprojects/ran_replacement/examples/artifacts/post-rollback-verify-gnb-cutover-open5gs-n79.json"
-      )
+      family_artifact("post-rollback-verify-gnb-cutover-open5gs-n79.json")
       |> File.read!()
       |> JSON.decode!()
 
@@ -164,5 +154,32 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
   end
 
+  test "failed-cutover capture example preserves the bounded family bundle paths" do
+    status =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/capture-artifacts-failed-cutover-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+  end
+
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
+
+  defp family_artifact(filename) do
+    repo_path(
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/#{filename}"
+    )
+  end
 end
