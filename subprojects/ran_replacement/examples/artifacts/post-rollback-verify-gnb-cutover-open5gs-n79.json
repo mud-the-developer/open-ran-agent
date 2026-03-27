@@ -1,28 +1,30 @@
 {
-  "change_id": "chg-ran-repl-capture-cutover-001",
-  "incident_id": "inc-ran-repl-cutover-001",
+  "command": "verify",
+  "phase": "post_rollback",
+  "change_id": "chg-ran-repl-rollback-001",
+  "incident_id": "inc-ran-repl-rollback-001",
   "rollback_target": "oai_reference",
+  "restored_from": "replacement_primary",
+  "captured_at": "2026-03-27T07:03:27Z",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
-  "failure_class": "cutover_or_rollback_failure",
-  "ngap_subset": {
-    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
-    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
-    "required_procedures": [
-      "NG Setup",
-      "Initial UE Message",
-      "Uplink NAS Transport",
-      "Downlink NAS Transport",
-      "UE Context Release"
-    ],
-    "optional_procedures": [
-      "Error Indication",
-      "Reset"
-    ],
-    "deferred_procedures": [
-      "Paging",
-      "Handover Preparation",
-      "Path Switch Request"
-    ]
+  "evidence_refs": [
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json"
+  ],
+  "verification_checks": [
+    "rollback_target_restored",
+    "post_rollback_verify_recorded",
+    "recovery_path_auditable"
+  ],
+  "restored_state": {
+    "summary": "Post-rollback verification confirms the declared oai_reference target is reviewable without SSH archaeology.",
+    "core_link_status": "ok",
+    "release_status": "ok",
+    "ru_status": "unknown"
   },
   "protocol_claims": {
     "ngap": {
@@ -115,40 +117,5 @@
         "Multi-path tunnel steering"
       ]
     }
-  },
-  "evidence_refs": [
-    "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
-    "artifacts/captures/inc-ran-repl-cutover-001.json",
-    "artifacts/captures/inc-ran-repl-cutover-001-request.json"
-  ],
-  "rollback_id": "rbk-chg-ran-repl-capture-cutover-001",
-  "rollback_reason": "The captured mismatch keeps rollback explicit until the lane is corrected.",
-  "triggering_gate": "blocked",
-  "pre_rollback_state": {
-    "gate_class": "blocked",
-    "compare_report_ref": "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
-    "cutover_state": "replacement_primary",
-    "observed_problem": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
-  },
-  "post_rollback_state": {
-    "rollback_target": "oai_reference",
-    "restored_from": "replacement_primary",
-    "post_rollback_verify_ref": null,
-    "cutover_state": "not_executed",
-    "repair_state": "rollback remains available and explicit for the next mutation"
-  },
-  "recovery_check": {
-    "status": "blocked",
-    "checks": [
-      "rollback_target_explicit",
-      "compare_report_preserved",
-      "review_path_auditable"
-    ]
-  },
-  "operator_notes": "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
+  }
 }

@@ -44,9 +44,13 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "remote-run summary" in compatibility["operator_surfaces"]
   end
 
-  test "repo-visible docs keep interoperability roadmap lanes explicit" do
+  test "repo-visible docs keep runtime support posture explicit" do
     readme = repo_path("README.md") |> File.read!()
     overview = repo_path("docs/architecture/00-system-overview.md") |> File.read!()
+
+    posture =
+      repo_path("docs/architecture/15-production-control-evidence-and-interoperability-lanes.md")
+      |> File.read!()
 
     contract =
       repo_path("docs/architecture/04-du-high-southbound-contract.md")
@@ -56,23 +60,23 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
       repo_path("docs/architecture/07-mvp-scope-and-roadmap.md")
       |> File.read!()
 
-    assert readme =~ "Future interoperability lanes are explicit and reviewable"
-    assert readme =~ "`YON-58`"
-    assert readme =~ "`YON-59`"
+    assert readme =~ "Runtime lanes with repo-visible proof are explicit and reviewable"
+    assert readme =~ "`aerial_clean_room_runtime_v1`"
+    assert readme =~ "`cumac_scheduler_clean_room_runtime_v1`"
     assert readme =~ "`YON-60`"
-    assert readme =~ "Roadmap-only interoperability lanes"
-    assert overview =~ "future interoperability lanes"
-    assert overview =~ "roadmap-only set"
-    assert contract =~ "not a claim of"
-    assert contract =~ "proven external interoperability"
-    assert contract =~ "roadmap-only in `YON-58`"
-    assert contract =~ "roadmap-only in `YON-59`"
-    assert contract =~ "expansion beyond the current bootstrap profile set remains roadmap-only"
-    assert contract =~ "`YON-60`"
-    assert roadmap =~ "roadmap-only interoperability lanes"
-    assert roadmap =~ "| `Aerial interoperability` |"
-    assert roadmap =~ "| `cuMAC scheduler interoperability` |"
-    assert roadmap =~ "| `broader profile expansion` |"
+    assert readme =~ "Declared live protocol lane"
+    assert overview =~ "evidence-backed runtime lanes"
+    assert overview =~ "bounded clean-room `aerial_clean_room_runtime_v1` gateway lane"
+    assert contract =~ "bounded clean-room runtime support surface"
+    assert contract =~ "`aerial_clean_room_runtime_v1`"
+    assert contract =~ "`cumac_scheduler_clean_room_runtime_v1`"
+    assert posture =~ "Live-lab validated declared lane"
+    assert posture =~ "Bounded clean-room runtime support"
+    assert posture =~ "Bounded clean-room scheduler support"
+    assert roadmap =~ "Evidence-backed Runtime Lanes"
+    assert roadmap =~ "| `Aerial clean-room runtime` |"
+    assert roadmap =~ "| `cuMAC clean-room scheduler` |"
+    assert roadmap =~ "vendor-backed NVIDIA Aerial integration"
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

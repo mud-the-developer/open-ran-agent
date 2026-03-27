@@ -1,9 +1,9 @@
 {
-  "change_id": "chg-ran-repl-capture-cutover-001",
-  "incident_id": "inc-ran-repl-cutover-001",
+  "change_id": "chg-ran-repl-capture-ru-sync-001",
+  "incident_id": "inc-ran-repl-ru-sync-001",
   "rollback_target": "oai_reference",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
-  "failure_class": "cutover_or_rollback_failure",
+  "failure_class": "ru_failure",
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
@@ -117,33 +117,33 @@
     }
   },
   "evidence_refs": [
-    "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
-    "artifacts/captures/inc-ran-repl-cutover-001.json",
-    "artifacts/captures/inc-ran-repl-cutover-001-request.json"
+    "artifacts/captures/inc-ran-repl-ru-sync-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-request.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ping.json"
   ],
-  "rollback_id": "rbk-chg-ran-repl-capture-cutover-001",
+  "rollback_id": "rbk-chg-ran-repl-capture-ru-sync-001",
   "rollback_reason": "The captured mismatch keeps rollback explicit until the lane is corrected.",
-  "triggering_gate": "blocked",
+  "triggering_gate": "degraded",
   "pre_rollback_state": {
-    "gate_class": "blocked",
-    "compare_report_ref": "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
-    "cutover_state": "replacement_primary",
-    "observed_problem": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+    "gate_class": "degraded",
+    "compare_report_ref": "artifacts/captures/inc-ran-repl-ru-sync-001-compare-report.json",
+    "cutover_state": "replacement_shadow",
+    "observed_problem": "Capture preserved the RU failure evidence bundle for rollback review on the declared lane."
   },
   "post_rollback_state": {
     "rollback_target": "oai_reference",
-    "restored_from": "replacement_primary",
+    "restored_from": "replacement_shadow",
     "post_rollback_verify_ref": null,
     "cutover_state": "not_executed",
     "repair_state": "rollback remains available and explicit for the next mutation"
   },
   "recovery_check": {
-    "status": "blocked",
+    "status": "degraded",
     "checks": [
       "rollback_target_explicit",
       "compare_report_preserved",

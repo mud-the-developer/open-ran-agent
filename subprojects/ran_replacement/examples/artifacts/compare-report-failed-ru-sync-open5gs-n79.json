@@ -1,12 +1,9 @@
 {
-  "status": "degraded",
-  "command": "observe",
-  "scope": "ru_link",
-  "change_id": "chg-ran-repl-observe-ru-sync-001",
+  "change_id": "chg-ran-repl-capture-ru-sync-001",
   "incident_id": "inc-ran-repl-ru-sync-001",
-  "target_ref": "ru-link-n79-lab-01",
+  "rollback_target": "oai_reference",
+  "summary": "Capture preserved the RU failure evidence bundle for rollback review on the declared lane.",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
-  "core_profile": "open5gs_nsa_lab_v1",
   "conformance_claim": {
     "profile": "oai_visible_5g_standards_baseline_v1",
     "evidence_tier": "milestone_proof",
@@ -31,7 +28,22 @@
     }
   },
   "gate_class": "degraded",
+  "core_profile": "open5gs_nsa_lab_v1",
   "failure_class": "ru_failure",
+  "report_id": "cmp-chg-ran-repl-capture-ru-sync-001-capture",
+  "comparison_scope": "ru_sync",
+  "expected_state": {
+    "host_preflight": "ok",
+    "ru_sync": "ok",
+    "timing_source": "stable",
+    "fronthaul": "ok"
+  },
+  "observed_state": {
+    "host_preflight": "ok",
+    "ru_sync": "blocked",
+    "timing_source": "degraded",
+    "fronthaul": "blocked"
+  },
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
@@ -144,68 +156,19 @@
       ]
     }
   },
-  "summary": "RU sync is degraded; the lane is visible, but the declared sync target is not stable enough for attach.",
-  "target_backend": "replacement_shadow",
-  "rollback_target": "oai_reference",
-  "rollback_available": true,
-  "artifacts": [
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/attach.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/registration.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/pdu-session.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ping.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/rollback-evidence.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/core-link.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ptp.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ru-fronthaul.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ru-sync.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ptp-state.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/host-state.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/control-plane.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/user-plane.json",
-    "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ru-link-n79-lab-01.json"
+  "diff_summary": [
+    "RU sync never reached a deterministic ready state for the declared lane.",
+    "The replay bundle keeps host readiness, timing, and fronthaul evidence explicit before another attach attempt."
   ],
-  "plane_status": {
-    "s_plane": {
-      "reason": "timing source is visible but not stable",
-      "status": "degraded",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ptp-state.json"
-    },
-    "m_plane": {
-      "reason": null,
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/host-state.json"
-    },
-    "c_plane": {
-      "reason": "control-plane stays shadow-only until RU sync stabilizes",
-      "status": "degraded",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/control-plane.json"
-    },
-    "u_plane": {
-      "reason": "user-plane must not be trusted before RU sync stabilizes",
-      "status": "blocked",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/user-plane.json"
-    }
-  },
-  "interface_status": {
-    "ptp": {
-      "reason": "timing source is visible but not stable enough for attach",
-      "status": "degraded",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ptp.json"
-    },
-    "ru_fronthaul": {
-      "reason": "stable RU sync is not yet proven on the declared fronthaul path",
-      "status": "blocked",
-      "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ru-fronthaul.json"
-    }
-  },
-  "ru_status": {
-    "reason": "RU sync has not been confirmed for the declared lane",
-    "status": "blocked",
-    "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/ru-sync.json"
-  },
-  "core_link_status": {
-    "reason": null,
-    "status": "ok",
-    "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ru-sync-001/core-link.json"
-  }
+  "evidence_refs": [
+    "artifacts/captures/inc-ran-repl-ru-sync-001.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-request.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ping.json"
+  ],
+  "operator_next_step": "inspect the compare report before another replacement mutation"
 }

@@ -7,6 +7,21 @@ defmodule RanActionGateway.ReplacementReview do
   @baseline_profile "oai_visible_5g_standards_baseline_v1"
   @baseline_ref "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   @replacement_scopes ~w(gnb target_host ue_session ru_link core_link replacement_cutover)
+  @default_ngap_subset %{
+    "standards_subset_ref" =>
+      "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "procedure_matrix_ref" =>
+      "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures" => [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "optional_procedures" => ["Error Indication", "Reset"],
+    "deferred_procedures" => ["Paging", "Handover Preparation", "Path Switch Request"]
+  }
 
   def enrich(payload, phase, %Change{scope: scope} = change, _checks)
       when scope in @replacement_scopes do
@@ -21,7 +36,7 @@ defmodule RanActionGateway.ReplacementReview do
     |> put_value(:core_profile, replacement["core_profile"])
     |> put_value(:conformance_claim, conformance_claim(phase))
     |> put_value(:core_endpoint, core_endpoint(replacement))
-    |> put_value(:ngap_subset, replacement["ngap_subset"])
+    |> put_value(:ngap_subset, replacement_ngap_subset(replacement))
     |> maybe_put_target_host_semantics(phase, change)
     |> put_value(:failure_class, replacement_failure_class(payload, phase, change))
     |> maybe_put_artifacts(phase, change)
@@ -145,6 +160,10 @@ defmodule RanActionGateway.ReplacementReview do
 
   defp replacement_failure_class(payload, _phase, _change),
     do: current_value(payload, :failure_class)
+
+  defp replacement_ngap_subset(replacement) do
+    replacement["ngap_subset"] || @default_ngap_subset
+  end
 
   defp maybe_put_artifacts(payload, phase, %Change{} = change) do
     artifacts =

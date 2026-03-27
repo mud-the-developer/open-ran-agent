@@ -14,6 +14,7 @@
     "rollback_reason",
     "triggering_gate",
     "failure_class",
+    "ngap_subset",
     "protocol_claims",
     "pre_rollback_state",
     "post_rollback_state",
@@ -55,17 +56,10 @@
       ]
     },
     "failure_class": {
-      "type": [
-        "string",
-        "null"
-      ],
-      "enum": [
-        "ru_failure",
-        "core_failure",
-        "user_plane_failure",
-        "cutover_or_rollback_failure",
-        null
-      ]
+      "$ref": "#/$defs/failureClass"
+    },
+    "ngap_subset": {
+      "$ref": "#/$defs/ngapSubset"
     },
     "protocol_claims": {
       "type": "object",
@@ -144,6 +138,19 @@
     }
   },
   "$defs": {
+    "failureClass": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "enum": [
+        "ru_failure",
+        "core_failure",
+        "user_plane_failure",
+        "cutover_or_rollback_failure",
+        null
+      ]
+    },
     "ngapSubset": {
       "type": "object",
       "additionalProperties": false,

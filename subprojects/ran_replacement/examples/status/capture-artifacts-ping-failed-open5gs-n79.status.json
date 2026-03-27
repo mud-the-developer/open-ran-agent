@@ -1,10 +1,10 @@
 {
   "status": "ok",
-  "command": "rollback",
-  "scope": "replacement_cutover",
-  "change_id": "chg-ran-repl-rollback-001",
-  "incident_id": "inc-ran-repl-rollback-001",
-  "target_ref": "gnb-n79-lab-01",
+  "command": "capture-artifacts",
+  "scope": "ue_session",
+  "change_id": "chg-ran-repl-capture-ping-001",
+  "incident_id": "inc-ran-repl-ping-001",
+  "target_ref": "ue-n79-lab-01",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "core_profile": "open5gs_nsa_lab_v1",
   "conformance_claim": {
@@ -30,8 +30,8 @@
       "upf_host": "10.41.83.45"
     }
   },
-  "gate_class": "pass",
-  "failure_class": "cutover_or_rollback_failure",
+  "gate_class": "degraded",
+  "failure_class": "user_plane_failure",
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
@@ -144,44 +144,54 @@
       ]
     }
   },
-  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed.",
-  "target_backend": "oai_reference",
+  "summary": "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
+  "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
-  "restored_from": "replacement_primary",
-  "approval_required": true,
   "rollback_available": true,
   "artifacts": [
-    "artifacts/changes/chg-ran-repl-rollback-001.json",
-    "artifacts/approvals/chg-ran-repl-rollback-001-rollback.json",
-    "artifacts/rollback_plans/chg-ran-repl-rollback-001.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/rollback-evidence.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gnb-n79-lab-01.json"
+    "artifacts/captures/inc-ran-repl-ping-001.json",
+    "artifacts/captures/inc-ran-repl-ping-001.json",
+    "artifacts/captures/inc-ran-repl-ping-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-ping-001-request.json",
+    "artifacts/captures/inc-ran-repl-ping-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ping.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/core-link.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/e1ap.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-c.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-u.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/gtpu.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap-setup.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/initial-ue-message.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/uplink-nas-transport.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/downlink-nas-transport.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/user-plane.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-n79-lab-01.json"
   ],
   "suggested_next": [
-    "review the compare report that triggered rollback",
-    "keep the lane shadowed until the captured mismatch is corrected",
-    "rerun precheck after the rollback target is confirmed clean"
+    "inspect the compare report before another replacement mutation",
+    "confirm the rollback target and cleanup evidence remain explicit",
+    "retry only after the captured mismatch is explained"
   ],
   "checks": [
     {
-      "detail": "declared rollback target is present and auditable",
+      "detail": "the compare report is preserved for review",
+      "name": "compare_report_ready",
+      "status": "ok"
+    },
+    {
+      "detail": "rollback target remains explicit for recovery",
       "name": "rollback_target_known",
       "status": "ok"
     },
     {
-      "detail": "approval evidence was captured before rollback was executed",
-      "name": "approval_evidence_present",
-      "status": "ok"
-    },
-    {
-      "detail": "cleanup evidence remains explicit after rollback",
+      "detail": "cleanup evidence remains explicit in the preserved review bundle",
       "name": "UE Context Release",
       "status": "ok"
     },
@@ -201,42 +211,64 @@
       "status": "ok"
     }
   ],
+  "plane_status": {
+    "u_plane": {
+      "reason": "captured evidence shows the declared user-plane route is not yet trusted",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/user-plane.json"
+    }
+  },
   "interface_status": {
+    "e1ap": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/e1ap.json"
+    },
     "f1_c": {
       "reason": null,
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json"
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-c.json"
     },
     "f1_u": {
-      "reason": null,
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+      "reason": "forwarding state does not yet prove the declared attach-plus-ping path",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-u.json"
     },
     "gtpu": {
-      "reason": null,
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+      "reason": "tunnel evidence exists, but end-to-end reachability did not complete",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/gtpu.json"
     },
     "ngap": {
       "reason": null,
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap.json"
     }
   },
   "attach_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/attach.json"
+  },
+  "pdu_session_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/pdu-session.json"
+  },
+  "ping_status": {
+    "reason": "ping failed after the declared session was established",
+    "status": "failed",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ping.json"
   },
   "release_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json"
   },
   "rollback_status": {
-    "reason": "rollback target restored and verified",
-    "status": "ok",
-    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+    "reason": "rollback is available but has not yet been executed",
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/rollback-evidence.json"
   },
   "ngap_procedure_trace": {
     "last_observed": "UE Context Release",
@@ -244,31 +276,31 @@
       {
         "name": "NG Setup",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap-setup.json",
         "detail": "the declared Open5GS AMF accepted the NG setup handshake"
       },
       {
         "name": "Initial UE Message",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/initial-ue-message.json",
         "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
       },
       {
         "name": "Uplink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/uplink-nas-transport.json",
         "detail": "uplink NAS transport carried the registration request toward the declared core profile"
       },
       {
         "name": "Downlink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/downlink-nas-transport.json",
         "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
       },
       {
         "name": "UE Context Release",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json",
         "detail": "UE context release completed and the cleanup state is auditable"
       }
     ]
@@ -276,6 +308,6 @@
   "core_link_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/core-link.json"
   }
 }

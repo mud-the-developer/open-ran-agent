@@ -11,7 +11,13 @@
 Open RAN Agent is a design-first repository for a **5G SA RAN control and operations architecture** centered on **CU-CP**, **CU-UP**, **DU-high**, **split 7.2x southbound integration**, a **native low-PHY / fronthaul runtime boundary**, and **deterministic operations through `bin/ranctl`**. The current phase hardens production-facing control, deploy, evidence, and recovery workflows while keeping runtime expansion and broader interoperability claims explicit and bounded.
 
 > **Status**  
-> This repository is intentionally **architecture-first**. It already exposes reviewable production-facing operator flows for deploy, evidence, and recovery, while full live protocol stacks, real-time datapaths, and broader interoperability lanes remain future work until they have repo-visible proof.
+> This repository is intentionally **architecture-first**. It already exposes
+> reviewable production-facing operator flows for deploy, evidence, and
+> recovery, plus evidence-backed runtime lanes for the declared
+> `n79_single_ru_single_ue_lab_v1` live-lab profile and the bounded
+> clean-room `Aerial` / `cuMAC` support paths. Vendor-backed integrations,
+> broader profile parity, and full RT datapaths remain future work until they
+> have repo-visible proof.
 
 **Jump to:** [Why this repo](#why-this-repo) · [Architecture](#architecture-at-a-glance) · [What works today](#what-works-today) · [Hardened now vs future lanes](#hardened-now-vs-future-lanes) · [Getting started](#getting-started) · [Project layout](#project-layout) · [Advanced workflows](#advanced-workflows) · [Roadmap](#roadmap)
 
@@ -68,18 +74,34 @@ This is a good fit for contributors interested in **RAN architecture**, **BEAM s
 | OAI DU runtime bridge | ✅ | Real OpenAirInterface DU orchestration via generated Docker Compose assets |
 | Source bundle packaging | ✅ | Source-first bundle generation and stricter topology validation |
 | Target-host deploy chain | ✅ | Ship, preflight, remote `ranctl`, and evidence fetch workflows |
-| Native runtime boundary | ⚠️ | Contracts, bootstrap session scaffolds, and host-probe gates exist; real Aerial and cuMAC interoperability remain roadmap-only |
-| End-to-end live protocol stacks | 🚧 | Deliberately deferred at this phase |
+| Native runtime boundary | ✅ | Shared Port-backed gateway runtime, strict host-probe gating, and bounded clean-room `Aerial` support are reviewable now |
+| Scheduler boundary | ✅ | `cpu_scheduler` and bounded clean-room `cumac_scheduler` support are explicit, replayable, and cell-group scoped |
+| End-to-end live protocol stacks | ⚠️ | The declared `n79_single_ru_single_ue_lab_v1` lane has real-lab lifecycle and attach/session/ping proof; broader protocol and profile parity remain future work |
 
-## Hardened now vs future lanes
+## Evidence-backed runtime lanes
 
-The current support split is deliberate:
+The current support split is deliberate and evidence-backed:
 
-- **Hardened now:** `ranctl` control lifecycle, target-host deploy and fetchback, reviewable debug/evidence artifacts, and replacement-track contract/evidence schemas.
-- **Future interoperability lanes are explicit and reviewable:**
-  - `Aerial interoperability`: current support stops at `aerial_fapi_profile` contract scaffolding, shared Port bootstrap runtime, session lifecycle scaffolds, and host-probe gating. Promotion to a real interoperability claim is tracked in `YON-58`.
-  - `cuMAC scheduler interoperability`: current support stops at the `ran_scheduler_host` boundary and placeholder `cumac_scheduler` adapter surface. Promotion to a real interoperability claim is tracked in `YON-59`.
-  - `Broader profile expansion`: current support stops at the declared single-DU, single-cell, single-UE bootstrap lane plus contract-only backend surfaces. Expansion to multi-cell, multi-DU, or broader vendor/profile coverage is tracked in `YON-60`.
+- **Operator and evidence surfaces are hardened now:** `ranctl` control
+  lifecycle, target-host deploy and fetchback, reviewable debug/evidence
+  artifacts, and replacement-track contract/evidence schemas.
+- **Runtime lanes with repo-visible proof are explicit and reviewable:**
+  - `Declared live protocol lane`: the repo now carries real-lab lifecycle,
+    attach, registration, PDU session, ping, and rollback evidence for
+    `n79_single_ru_single_ue_lab_v1`.
+  - `Aerial clean-room runtime`: `aerial_fapi_profile` now carries bounded
+    clean-room runtime support for `aerial_clean_room_runtime_v1`, including
+    strict host probes plus health, drain, resume, and restart evidence.
+  - `cuMAC clean-room scheduler`: `cumac_scheduler` now carries bounded
+    clean-room scheduler support for
+    `cumac_scheduler_clean_room_runtime_v1`, including executable slot-plan
+    proof, explicit CPU rollback target metadata, and cell-group failure-domain
+    boundaries.
+- **Future expansion lanes remain explicit and reviewable:**
+  - vendor-backed `Aerial` device bring-up and attach validation
+  - external `cuMAC` worker ownership and timing guarantees
+  - broader profile expansion beyond the declared single-DU, single-cell,
+    single-UE lane, tracked in `YON-60`
 
 Use [docs/architecture/15-production-control-evidence-and-interoperability-lanes.md](docs/architecture/15-production-control-evidence-and-interoperability-lanes.md) for the parent-level posture map that ties those categories together.
 
@@ -87,12 +109,12 @@ Use [docs/architecture/15-production-control-evidence-and-interoperability-lanes
 
 The current phase does **not** aim to deliver a complete production RAN stack. The following remain explicitly deferred for now:
 
-- live ASN.1 codecs
-- SCTP and GTP-U runtime stacks
+- live ASN.1 codecs beyond the declared `n79` proof lane
+- SCTP and GTP-U runtime stacks beyond the declared `n79` proof lane
 - real eCPRI or O-RAN FH transport
 - real local DU-low implementation
-- real NVIDIA Aerial integration
-- real cuMAC integration
+- vendor-backed NVIDIA Aerial integration
+- external-worker cuMAC integration
 - broader profile expansion beyond the declared single-DU, single-cell, single-UE bootstrap lane
 - production Symphony hooks
 

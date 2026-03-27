@@ -55,7 +55,7 @@ The site groups the repo into three operator-friendly surfaces:
   <a class="docs-hero-card" href="/architecture/15-production-control-evidence-and-interoperability-lanes">
     <img src="/assets/figures/ranctl-lifecycle.svg" alt="Support posture figure">
     <strong>Support posture</strong>
-    <span>See what is hardened now for operators and what still remains a future interoperability lane.</span>
+    <span>See the evidence-backed runtime lanes, their proof surfaces, and the future expansion lanes that still need proof.</span>
   </a>
 </div>
 
@@ -72,7 +72,7 @@ The site groups the repo into three operator-friendly surfaces:
   </a>
   <a class="doc-hub-card" href="/backlog/">
     <strong>Backlog</strong>
-    <span>See the current implementation queue and the future runtime and interoperability lanes that still need proof.</span>
+    <span>See the current implementation queue and the future runtime-expansion lanes that still need proof.</span>
   </a>
 </div>
 
@@ -84,5 +84,7 @@ The site groups the repo into three operator-friendly surfaces:
 - a static documentation site that can be deployed without adding a backend
 
 <div class="doc-callout">
-  This site is intentionally documentation-centric. It explains what is hardened now for operator control and evidence, and it keeps future interoperability lanes explicit until they are proven.
+  This site is intentionally documentation-centric. It explains the current
+  operator control, evidence, and bounded runtime support posture, and it keeps
+  future expansion lanes explicit until they are proven.
 </div>
