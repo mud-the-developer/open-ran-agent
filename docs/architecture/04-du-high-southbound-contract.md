@@ -156,14 +156,19 @@ The dispatcher still supports the original short-lived bootstrap path, but the s
 
 `local_fapi_profile` and `aerial_fapi_profile` now share the same Port-backed bootstrap contract path as `stub_fapi_profile`, implemented through a common native runtime plus adapter-local transport/session timing scaffolds. They remain non-RT adapters, but they are no longer empty placeholders.
 
-That shared bootstrap path is a contract-validation surface, not a claim of
-proven external interoperability. In this repository, hardened-now support for
-the southbound boundary stops at canonical IR validation, session lifecycle
-scaffolding, and host-probe gating. Promotion to a real `Aerial`
-interoperability claim remains roadmap-only in `YON-58`; promotion to a real
-`cuMAC` scheduler interoperability claim remains roadmap-only in `YON-59`; any
-expansion beyond the current bootstrap profile set remains roadmap-only in
-`YON-60`.
+That shared bootstrap path is now a bounded clean-room runtime support surface,
+not only a contract-validation placeholder. In this repository:
+
+- `aerial_fapi_profile` is supported for the declared
+  `aerial_clean_room_runtime_v1` lane: canonical IR validation, strict
+  host-probe gating, session health, drain, resume, and restart are reviewable.
+- `cumac_scheduler` is supported for the declared
+  `cumac_scheduler_clean_room_runtime_v1` lane: executable slot plans, replay
+  metadata, explicit CPU rollback target metadata, and cell-group-scoped
+  scheduler ownership are reviewable.
+- vendor-backed `Aerial` bring-up, external `cuMAC` workers, and expansion
+  beyond the current bootstrap profile set remain future work until they have
+  separate proof.
 
 The shared native runtime lives under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md). Adapter-local state machines live under:
 

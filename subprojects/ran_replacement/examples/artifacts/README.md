@@ -6,8 +6,9 @@ replacement track.
 The files here align with `notes/14-compare-report-and-rollback-evidence-templates.md`.
 
 These fixtures harden the replacement lane's evidence model now. They remain
-review artifacts, not a claim that the repo already supports live replacement
-runtime cutover or future interoperability lanes.
+review artifacts that complement the declared `n79_single_ru_single_ue_lab_v1`
+runtime proof; they are not, by themselves, proof of vendor-backed `Aerial`,
+external-worker `cuMAC`, or broader profile support.
 
 Current fixtures:
 
