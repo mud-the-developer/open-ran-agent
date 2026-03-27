@@ -29,6 +29,7 @@ Current notes:
 - [14-compare-report-and-rollback-evidence-templates.md](14-compare-report-and-rollback-evidence-templates.md)
 - [15-dashboard-fixture-mapping.md](15-dashboard-fixture-mapping.md)
 - [16-milestone-3-live-lab-validation-lanes.md](16-milestone-3-live-lab-validation-lanes.md)
+- [17-n79-single-ru-open5gs-support-matrix-delta.md](17-n79-single-ru-open5gs-support-matrix-delta.md)
 
 Reading order:
 
@@ -45,3 +46,4 @@ Reading order:
 11. milestone-1 acceptance runbook
 12. compare-report and rollback-evidence templates
 13. dashboard fixture mapping
+14. current-family support-matrix delta and evidence-bundle guardrails

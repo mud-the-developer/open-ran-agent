@@ -1,5 +1,13 @@
 {
   "profile": "n79_single_ru_single_ue_lab_v1",
+  "profile_family": "n79_single_ru_single_ue_open5gs_family_v1",
+  "ru_family": "single_ru_ecpri_ptp_lab_v1",
+  "core_family": "open5gs_nsa_lab_v1",
+  "family_bundle_ref": "subprojects/ran_replacement/contracts/examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json",
+  "support_matrix_delta_refs": [
+    "subprojects/ran_replacement/notes/17-n79-single-ru-open5gs-support-matrix-delta.md"
+  ],
+  "evidence_bundle_root": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/",
   "scope": {
     "band": "n79",
     "real_ru_required": true,

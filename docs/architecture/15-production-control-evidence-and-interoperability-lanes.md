@@ -98,7 +98,7 @@ to reviewable proof.
 
 | Lane | Declared target profile | Verify evidence | Rollback evidence | Health / failure-domain refs | Explicit non-claims |
 | --- | --- | --- | --- | --- | --- |
-| `Declared live protocol lane` | `n79_single_ru_single_ue_lab_v1` | `subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json`, `apps/ran_action_gateway/test/ran_action_gateway/replacement_examples_test.exs` | `subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json`, `subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json` | `docs/architecture/03-failure-domains.md`, `docs/architecture/14-debug-and-evidence-workflow.md` | no multi-cell, multi-DU, or broad RU/core/profile parity claim |
+| `Declared live protocol lane` | `n79_single_ru_single_ue_lab_v1` | `subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json`, `apps/ran_action_gateway/test/ran_action_gateway/replacement_examples_test.exs` | `subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json`, `subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json` | `docs/architecture/03-failure-domains.md`, `docs/architecture/14-debug-and-evidence-workflow.md` | no multi-cell, multi-DU, or broad RU/core/profile parity claim |
 | `Aerial` backend | `aerial_clean_room_runtime_v1` | `apps/ran_fapi_core/test/ran_fapi_core/native_gateway_contract_test.exs`, `apps/ran_fapi_core/test/ran_fapi_core/native_gateway_transport_state_test.exs` | `apps/ran_fapi_core/test/ran_fapi_core/native_gateway_contract_test.exs`, `apps/ran_fapi_core/test/ran_fapi_core/native_gateway_transport_state_test.exs` | `docs/architecture/03-failure-domains.md`, `docs/architecture/04-du-high-southbound-contract.md`, `native/aerial_adapter/CONTRACT.md` | no vendor device bring-up proof, no attach-plus-ping proof on Aerial, no production timing claim |
 | `cuMAC` scheduler | `cumac_scheduler_clean_room_runtime_v1` | `apps/ran_scheduler_host/test/ran_scheduler_host/cumac_scheduler_test.exs`, `apps/ran_du_high/test/ran_du_high_test.exs` | `apps/ran_scheduler_host/test/ran_scheduler_host/cumac_scheduler_test.exs`, `apps/ran_du_high/test/ran_du_high_test.exs` | `docs/architecture/02-otp-apps-and-supervision.md`, `docs/architecture/03-failure-domains.md`, `apps/ran_scheduler_host/lib/ran_scheduler_host/cumac_scheduler.ex` | no external scheduler worker proof, no attach validation claim, no production timing claim |
 
@@ -110,7 +110,7 @@ These lanes remain explicit future work.
 | --- | --- | --- |
 | Vendor-backed `Aerial` integration | Clean-room runtime support is bounded to `aerial_clean_room_runtime_v1` | vendor device bring-up, target-host attach-plus-ping on Aerial, and production timing proof |
 | External-worker `cuMAC` integration | Clean-room scheduler support is bounded to `cumac_scheduler_clean_room_runtime_v1` | external worker contract, runtime timing proof, and rollback coverage that keeps scheduler ownership bounded |
-| Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target profile, explicit core-link contract, schema-backed fixtures, and attach-plus-ping plus rollback evidence for that exact lane |
+| Broader RU/core/profile support | Current replacement contracts stay fixed to one `n79` / one real RU / one real UE / one real `Open5GS` core | a declared target-profile contract/example, explicit core-link contract/example, a schema-backed family bundle with a support-matrix delta and evidence bundle, plus attach-plus-ping and rollback evidence for that exact lane |
 | Multi-cell or multi-DU orchestration | Mentioned in roadmap only | action scope, blast-radius rules, approval model, and evidence/rollback semantics for each additional scope before any multi-cell or multi-DU parity claim is allowed |
 
 ## Reviewer Rules
@@ -122,8 +122,10 @@ These lanes remain explicit future work.
 - Treat the declared `n79` live lane, `aerial_clean_room_runtime_v1`, and
   `cumac_scheduler_clean_room_runtime_v1` as the current bounded support lanes.
 - Treat vendor-backed `Aerial`, external-worker `cuMAC`, and broader profile
-  expansion as future work until they have their own declared profiles,
-  repo-visible validation, and deterministic rollback evidence.
+  expansion as future work until each new RU/core/profile family has its own
+  declared target-profile contract/example, repo-visible validation,
+  support-matrix delta, deterministic rollback evidence, and schema-backed
+  family bundle.
 - Do not promote the current single-`n79` lane into multi-cell, multi-DU, or
   broad profile parity claims.
 
