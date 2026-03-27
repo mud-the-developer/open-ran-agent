@@ -20,6 +20,9 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert get_in(status, ["release_status", "evidence_ref"]) ==
              "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
+    assert get_in(status, ["conformance_claim", "evidence_tier"]) == "milestone_proof"
+    assert get_in(status, ["rollback_status", "evidence_ref"]) =~ "/rollback-evidence.json"
+    assert get_in(status, ["release_status", "evidence_ref"]) =~ "/ue-context-release.json"
     assert get_in(status, ["ngap_procedure_trace", "last_observed"]) == "UE Context Release"
 
     assert get_in(status, ["interface_status", "ngap", "evidence_ref"]) ==
@@ -61,6 +64,10 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert registration_report["summary"] =~ "Downlink NAS Transport"
     assert registration_report["rollback_target"] == "oai_reference"
+
+    assert get_in(registration_report, ["conformance_claim", "evidence_tier"]) ==
+             "milestone_proof"
+
     assert ping_report["summary"] =~ "user-plane failure"
     assert ping_report["rollback_target"] == "oai_reference"
 
@@ -75,6 +82,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json" in registration_report[
              "evidence_refs"
            ]
+    assert get_in(ping_report, ["conformance_claim", "evidence_tier"]) == "milestone_proof"
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

@@ -105,6 +105,7 @@ REMOTE_READINESS_FILE="${REMOTE_ETC_ROOT}/deploy.readiness.json"
 CHANGE_ID="$(json_field "${REQUEST_FILE}" "change_id")"
 INCIDENT_ID="$(json_field "${REQUEST_FILE}" "incident_id")"
 CELL_GROUP="$(json_field "${REQUEST_FILE}" "cell_group")"
+TARGET_PROFILE="$(json_field "${REQUEST_FILE}" "target_profile")"
 RUN_STAMP="$(date +%Y%m%dT%H%M%S)"
 FETCH_LABEL="${RAN_REMOTE_FETCH_LABEL:-${RUN_STAMP}-fetch}"
 
@@ -143,6 +144,7 @@ write_debug_summary() {
     "change_id=${CHANGE_ID}" \
     "incident_id=${INCIDENT_ID}" \
     "cell_group=${CELL_GROUP}" \
+    "target_profile=${TARGET_PROFILE}" \
     "archive=${LOCAL_ARCHIVE}" \
     "extract_dir=${LOCAL_EXTRACT_DIR}" \
     "plan_file=${LOCAL_PLAN_FILE}" \
@@ -164,6 +166,7 @@ Debug Pack
   change id  : ${CHANGE_ID:-n/a}
   incident id: ${INCIDENT_ID:-n/a}
   cell group : ${CELL_GROUP:-n/a}
+  profile    : ${TARGET_PROFILE:-n/a}
   failed step: ${FAILED_STEP:-n/a}
   exit code  : ${EXIT_CODE:-n/a}
 
@@ -216,6 +219,7 @@ readiness_file=$(quote "${REMOTE_READINESS_FILE}")
 change_id=$(quote "${CHANGE_ID}")
 incident_id=$(quote "${INCIDENT_ID}")
 cell_group=$(quote "${CELL_GROUP}")
+target_profile=$(quote "${TARGET_PROFILE}")
 run_stamp=$(quote "${RUN_STAMP}")
 target_host=$(quote "${TARGET_HOST}")
 copied=0
@@ -252,6 +256,19 @@ copy_matches() {
   done
 }
 
+copy_replacement_phase() {
+  local phase="\$1"
+  local needle="\$2"
+  local base="\${current_root}/artifacts/replacement/\${phase}"
+
+  [[ -n "\${needle}" ]] || return 0
+  [[ -d "\${base}" ]] || return 0
+
+  if [[ -d "\${base}/\${needle}" ]]; then
+    stage_copy "\${base}/\${needle}" "artifacts/replacement/\${phase}/\${needle}"
+  fi
+}
+
 rm -rf "\${stage_dir}"
 mkdir -p "\${stage_dir}"
 
@@ -259,6 +276,14 @@ for category in prechecks plans changes verify captures approvals rollback_plans
   copy_matches "\${category}" "\${change_id}"
   copy_matches "\${category}" "\${incident_id}"
 done
+
+for phase in precheck plan apply observe verify capture rollback; do
+  copy_replacement_phase "\${phase}" "\${change_id}"
+done
+
+if [[ -n "\${target_profile}" && -d "\${current_root}/artifacts/replacement/\${target_profile}" ]]; then
+  stage_copy "\${current_root}/artifacts/replacement/\${target_profile}" "artifacts/replacement/\${target_profile}"
+fi
 
 if [[ -n "\${change_id}" && -d "\${current_root}/artifacts/runtime/\${change_id}" ]]; then
   stage_copy "\${current_root}/artifacts/runtime/\${change_id}" "artifacts/runtime/\${change_id}"
@@ -277,6 +302,7 @@ target_host=\${target_host}
 change_id=\${change_id}
 incident_id=\${incident_id}
 cell_group=\${cell_group}
+target_profile=\${target_profile}
 request_file=\$(basename "\${request_file}")
 copied_entries=\${copied}
 generated_at=\${run_stamp}

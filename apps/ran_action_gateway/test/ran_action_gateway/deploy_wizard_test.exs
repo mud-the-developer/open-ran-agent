@@ -171,6 +171,40 @@ defmodule RanActionGateway.DeployWizardTest do
                &String.contains?(&1, "bin/ran-remote-ranctl")
              )
 
+      assert Enum.map(result.handoff.remote_ranctl_commands, fn command ->
+               Enum.find(
+                 ["precheck", "plan", "apply", "verify", "capture-artifacts", "rollback"],
+                 &String.contains?(command, " #{&1} ")
+               )
+             end) == [
+               "precheck",
+               "plan",
+               "apply",
+               "verify",
+               "capture-artifacts",
+               "rollback"
+             ]
+
+      assert Enum.any?(
+               result.handoff.remote_ranctl_commands,
+               &String.contains?(&1, "precheck-target-host.json")
+             )
+
+      assert Enum.any?(
+               result.handoff.remote_ranctl_commands,
+               &String.contains?(&1, "plan-gnb-bringup.json")
+             )
+
+      assert Enum.any?(
+               result.handoff.remote_ranctl_commands,
+               &String.contains?(&1, "verify-attach-ping.json")
+             )
+
+      assert Enum.any?(
+               result.handoff.remote_ranctl_commands,
+               &String.contains?(&1, "rollback-gnb-cutover.json")
+             )
+
       assert Enum.any?(
                result.handoff.fetch_commands,
                &String.contains?(&1, "bin/ran-fetch-remote-artifacts")

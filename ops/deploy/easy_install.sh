@@ -232,12 +232,17 @@ QUICKSTART_DIR="${REPO_ROOT}/artifacts/deploy_preview/quick_install/${RUN_STAMP}
 WIZARD_RESULT_FILE="${QUICKSTART_DIR}/wizard-result.json"
 SUMMARY_FILE="${QUICKSTART_DIR}/summary.txt"
 REQUEST_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/requests/precheck-target-host.json"
+PLAN_REQUEST_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/requests/plan-gnb-bringup.json"
+VERIFY_REQUEST_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/requests/verify-attach-ping.json"
+ROLLBACK_REQUEST_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/requests/rollback-gnb-cutover.json"
 READINESS_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/deploy.readiness.json"
 PROFILE_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/deploy.profile.json"
 EFFECTIVE_CONFIG_FILE="${REPO_ROOT}/artifacts/deploy_preview/etc/deploy.effective.json"
 PREVIEW_COMMAND_FILE="${QUICKSTART_DIR}/install.preview.sh"
 APPLY_COMMAND_FILE="${QUICKSTART_DIR}/install.apply.sh"
 REMOTE_PRECHECK_FILE="${QUICKSTART_DIR}/remote.precheck.sh"
+REMOTE_LIFECYCLE_FILE="${QUICKSTART_DIR}/remote.lifecycle.sh"
+REMOTE_FETCH_FILE="${QUICKSTART_DIR}/remote.fetch.sh"
 GUIDE_FILE="${QUICKSTART_DIR}/INSTALL.md"
 DEBUG_SUMMARY_FILE="${QUICKSTART_DIR}/debug-summary.txt"
 DEBUG_PACK_FILE="${QUICKSTART_DIR}/debug-pack.txt"
@@ -270,6 +275,8 @@ write_debug_summary() {
     "preview_command_file=${PREVIEW_COMMAND_FILE}" \
     "apply_command_file=${APPLY_COMMAND_FILE}" \
     "remote_precheck_file=${REMOTE_PRECHECK_FILE}" \
+    "remote_lifecycle_file=${REMOTE_LIFECYCLE_FILE}" \
+    "remote_fetch_file=${REMOTE_FETCH_FILE}" \
     "install_guide=${GUIDE_FILE}" \
     "debug_pack_file=${DEBUG_PACK_FILE}" \
     "failed_step=$(single_line "${FAILED_STEP}")" \
@@ -299,6 +306,8 @@ Inspect next:
   - preview cmd    : ${PREVIEW_COMMAND_FILE}
   - apply cmd      : ${APPLY_COMMAND_FILE}
   - remote precheck: ${REMOTE_PRECHECK_FILE}
+  - remote lifecycle: ${REMOTE_LIFECYCLE_FILE}
+  - remote fetch   : ${REMOTE_FETCH_FILE}
 EOF
 }
 
@@ -379,7 +388,29 @@ if [[ -n "${TARGET_HOST}" ]]; then
     "" \
     "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") precheck $(shell_quote "${REQUEST_FILE}")"
 
-  chmod +x "${APPLY_COMMAND_FILE}" "${REMOTE_PRECHECK_FILE}"
+  write_text \
+    "${REMOTE_LIFECYCLE_FILE}" \
+    "#!/usr/bin/env bash" \
+    "set -euo pipefail" \
+    "" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") precheck $(shell_quote "${REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") plan $(shell_quote "${PLAN_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") apply $(shell_quote "${PLAN_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") verify $(shell_quote "${VERIFY_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") capture-artifacts $(shell_quote "${VERIFY_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-remote-ranctl $(shell_quote "${TARGET_HOST}") rollback $(shell_quote "${ROLLBACK_REQUEST_FILE}")"
+
+  write_text \
+    "${REMOTE_FETCH_FILE}" \
+    "#!/usr/bin/env bash" \
+    "set -euo pipefail" \
+    "" \
+    "RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts $(shell_quote "${TARGET_HOST}") $(shell_quote "${REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts $(shell_quote "${TARGET_HOST}") $(shell_quote "${PLAN_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts $(shell_quote "${TARGET_HOST}") $(shell_quote "${VERIFY_REQUEST_FILE}")" \
+    "RAN_REMOTE_APPLY=1 bin/ran-fetch-remote-artifacts $(shell_quote "${TARGET_HOST}") $(shell_quote "${ROLLBACK_REQUEST_FILE}")"
+
+  chmod +x "${APPLY_COMMAND_FILE}" "${REMOTE_PRECHECK_FILE}" "${REMOTE_LIFECYCLE_FILE}" "${REMOTE_FETCH_FILE}"
 else
   write_text \
     "${APPLY_COMMAND_FILE}" \
@@ -387,6 +418,12 @@ else
   write_text \
     "${REMOTE_PRECHECK_FILE}" \
     "# Set --target-host first to generate an executable remote precheck command."
+  write_text \
+    "${REMOTE_LIFECYCLE_FILE}" \
+    "# Set --target-host first to generate the full remote ranctl lifecycle helper."
+  write_text \
+    "${REMOTE_FETCH_FILE}" \
+    "# Set --target-host first to generate the remote fetch helper."
 fi
 
 write_text \
@@ -404,7 +441,12 @@ write_text \
   "- Preview command: ${PREVIEW_COMMAND_FILE}" \
   "- Apply command: ${APPLY_COMMAND_FILE}" \
   "- Remote precheck: ${REMOTE_PRECHECK_FILE}" \
+  "- Remote lifecycle: ${REMOTE_LIFECYCLE_FILE}" \
+  "- Remote fetch: ${REMOTE_FETCH_FILE}" \
   "- Request: ${REQUEST_FILE}" \
+  "- Plan request: ${PLAN_REQUEST_FILE}" \
+  "- Verify request: ${VERIFY_REQUEST_FILE}" \
+  "- Rollback request: ${ROLLBACK_REQUEST_FILE}" \
   "- Readiness: ${READINESS_FILE}" \
   "- Profile: ${PROFILE_FILE}" \
   "- Effective config: ${EFFECTIVE_CONFIG_FILE}" \
@@ -425,6 +467,8 @@ write_text \
   echo "  wizard result : ${WIZARD_RESULT_FILE}"
   echo "  preview cmd   : ${PREVIEW_COMMAND_FILE}"
   echo "  apply cmd     : ${APPLY_COMMAND_FILE}"
+  echo "  lifecycle cmd : ${REMOTE_LIFECYCLE_FILE}"
+  echo "  fetch cmd     : ${REMOTE_FETCH_FILE}"
   echo "  install guide : ${GUIDE_FILE}"
   echo "  debug summary : ${DEBUG_SUMMARY_FILE}"
   echo "  debug pack    : ${DEBUG_PACK_FILE}"
@@ -435,6 +479,7 @@ write_text \
   if [[ -n "${TARGET_HOST}" ]]; then
     echo "  2. Run  bin/ran-ship-bundle ${BUNDLE_TARBALL} ${TARGET_HOST}"
     echo "  3. Run  bin/ran-remote-ranctl ${TARGET_HOST} precheck ${REQUEST_FILE}"
+    echo "  4. Or   run ${REMOTE_LIFECYCLE_FILE} for the full replacement proof loop"
   else
     echo "  2. Set  --target-host to generate a real handoff plan"
     echo "  3. Or   run bin/ran-dashboard and continue from Deploy Studio"

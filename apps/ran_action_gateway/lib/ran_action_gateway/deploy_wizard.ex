@@ -95,17 +95,24 @@ defmodule RanActionGateway.DeployWizard do
   @spec write_target_host_files(map()) :: {:ok, map()} | {:error, map()}
   def write_target_host_files(config) when is_map(config) do
     topology_path = Path.join(config.etc_root, "topology.single_du.target_host.rfsim.json")
-    request_path = Path.join(config.etc_root, "requests/precheck-target-host.json")
+    request_dir = Path.join(config.etc_root, "requests")
+    request_path = Path.join(request_dir, "precheck-target-host.json")
     dashboard_env_path = Path.join(config.etc_root, "ran-dashboard.env")
     preflight_env_path = Path.join(config.etc_root, "ran-host-preflight.env")
     profile_path = Path.join(config.etc_root, "deploy.profile.json")
     effective_config_path = Path.join(config.etc_root, "deploy.effective.json")
+    request_payloads = render_request_payloads(config)
+    request_paths = request_bundle_paths(request_dir)
 
     File.mkdir_p!(Path.dirname(topology_path))
-    File.mkdir_p!(Path.dirname(request_path))
+    File.mkdir_p!(request_dir)
 
     File.write!(topology_path, JSON.encode!(render_topology(config)))
-    File.write!(request_path, JSON.encode!(render_request(config)))
+
+    Enum.each(request_paths, fn {key, path} ->
+      File.write!(path, JSON.encode!(Map.fetch!(request_payloads, key)))
+    end)
+
     File.write!(dashboard_env_path, render_dashboard_env(config, topology_path))
     File.write!(preflight_env_path, render_preflight_env(config, topology_path, request_path))
     File.write!(profile_path, JSON.encode!(render_profile_manifest(config)))
@@ -119,6 +126,7 @@ defmodule RanActionGateway.DeployWizard do
      %{
        topology_path: topology_path,
        request_path: request_path,
+       request_paths: request_paths,
        dashboard_env_path: dashboard_env_path,
        preflight_env_path: preflight_env_path,
        profile_path: profile_path,
@@ -167,22 +175,42 @@ defmodule RanActionGateway.DeployWizard do
   end
 
   @spec render_request(map()) :: map()
-  def render_request(config) do
+  def render_request(config), do: Map.fetch!(render_request_payloads(config), :precheck)
+
+  defp render_request_payloads(config) do
     %{
-      "scope" => "cell_group",
-      "cell_group" => config.cell_group,
-      "target_backend" => config.default_backend,
-      "current_backend" => config.default_backend,
-      "change_id" => "chg-target-host-001",
-      "reason" => "precheck target host deployment",
-      "idempotency_key" => "chg-target-host-001-key",
-      "ttl" => "15m",
+      precheck: render_precheck_request(config),
+      plan: render_plan_request(config),
+      verify: render_verify_request(config),
+      rollback: render_rollback_request(config)
+    }
+  end
+
+  defp request_bundle_paths(request_dir) do
+    %{
+      precheck: Path.join(request_dir, "precheck-target-host.json"),
+      plan: Path.join(request_dir, "plan-gnb-bringup.json"),
+      verify: Path.join(request_dir, "verify-attach-ping.json"),
+      rollback: Path.join(request_dir, "rollback-gnb-cutover.json")
+    }
+  end
+
+  defp render_precheck_request(config) do
+    %{
+      "scope" => "target_host",
+      "target_ref" => replacement_host_target_ref(config),
+      "target_backend" => "replacement_shadow",
+      "rollback_target" => "oai_reference",
+      "change_id" => "chg-ran-repl-precheck-001",
+      "reason" => "precheck declared n79 replacement lane on the target host",
+      "idempotency_key" => "ran-repl-precheck-001",
+      "ttl" => "20m",
       "dry_run" => false,
       "verify_window" => %{
         "duration" => "30s",
-        "checks" => ["gateway_healthy"]
+        "checks" => ["host_preflight", "ru_sync", "core_link_reachable"]
       },
-      "max_blast_radius" => "single_cell_group",
+      "max_blast_radius" => "single_lab",
       "metadata" => %{
         "deploy_profile" => render_profile_summary(config),
         "native_probe" => %{
@@ -194,10 +222,209 @@ defmodule RanActionGateway.DeployWizard do
             "pci_bdf" => config.pci_bdf,
             "strict_host_probe" => config.strict_host_probe
           }
-        }
+        },
+        "replacement" =>
+          replacement_metadata_payload(config, %{
+            "target_role" => "target_host",
+            "action" => "precheck",
+            "desired_state" => "present",
+            "cutover_mode" => "none",
+            "required_interfaces" => [
+              "ngap",
+              "f1_c",
+              "f1_u",
+              "e1ap",
+              "gtpu",
+              "ru_fronthaul",
+              "ptp"
+            ],
+            "acceptance_gates" => [
+              "host_preflight",
+              "ru_sync",
+              "registration",
+              "pdu_session",
+              "ping"
+            ]
+          })
       }
     }
   end
+
+  defp render_plan_request(config) do
+    %{
+      "scope" => "gnb",
+      "target_ref" => replacement_gnb_target_ref(config),
+      "target_backend" => "replacement_shadow",
+      "current_backend" => "oai_reference",
+      "rollback_target" => "oai_reference",
+      "change_id" => "chg-ran-repl-bringup-001",
+      "reason" => "plan declared n79 replacement bring-up against the real target host lane",
+      "idempotency_key" => "ran-repl-bringup-001",
+      "ttl" => "30m",
+      "dry_run" => false,
+      "verify_window" => %{
+        "duration" => "60s",
+        "checks" => ["host_preflight", "ru_sync", "ngap_reachable", "registration_path_ready"]
+      },
+      "max_blast_radius" => "single_gnb",
+      "metadata" => %{
+        "deploy_profile" => render_profile_summary(config),
+        "replacement" =>
+          replacement_metadata_payload(config, %{
+            "target_role" => "gnb",
+            "action" => "bring_up",
+            "desired_state" => "shadow",
+            "cutover_mode" => "shadow",
+            "required_interfaces" => [
+              "ngap",
+              "f1_c",
+              "f1_u",
+              "e1ap",
+              "gtpu",
+              "ru_fronthaul",
+              "ptp"
+            ],
+            "acceptance_gates" => [
+              "host_preflight",
+              "ru_sync",
+              "registration",
+              "pdu_session",
+              "ping"
+            ]
+          })
+      }
+    }
+  end
+
+  defp render_verify_request(config) do
+    %{
+      "scope" => "ue_session",
+      "target_ref" => replacement_ue_target_ref(config),
+      "target_backend" => "replacement_shadow",
+      "current_backend" => "oai_reference",
+      "rollback_target" => "oai_reference",
+      "change_id" => "chg-ran-repl-verify-001",
+      "incident_id" => "inc-ran-repl-verify-001",
+      "reason" =>
+        "verify attach, registration, PDU session, and ping on the declared n79 replacement lane",
+      "idempotency_key" => "ran-repl-verify-001",
+      "ttl" => "20m",
+      "dry_run" => false,
+      "verify_window" => %{
+        "duration" => "120s",
+        "checks" => ["registration_complete", "pdu_session_established", "ping_success"]
+      },
+      "max_blast_radius" => "single_ue",
+      "metadata" => %{
+        "deploy_profile" => render_profile_summary(config),
+        "replacement" =>
+          replacement_metadata_payload(config, %{
+            "target_role" => "ue_session",
+            "action" => "verify_attach_ping",
+            "desired_state" => "active",
+            "cutover_mode" => "shadow",
+            "required_interfaces" => ["ngap", "f1_u", "gtpu", "ru_fronthaul"],
+            "acceptance_gates" => ["registration", "pdu_session", "ping"]
+          })
+      }
+    }
+  end
+
+  defp render_rollback_request(config) do
+    %{
+      "scope" => "replacement_cutover",
+      "target_ref" => replacement_gnb_target_ref(config),
+      "target_backend" => "oai_reference",
+      "current_backend" => "replacement_primary",
+      "rollback_target" => "oai_reference",
+      "change_id" => "chg-ran-repl-rollback-001",
+      "incident_id" => "inc-ran-repl-rollback-001",
+      "reason" => "rollback the declared n79 replacement lane after a failed real-lab proof",
+      "idempotency_key" => "ran-repl-rollback-001",
+      "ttl" => "20m",
+      "dry_run" => false,
+      "verify_window" => %{
+        "duration" => "45s",
+        "checks" => ["rollback_target_known", "approval_evidence_present", "oai_reference_ready"]
+      },
+      "max_blast_radius" => "single_gnb",
+      "metadata" => %{
+        "deploy_profile" => render_profile_summary(config),
+        "replacement" =>
+          replacement_metadata_payload(config, %{
+            "target_role" => "gnb",
+            "action" => "rollback",
+            "desired_state" => "present",
+            "cutover_mode" => "rollback",
+            "destructive" => true,
+            "required_interfaces" => [
+              "ngap",
+              "f1_c",
+              "f1_u",
+              "e1ap",
+              "gtpu",
+              "ru_fronthaul",
+              "ptp"
+            ],
+            "acceptance_gates" => ["registration", "pdu_session", "ping"]
+          })
+      }
+    }
+  end
+
+  defp replacement_metadata_payload(config, overrides) do
+    base = %{
+      "target_profile" => "n79_single_ru_single_ue_lab_v1",
+      "core_profile" => "open5gs_nsa_lab_v1",
+      "band" => "n79",
+      "plane_scope" => ["s_plane", "m_plane", "c_plane", "u_plane"],
+      "allow_oai_fallback" => true,
+      "destructive" => false,
+      "real_ru_required" => true,
+      "real_ue_required" => true,
+      "open5gs_core" => %{
+        "profile" => "open5gs_nsa_lab_v1",
+        "release_ref" => "open5gs-sanitized-lab-release-1",
+        "n2" => %{"amf_host" => "10.41.83.45", "amf_port" => 38412, "bind_host" => "10.41.83.34"},
+        "n3" => %{
+          "upf_host" => "10.41.83.45",
+          "gtpu_port" => 2152,
+          "dnn" => "internet",
+          "slice" => %{"sst" => 1, "sd" => "000001"}
+        },
+        "subscriber_profile" => %{"imsi_ref" => "sanitized-imsi-001", "ue_class" => "n79_lab_ue"},
+        "session_profile" => %{"pdu_type" => "ipv4", "expect_ping_target" => "8.8.8.8"}
+      },
+      "native_probe" => %{
+        "strict_host_probe" => config.strict_host_probe,
+        "required_resources" => [config.host_interface, config.device_path, config.pci_bdf]
+      },
+      "ngap_subset" => %{
+        "standards_subset_ref" =>
+          "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+        "procedure_matrix_ref" =>
+          "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+        "required_procedures" => [
+          "NG Setup",
+          "Initial UE Message",
+          "Uplink NAS Transport",
+          "Downlink NAS Transport",
+          "UE Context Release"
+        ],
+        "optional_procedures" => ["Error Indication", "Reset"],
+        "deferred_procedures" => ["Paging", "Handover Preparation", "Path Switch Request"]
+      }
+    }
+
+    Map.merge(base, overrides)
+  end
+
+  defp replacement_host_target_ref(config) do
+    if blank?(config.target_host), do: "host-#{config.cell_group}", else: config.target_host
+  end
+
+  defp replacement_gnb_target_ref(config), do: "gnb-#{config.cell_group}"
+  defp replacement_ue_target_ref(config), do: "ue-#{config.cell_group}"
 
   @spec render_dashboard_env(map(), Path.t()) :: String.t()
   def render_dashboard_env(config, topology_path) do
@@ -552,6 +779,10 @@ defmodule RanActionGateway.DeployWizard do
     %{
       topology: load_preview(files.topology_path),
       request: load_preview(files.request_path),
+      replacement_requests:
+        files.request_paths
+        |> Enum.reject(fn {key, _path} -> key == :precheck end)
+        |> Enum.into(%{}, fn {key, path} -> {key, load_preview(path)} end),
       dashboard_env: load_preview(files.dashboard_env_path),
       preflight_env: load_preview(files.preflight_env_path),
       profile_manifest: load_preview(files.profile_path),
@@ -600,6 +831,7 @@ defmodule RanActionGateway.DeployWizard do
 
     generic_steps = [
       "Review #{files.topology_path} and #{files.request_path} before moving the bundle to the target host.",
+      "Review the replacement request bundle under #{Path.dirname(files.request_path)} before remote ranctl execution.",
       "Review #{files.readiness_path} for blockers, warnings, and the computed rollout score.",
       "Run #{Path.join(config.current_root, "bin/ran-host-preflight")} with #{files.preflight_env_path} on the target host.",
       "Launch #{Path.join(config.current_root, "bin/ran-dashboard")} with #{files.dashboard_env_path} to expose the operator UI."
@@ -610,8 +842,8 @@ defmodule RanActionGateway.DeployWizard do
         do: [],
         else: [
           "Use the generated handoff commands or run #{Path.join(config.current_root, "bin/ran-ship-bundle")} #{config.bundle_tarball} #{config.target_host} from the packaging host.",
-          "Drive remote ranctl from the packaging host with #{Path.join(config.current_root, "bin/ran-remote-ranctl")} and let it mirror fetched evidence into artifacts/remote_runs/*.",
-          "Re-sync remote evidence on demand with #{Path.join(config.current_root, "bin/ran-fetch-remote-artifacts")} #{config.target_host} #{files.request_path}."
+          "Drive remote ranctl from the packaging host with #{Path.join(config.current_root, "bin/ran-remote-ranctl")} across precheck, plan, apply, verify, capture-artifacts, and rollback using the generated request bundle.",
+          "Re-sync remote evidence on demand with #{Path.join(config.current_root, "bin/ran-fetch-remote-artifacts")} #{config.target_host} and the matching generated request file for the phase you are replaying."
         ]
       )
 
@@ -658,9 +890,9 @@ defmodule RanActionGateway.DeployWizard do
     remote_bundle_tarball = remote_path(config.remote_bundle_dir, remote_bundle_name)
     remote_installer = remote_path(config.remote_bundle_dir, "install_bundle.sh")
     remote_topology = remote_path(config.remote_etc_root, Path.basename(files.topology_path))
+    remote_request_paths = remote_request_paths(config, files)
 
-    remote_request =
-      remote_path(config.remote_etc_root, "requests/" <> Path.basename(files.request_path))
+    remote_request = Map.fetch!(remote_request_paths, :precheck)
 
     remote_dashboard_env =
       remote_path(config.remote_etc_root, Path.basename(files.dashboard_env_path))
@@ -687,6 +919,7 @@ defmodule RanActionGateway.DeployWizard do
       remote_installer_path: remote_installer,
       remote_topology_path: remote_topology,
       remote_request_path: remote_request,
+      remote_request_paths: remote_request_paths,
       remote_dashboard_env_path: remote_dashboard_env,
       remote_preflight_env_path: remote_preflight_env,
       remote_profile_path: remote_profile,
@@ -720,9 +953,8 @@ defmodule RanActionGateway.DeployWizard do
     remote_bundle_tarball = remote_path(remote_bundle_dir, maybe_basename(config.bundle_tarball))
     remote_installer = remote_path(remote_bundle_dir, "install_bundle.sh")
     remote_topology = remote_path(config.remote_etc_root, Path.basename(files.topology_path))
-
-    remote_request =
-      remote_path(config.remote_etc_root, "requests/" <> Path.basename(files.request_path))
+    remote_request_paths = remote_request_paths(config, files)
+    remote_request = Map.fetch!(remote_request_paths, :precheck)
 
     remote_dashboard_env =
       remote_path(config.remote_etc_root, Path.basename(files.dashboard_env_path))
@@ -738,37 +970,57 @@ defmodule RanActionGateway.DeployWizard do
     remote_readiness =
       remote_path(config.remote_etc_root, Path.basename(files.readiness_path))
 
+    request_copy_commands =
+      Enum.map(files.request_paths, fn {key, path} ->
+        remote_path = Map.fetch!(remote_request_paths, key)
+
+        "scp -P #{shell_escape(ssh_port)} #{shell_escape(path)} #{shell_escape(ssh_target <> ":" <> remote_path)}"
+      end)
+
     [
       "ssh -p #{shell_escape(ssh_port)} #{shell_escape(ssh_target)} mkdir -p #{shell_escape(remote_bundle_dir)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(config.bundle_tarball)} #{shell_escape(ssh_target <> ":" <> remote_bundle_tarball)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(installer_path)} #{shell_escape(ssh_target <> ":" <> remote_installer)}",
       "ssh -p #{shell_escape(ssh_port)} #{shell_escape(ssh_target)} env RAN_ETC_ROOT=#{shell_escape(config.remote_etc_root)} RAN_SYSTEMD_STAGING_DIR=#{shell_escape(config.remote_systemd_dir)} bash #{shell_escape(remote_installer)} #{shell_escape(remote_bundle_tarball)} #{shell_escape(config.remote_install_root)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.topology_path)} #{shell_escape(ssh_target <> ":" <> remote_topology)}",
-      "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.request_path)} #{shell_escape(ssh_target <> ":" <> remote_request)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.dashboard_env_path)} #{shell_escape(ssh_target <> ":" <> remote_dashboard_env)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.preflight_env_path)} #{shell_escape(ssh_target <> ":" <> remote_preflight_env)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.profile_path)} #{shell_escape(ssh_target <> ":" <> remote_profile)}",
       "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.effective_config_path)} #{shell_escape(ssh_target <> ":" <> remote_effective_config)}",
-      "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.readiness_path)} #{shell_escape(ssh_target <> ":" <> remote_readiness)}",
-      "ssh -p #{shell_escape(ssh_port)} #{shell_escape(ssh_target)} env RAN_REPO_ROOT=#{shell_escape(remote_path(config.remote_install_root, "current"))} RAN_TOPOLOGY_FILE=#{shell_escape(remote_topology)} RAN_PREFLIGHT_REQUEST=#{shell_escape(remote_request)} #{shell_escape(remote_path(config.remote_install_root, "current/bin/ran-host-preflight"))}"
-    ]
+      "scp -P #{shell_escape(ssh_port)} #{shell_escape(files.readiness_path)} #{shell_escape(ssh_target <> ":" <> remote_readiness)}"
+    ] ++
+      request_copy_commands ++
+      [
+        "ssh -p #{shell_escape(ssh_port)} #{shell_escape(ssh_target)} env RAN_REPO_ROOT=#{shell_escape(remote_path(config.remote_install_root, "current"))} RAN_TOPOLOGY_FILE=#{shell_escape(remote_topology)} RAN_PREFLIGHT_REQUEST=#{shell_escape(remote_request)} #{shell_escape(remote_path(config.remote_install_root, "current/bin/ran-host-preflight"))}"
+      ]
   end
 
   defp remote_ranctl_commands(config, files) do
     helper = Path.join(config.current_root, "bin/ran-remote-ranctl")
+    request_paths = files.request_paths
 
-    ["precheck", "plan", "observe", "capture-artifacts"]
-    |> Enum.map(fn command ->
-      "RAN_REMOTE_APPLY=1 #{shell_escape(helper)} #{shell_escape(config.target_host)} #{command} #{shell_escape(files.request_path)}"
+    [
+      {"precheck", request_paths.precheck},
+      {"plan", request_paths.plan},
+      {"apply", request_paths.plan},
+      {"verify", request_paths.verify},
+      {"capture-artifacts", request_paths.verify},
+      {"rollback", request_paths.rollback}
+    ]
+    |> Enum.map(fn {command, request_path} ->
+      "RAN_REMOTE_APPLY=1 #{shell_escape(helper)} #{shell_escape(config.target_host)} #{command} #{shell_escape(request_path)}"
     end)
   end
 
   defp fetch_commands(config, files) do
     helper = Path.join(config.current_root, "bin/ran-fetch-remote-artifacts")
 
-    [
-      "RAN_REMOTE_APPLY=1 #{shell_escape(helper)} #{shell_escape(config.target_host)} #{shell_escape(files.request_path)}"
-    ]
+    files.request_paths
+    |> Map.values()
+    |> Enum.uniq()
+    |> Enum.map(fn request_path ->
+      "RAN_REMOTE_APPLY=1 #{shell_escape(helper)} #{shell_escape(config.target_host)} #{shell_escape(request_path)}"
+    end)
   end
 
   defp maybe_apply_profile(config) do
@@ -811,21 +1063,35 @@ defmodule RanActionGateway.DeployWizard do
   end
 
   defp render_effective_config(config, topology_path, request_path) do
+    request_paths = request_bundle_paths(Path.join(config.etc_root, "requests"))
+
     %{
       "generated_at" => now_iso8601(),
       "deploy_profile" => render_profile_manifest(config),
       "paths" => %{
         "topology_path" => topology_path,
         "request_path" => request_path,
+        "request_paths" =>
+          Map.new(request_paths, fn {key, path} -> {Atom.to_string(key), path} end),
         "dashboard_env_path" => Path.join(config.etc_root, "ran-dashboard.env"),
         "preflight_env_path" => Path.join(config.etc_root, "ran-host-preflight.env"),
         "readiness_path" => Path.join(config.etc_root, "deploy.readiness.json")
       },
       "topology" => render_topology(config),
       "request" => render_request(config),
+      "request_bundle" =>
+        render_request_payloads(config)
+        |> Map.new(fn {key, value} -> {Atom.to_string(key), value} end),
       "dashboard_env" => render_dashboard_env_map(config, topology_path),
       "preflight_env" => render_preflight_env_map(config, topology_path, request_path)
     }
+  end
+
+  defp remote_request_paths(config, files) do
+    files.request_paths
+    |> Enum.into(%{}, fn {key, path} ->
+      {key, remote_path(config.remote_etc_root, "requests/" <> Path.basename(path))}
+    end)
   end
 
   defp render_profile_summary(config) do
@@ -985,7 +1251,7 @@ defmodule RanActionGateway.DeployWizard do
   end
 
   defp preview_files_status(files) do
-    if Enum.all?(Map.values(files), &File.exists?/1), do: "passed", else: "failed"
+    if Enum.all?(preview_file_paths(files), &File.exists?/1), do: "passed", else: "failed"
   end
 
   defp preview_files_detail(files) do
@@ -994,6 +1260,16 @@ defmodule RanActionGateway.DeployWizard do
     else
       "One or more preview artifacts could not be written."
     end
+  end
+
+  defp preview_file_paths(files) do
+    files
+    |> Map.values()
+    |> Enum.flat_map(fn
+      %{} = nested -> Map.values(nested)
+      value -> [value]
+    end)
+    |> Enum.filter(&is_binary/1)
   end
 
   defp oai_paths_status(config) do
