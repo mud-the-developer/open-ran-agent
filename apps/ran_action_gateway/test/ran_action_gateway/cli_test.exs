@@ -217,11 +217,18 @@ defmodule RanActionGateway.CLITest do
       assert precheck.target_ref == "host-n79-lab-01"
       assert precheck.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert precheck.target_backend == "replacement_shadow"
-      assert precheck.rollback_target == "oai_reference"
+      assert (precheck[:rollback_target] || precheck["rollback_target"]) == "oai_reference"
+      assert precheck.rollback_available == true
+      assert precheck.conformance_claim.profile == "oai_visible_5g_standards_baseline_v1"
+      assert precheck.core_endpoint.profile == "open5gs_nsa_lab_v1"
+      assert precheck.core_endpoint.n2["amf_host"] == "10.41.83.45"
+      assert get_in(precheck, [:ru_status, :evidence_ref]) =~ "/ru-sync.json"
+      assert Enum.any?(precheck.artifacts, &String.ends_with?(&1, "/host-n79-lab-01.json"))
+      assert Enum.all?(precheck.artifacts, &File.exists?/1)
       assert File.exists?(Store.precheck_path("chg-ran-repl-precheck-001"))
 
       assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
-               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/"
+               "artifacts/replacement/precheck/"
 
       assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) =~
                "artifacts/replacement/precheck/"
@@ -244,26 +251,36 @@ defmodule RanActionGateway.CLITest do
         |> File.read!()
         |> JSON.decode!()
 
-      plan = %{
-        "change_id" => verify_request["change_id"],
-        "target_backend" => "replacement_shadow",
-        "rollback_target" => "oai_reference",
-        "runtime_contract" => nil,
-        "verify_window" => verify_request["verify_window"]
-      }
-
-      state = %{
-        "status" => "applied",
-        "change_id" => verify_request["change_id"],
-        "scope" => verify_request["scope"]
-      }
-
-      Store.write_json(Store.plan_path(verify_request["change_id"]), plan)
-      Store.write_json(Store.change_state_path(verify_request["change_id"]), state)
-
       verify_payload = JSON.encode!(verify_request)
+      assert {:ok, plan} = CLI.run(["plan", "--json", verify_payload])
+      assert (plan[:target_backend] || plan["target_backend"]) == "replacement_shadow"
+      assert (plan[:rollback_target] || plan["rollback_target"]) == "oai_reference"
+      assert plan.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert plan.conformance_claim.evidence_tier == "milestone_proof"
+      assert plan.core_endpoint.n3["dnn"] == "internet"
+      assert Enum.all?(plan[:artifacts] || plan["artifacts"], &File.exists?/1)
+
+      assert {:ok, apply} = CLI.run(["apply", "--json", verify_payload])
+      assert (apply[:target_backend] || apply["target_backend"]) == "replacement_shadow"
+      assert (apply[:rollback_target] || apply["rollback_target"]) == "oai_reference"
+      assert apply.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert apply.conformance_claim.evidence_tier == "milestone_proof"
+      assert Enum.all?(apply.artifacts, &File.exists?/1)
+
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.status == "ok"
       assert verify.core_profile == "open5gs_nsa_lab_v1"
+      assert verify.target_ref == "ue-n79-lab-01"
+      assert verify.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert verify.target_backend == "replacement_shadow"
+      assert verify.rollback_target == "oai_reference"
+      assert verify.rollback_available == true
+      assert verify.conformance_claim.evidence_tier == "milestone_proof"
+      assert verify.core_endpoint.profile == "open5gs_nsa_lab_v1"
+
+      assert verify.ngap_subset["standards_subset_ref"] =~
+               "06-ngap-and-registration-standards-subset.md"
+
       assert verify.gate_class in ["degraded", "pass"]
 
       assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~
@@ -280,9 +297,17 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:session_status, :pdu_type]) == "ipv4"
       assert get_in(verify, [:session_status, :ping_target]) == "8.8.8.8"
       assert get_in(verify, [:session_status, :evidence_ref]) =~ "/session.json"
+      assert get_in(verify, [:pdu_session_status, :status]) == "ok"
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
+      assert get_in(verify, [:ping_status, :status]) == "ok"
+      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
       assert get_in(verify, [:interface_status, "f1_u", :status]) == "ok"
       assert get_in(verify, [:interface_status, "gtpu", :status]) == "ok"
       assert verify.summary =~ "UE attach, PDU session, and ping are all proven"
+      assert Enum.any?(verify.artifacts, &String.contains?(&1, "/replacement/verify/"))
+      assert File.exists?(get_in(verify, [:attach_status, :evidence_ref]))
+      assert File.exists?(get_in(verify, [:pdu_session_status, :evidence_ref]))
+      assert File.exists?(get_in(verify, [:ping_status, :evidence_ref]))
 
       assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
 
@@ -301,6 +326,19 @@ defmodule RanActionGateway.CLITest do
              end)
 
       assert get_in(verify, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
+      assert capture.status == "ok"
+      assert capture.gate_class == "pass"
+      assert capture.summary =~ "verified live-lab evidence bundle"
+      assert get_in(capture, [:rollback_status, :status]) == "ok"
+      assert get_in(capture, [:bundle, :review, :compare_report]) =~ "-compare-report.json"
+      assert File.exists?(get_in(capture, [:bundle, :review, :compare_report]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :request_snapshot]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :rollback_evidence]))
+      assert File.exists?(get_in(capture, [:attach_status, :evidence_ref]))
+      assert File.exists?(get_in(capture, [:pdu_session_status, :evidence_ref]))
+      assert File.exists?(get_in(capture, [:ping_status, :evidence_ref]))
     end)
   end
 
@@ -335,8 +373,8 @@ defmodule RanActionGateway.CLITest do
                ])
 
       assert plan.target_ref == "host-n79-lab-01"
-      assert plan.target_backend == "replacement_shadow"
-      assert plan.rollback_target == "oai_reference"
+      assert (plan[:target_backend] || plan["target_backend"]) == "replacement_shadow"
+      assert (plan[:rollback_target] || plan["rollback_target"]) == "oai_reference"
       assert File.exists?(Store.plan_path("chg-ran-repl-target-host-001"))
 
       assert {:ok, apply} =
@@ -347,8 +385,8 @@ defmodule RanActionGateway.CLITest do
                ])
 
       assert apply.target_ref == "host-n79-lab-01"
-      assert apply.target_backend == "replacement_shadow"
-      assert apply.rollback_target == "oai_reference"
+      assert (apply[:target_backend] || apply["target_backend"]) == "replacement_shadow"
+      assert (apply[:rollback_target] || apply["rollback_target"]) == "oai_reference"
       assert File.exists?(Store.change_state_path("chg-ran-repl-target-host-001"))
 
       assert {:ok, verify} =
@@ -359,8 +397,8 @@ defmodule RanActionGateway.CLITest do
                ])
 
       assert verify.target_ref == "host-n79-lab-01"
-      assert verify.target_backend == "replacement_shadow"
-      assert verify.rollback_target == "oai_reference"
+      assert (verify[:target_backend] || verify["target_backend"]) == "replacement_shadow"
+      assert (verify[:rollback_target] || verify["rollback_target"]) == "oai_reference"
       assert File.exists?(Store.verify_path("chg-ran-repl-target-host-001"))
 
       assert {:ok, capture} =
@@ -371,7 +409,7 @@ defmodule RanActionGateway.CLITest do
                ])
 
       assert capture.target_ref == "host-n79-lab-01"
-      assert capture.rollback_target == "oai_reference"
+      assert (capture[:rollback_target] || capture["rollback_target"]) == "oai_reference"
 
       assert get_in(capture, [:bundle, :workflow, :precheck]) ==
                Store.precheck_path("chg-ran-repl-target-host-001")
@@ -389,9 +427,9 @@ defmodule RanActionGateway.CLITest do
                ])
 
       assert rollback.target_ref == "host-n79-lab-01"
-      assert rollback.target_backend == "oai_reference"
-      assert rollback.rollback_target == "oai_reference"
-      assert rollback.restored_from == "replacement_shadow"
+      assert (rollback[:target_backend] || rollback["target_backend"]) == "oai_reference"
+      assert (rollback[:rollback_target] || rollback["rollback_target"]) == "oai_reference"
+      assert (rollback[:restored_from] || rollback["restored_from"]) == "replacement_shadow"
       assert File.exists?(Store.approval_path("chg-ran-repl-target-host-001", "rollback"))
     end)
   end
@@ -641,6 +679,9 @@ defmodule RanActionGateway.CLITest do
       assert capture.rollback_target == "oai_reference"
       assert capture.rollback_available == true
       assert capture.summary =~ "failed replacement evidence bundle"
+      assert capture.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert capture.conformance_claim.evidence_tier == "milestone_proof"
+      assert capture.core_endpoint.n2["amf_host"] == "10.41.83.45"
 
       assert "inspect the compare report before another replacement mutation" in capture.suggested_next
 
@@ -656,6 +697,13 @@ defmodule RanActionGateway.CLITest do
                capture.checks,
                &(&1["name"] == "compare_report_ready" and &1["status"] == "ok")
              )
+
+      assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "-compare-report.json"))
+      assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "-rollback-evidence.json"))
+      assert File.exists?(get_in(capture, [:bundle, :review, :compare_report]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :request_snapshot]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :rollback_evidence]))
+      assert File.exists?(get_in(capture, [:rollback_status, :evidence_ref]))
 
       rollback_payload =
         Path.join(
@@ -673,6 +721,8 @@ defmodule RanActionGateway.CLITest do
       assert rollback.rollback_available == true
       assert rollback.approval_required == true
       assert rollback.summary =~ "declared oai_reference target"
+      assert rollback.target_profile == "n79_single_ru_single_ue_lab_v1"
+      assert rollback.conformance_claim.evidence_tier == "milestone_proof"
       assert "review the compare report that triggered rollback" in rollback.suggested_next
       assert get_in(rollback, [:rollback_status, :status]) == "ok"
       assert get_in(rollback, [:rollback_status, :evidence_ref]) =~ "/post-rollback-verify.json"
@@ -685,6 +735,13 @@ defmodule RanActionGateway.CLITest do
       assert Enum.any?(rollback.checks, fn check ->
                check["name"] == "approval_evidence_present" and check["status"] == "ok"
              end)
+
+      assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/post-rollback-verify.json"))
+      assert File.exists?(Store.change_state_path("chg-ran-repl-rollback-001"))
+      assert File.exists?(Store.approval_path("chg-ran-repl-rollback-001", "rollback"))
+      assert File.exists?(Store.rollback_plan_path("chg-ran-repl-rollback-001"))
+      assert File.exists?(get_in(rollback, [:rollback_status, :evidence_ref]))
+      assert File.exists?(get_in(rollback, [:attach_status, :evidence_ref]))
     end)
   end
 

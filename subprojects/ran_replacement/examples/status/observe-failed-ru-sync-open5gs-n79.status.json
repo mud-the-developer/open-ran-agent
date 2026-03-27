@@ -9,7 +9,7 @@
   "core_profile": "open5gs_nsa_lab_v1",
   "conformance_claim": {
     "profile": "oai_visible_5g_standards_baseline_v1",
-    "evidence_tier": "standards_subset",
+    "evidence_tier": "milestone_proof",
     "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   },
   "gate_class": "degraded",
