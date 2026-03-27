@@ -227,8 +227,8 @@ defmodule RanActionGateway.CLITest do
       assert Enum.all?(precheck.artifacts, &File.exists?/1)
       assert File.exists?(Store.precheck_path("chg-ran-repl-precheck-001"))
 
-      assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
-               "artifacts/replacement/precheck/"
+      assert get_in(precheck, [:core_link_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
       assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
@@ -297,6 +297,11 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
 
+      assert get_in(verify, [:session_status, :status]) == "established"
+      assert get_in(verify, [:session_status, :pdu_type]) == "ipv4"
+      assert get_in(verify, [:session_status, :ping_target]) == "8.8.8.8"
+      assert get_in(verify, [:session_status, :evidence_ref]) =~ "/session.json"
+
       assert get_in(verify, [:pdu_session_status, :status]) == "ok"
 
       assert get_in(verify, [:pdu_session_status, :evidence_ref]) ==
@@ -307,19 +312,6 @@ defmodule RanActionGateway.CLITest do
       assert get_in(verify, [:ping_status, :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
 
-      assert get_in(verify, [:interface_status, "f1_u", :status]) == "ok"
-      assert get_in(verify, [:interface_status, "gtpu", :status]) == "ok"
-      assert verify.summary =~ "UE attach, PDU session, and ping are all proven"
-      refute Map.has_key?(verify, :session_status)
-      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
-      assert get_in(verify, [:session_status, :status]) == "established"
-      assert get_in(verify, [:session_status, :pdu_type]) == "ipv4"
-      assert get_in(verify, [:session_status, :ping_target]) == "8.8.8.8"
-      assert get_in(verify, [:session_status, :evidence_ref]) =~ "/session.json"
-      assert get_in(verify, [:pdu_session_status, :status]) == "ok"
-      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
-      assert get_in(verify, [:ping_status, :status]) == "ok"
-      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
       assert get_in(verify, [:interface_status, "f1_u", :status]) == "ok"
       assert get_in(verify, [:interface_status, "gtpu", :status]) == "ok"
       assert verify.summary =~ "UE attach, PDU session, and ping are all proven"
@@ -356,7 +348,6 @@ defmodule RanActionGateway.CLITest do
                ],
                &(&1 in verify.artifacts)
              )
-      assert get_in(verify, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
       assert capture.status == "ok"

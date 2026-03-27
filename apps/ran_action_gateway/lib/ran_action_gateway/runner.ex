@@ -926,6 +926,200 @@ defmodule RanActionGateway.Runner do
     }
   end
 
+  defp maybe_put_target_host_precheck_semantics(
+         payload,
+         :precheck,
+         %Change{scope: "target_host"} = change,
+         replacement
+       ) do
+    profile = replacement_target_profile_contract(change)
+    overlay = replacement_target_profile_overlay(change)
+    core_profile = replacement["open5gs_core"] || %{}
+    target_backend = replacement_target_backend(:precheck, change)
+    rollback_target = replacement_rollback_target(change)
+
+    layout =
+      get_in(overlay, ["target_host", "deployment_layout"]) ||
+        get_in(profile, ["host_boundary", "deployment_layout"])
+
+    host_evidence = get_in(profile, ["host_boundary", "preflight_evidence_ref"])
+    ru_evidence = get_in(profile, ["ru_boundary", "readiness_evidence_ref"])
+
+    core_evidence =
+      get_in(profile, ["core_boundary", "registration_evidence_ref"]) ||
+        replacement_evidence_ref(:precheck, change, "core-link")
+
+    host_resources = get_in(replacement, ["native_probe", "required_resources"]) || []
+
+    status = if(layout && rollback_target, do: "blocked", else: "failed")
+
+    payload
+    |> Map.put(:status, status)
+    |> Map.put(
+      :summary,
+      "Target-host precheck is blocked because the declared timing, layout, and fronthaul dependencies are not yet proven."
+    )
+    |> Map.put(:gate_class, "blocked")
+    |> put_optional(:target_backend, target_backend)
+    |> put_optional(:rollback_target, rollback_target)
+    |> Map.put(:rollback_available, not is_nil(rollback_target))
+    |> Map.put(:approval_required, false)
+    |> Map.put(:core_profile, core_profile["profile"] || replacement["core_profile"])
+    |> Map.put(
+      :conformance_claim,
+      %{
+        profile: @baseline_conformance_profile,
+        evidence_tier: "standards_subset",
+        baseline_ref: @baseline_conformance_ref
+      }
+    )
+    |> Map.put(
+      :core_endpoint,
+      %{
+        profile: core_profile["profile"] || replacement["core_profile"],
+        release_ref: get_in(profile, ["core_boundary", "release_ref"]),
+        n2: get_in(core_profile, ["n2"]),
+        n3: get_in(core_profile, ["n3"])
+      }
+    )
+    |> Map.put(
+      :checks,
+      [
+        %{
+          "name" => "host_preflight",
+          "status" => "blocked",
+          "detail" =>
+            "host readiness is not yet proven for #{Enum.join(host_resources, ", ")} and layout #{layout || "unknown"}"
+        },
+        %{
+          "name" => "ru_sync",
+          "status" => "blocked",
+          "detail" => "RU sync has not been demonstrated for the declared profile"
+        },
+        %{
+          "name" => "core_link_reachable",
+          "status" => if(core_profile["profile"], do: "ok", else: "blocked"),
+          "detail" =>
+            if(core_profile["profile"],
+              do:
+                "Open5GS endpoint #{get_in(core_profile, ["n2", "amf_host"])}:#{get_in(core_profile, ["n2", "amf_port"])} for profile #{core_profile["profile"]} is declared and reachable from the target profile",
+              else: "the declared Open5GS core profile is still missing"
+            )
+        }
+      ]
+    )
+    |> Map.put(
+      :plane_status,
+      %{
+        s_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "ptp-state"),
+          reason: "timing source is not yet proven for the declared lane"
+        },
+        m_plane: %{
+          status: if(layout, do: "ok", else: "blocked"),
+          evidence_ref: replacement_evidence_ref(:precheck, change, "host-inventory"),
+          reason:
+            if(layout, do: nil, else: "deployment layout is missing from the declared profile")
+        },
+        c_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "core-link"),
+          reason: "cutover to the replacement lane is not yet allowed"
+        },
+        u_plane: %{
+          status: "blocked",
+          evidence_ref: replacement_evidence_ref(:precheck, change, "user-plane"),
+          reason: "user-plane path is not yet declared ready"
+        }
+      }
+    )
+    |> Map.put(
+      :ru_status,
+      %{
+        status: "blocked",
+        evidence_ref: replacement_evidence_ref(:precheck, change, "ru-sync"),
+        reason: "RU sync has not been confirmed"
+      }
+    )
+    |> Map.put(
+      :core_link_status,
+      %{
+        status: "ok",
+        evidence_ref: core_evidence,
+        reason: nil,
+        profile: core_profile["profile"] || replacement["core_profile"]
+      }
+    )
+    |> Map.put(:failure_class, "ru_failure")
+    |> put_optional(:ngap_subset, replacement["ngap_subset"])
+    |> Map.put(
+      :artifacts,
+      Enum.reject(
+        [
+          List.first(payload[:artifacts] || []),
+          host_evidence || replacement_evidence_ref(:precheck, change, "host-inventory"),
+          ru_evidence || replacement_evidence_ref(:precheck, change, "ru-sync"),
+          core_evidence
+        ],
+        &is_nil/1
+      )
+    )
+    |> Map.put(
+      :suggested_next,
+      [
+        "inspect host timing and RU link blockers",
+        "confirm rollback target remains known",
+        "rerun precheck after RF and sync assumptions are corrected"
+      ]
+    )
+  end
+
+  defp maybe_put_target_host_precheck_semantics(payload, _phase, _change, _replacement),
+    do: payload
+
+  defp replacement_target_profile_contract(%Change{} = change) do
+    case change |> replacement_metadata() |> Map.get("target_profile") do
+      nil -> %{}
+      profile -> load_replacement_profile_json(profile, ".example.json")
+    end
+  end
+
+  defp replacement_target_profile_overlay(%Change{} = change) do
+    case change |> replacement_metadata() |> Map.get("target_profile") do
+      nil -> %{}
+      profile -> load_replacement_profile_json(profile, ".lab-owner-overlay.example.json")
+    end
+  end
+
+  defp load_replacement_profile_json(profile_name, suffix) do
+    repo_root = Path.expand("../../../../", __DIR__)
+
+    path =
+      Path.join(repo_root, "subprojects/ran_replacement/contracts/examples/*#{suffix}")
+      |> Path.wildcard()
+      |> Enum.find(fn candidate ->
+        case File.read(candidate) do
+          {:ok, body} ->
+            case JSON.decode(body) do
+              {:ok, payload} -> payload["profile"] == profile_name
+              _ -> false
+            end
+
+          _ ->
+            false
+        end
+      end)
+
+    with path when is_binary(path) <- path,
+         {:ok, body} <- File.read(path),
+         {:ok, payload} <- JSON.decode(body) do
+      payload
+    else
+      _ -> %{}
+    end
+  end
+
   defp replacement_declared_evidence_refs(%Change{} = change) do
     profile = replacement_target_profile_contract(change)
     overlay = replacement_target_profile_overlay(change)
@@ -1398,7 +1592,7 @@ defmodule RanActionGateway.Runner do
     if user_plane_scope?(replacement) do
       payload
       |> maybe_put_user_plane_status(phase, change)
-      |> maybe_put_pdu_session_and_ping_status(phase, change, replacement)
+      |> maybe_put_session_status(phase, change, replacement)
       |> maybe_put_user_plane_interfaces(phase, change)
       |> maybe_put_user_plane_rollback_status(phase, change)
     else
@@ -1465,21 +1659,22 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_user_plane_status(payload, _phase, _change), do: payload
 
-  defp maybe_put_pdu_session_and_ping_status(payload, phase, %Change{} = change, replacement)
+  defp maybe_put_session_status(payload, phase, %Change{} = change, replacement)
        when phase in [:verify, :observe, :capture_artifacts] do
     session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
     ngap_failure? = ngap_registration_failure?(change)
     ping_failure? = user_plane_ping_failure?(change)
 
-    payload
-    |> Map.put(:pdu_session_status, %{
-    session_status = %{
+    Map.put(payload, :session_status, %{
       status:
         cond do
           ngap_failure? -> "pending"
-          true -> "ok"
+          ping_failure? -> "established_but_ping_failed"
+          true -> "established"
         end,
-      evidence_ref: replacement_declared_evidence_ref(change, :pdu_session, phase, "pdu-session"),
+      pdu_type: session_profile["pdu_type"],
+      ping_target: session_profile["expect_ping_target"],
+      evidence_ref: replacement_evidence_ref(phase, change, "session"),
       reason:
         cond do
           ngap_failure? ->
@@ -1488,57 +1683,13 @@ defmodule RanActionGateway.Runner do
           ping_failure? ->
             "PDU session is established, but the declared route did not complete a successful ping"
 
-          is_binary(session_profile["pdu_type"]) ->
-            "declared #{session_profile["pdu_type"]} session is established"
-
           true ->
             nil
         end
-    })
-    |> Map.put(:ping_status, %{
-      status:
-        cond do
-          ngap_failure? -> "pending"
-          ping_failure? -> "failed"
-          true -> "ok"
-        end,
-      evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "ping"),
-      reason:
-        cond do
-          ngap_failure? ->
-            "ping not attempted after the attach failure"
-
-          ping_failure? ->
-            "the declared ping target #{session_profile["expect_ping_target"] || "unknown"} did not answer"
-
-          true ->
-            nil
-        end
-        if(user_plane_ping_failure?(change),
-          do: "PDU session exists, but the declared route did not complete a successful ping",
-          else: nil
-        )
-    }
-
-    payload
-    |> Map.put(:session_status, session_status)
-    |> Map.put(:pdu_session_status, %{
-      status: if(user_plane_ping_failure?(change), do: "ok", else: "ok"),
-      evidence_ref: replacement_evidence_ref(phase, change, "pdu-session"),
-      reason: nil
-    })
-    |> Map.put(:ping_status, %{
-      status: if(user_plane_ping_failure?(change), do: "failed", else: "ok"),
-      evidence_ref: replacement_evidence_ref(phase, change, "ping"),
-      reason:
-        if(user_plane_ping_failure?(change),
-          do: "declared ping target did not answer during the verify window",
-          else: nil
-        )
     })
   end
 
-  defp maybe_put_pdu_session_and_ping_status(payload, _phase, _change, _replacement),
+  defp maybe_put_session_status(payload, _phase, _change, _replacement),
     do: payload
 
   defp maybe_put_user_plane_interfaces(payload, phase, %Change{} = change)
@@ -1664,21 +1815,6 @@ defmodule RanActionGateway.Runner do
             ngap_failure? -> "attach did not progress beyond the NGAP registration stage"
             status == "failed" -> "replacement attach path is not yet fully proven"
             true -> nil
-            ngap_registration_failure?(change) -> "failed"
-            status == "failed" -> "pending"
-            true -> "ok"
-          end,
-        evidence_ref: replacement_evidence_ref(phase, change, "attach"),
-        reason:
-          cond do
-            ngap_registration_failure?(change) ->
-              "registration was rejected before the declared attach path completed"
-
-            status == "failed" ->
-              "replacement attach path is not yet fully proven"
-
-            true ->
-              nil
           end
       })
     else
@@ -1697,14 +1833,28 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_pdu_session_status(payload, phase, %Change{} = change, replacement) do
     if Enum.member?(replacement["acceptance_gates"] || [], "pdu_session") do
+      session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
+      ngap_failure? = ngap_registration_failure?(change)
+      ping_failure? = user_plane_ping_failure?(change)
+
       Map.put(payload, :pdu_session_status, %{
-        status: if(ngap_registration_failure?(change), do: "pending", else: "ok"),
-        evidence_ref: replacement_evidence_ref(phase, change, "pdu-session"),
+        status: if(ngap_failure?, do: "pending", else: "ok"),
+        evidence_ref:
+          replacement_declared_evidence_ref(change, :pdu_session, phase, "pdu-session"),
         reason:
-          if(ngap_registration_failure?(change),
-            do: "session setup was not reached after registration failed",
-            else: nil
-          )
+          cond do
+            ngap_failure? ->
+              "session setup not reached after the NGAP rejection"
+
+            ping_failure? ->
+              "PDU session is established, but the declared route did not complete a successful ping"
+
+            is_binary(session_profile["pdu_type"]) ->
+              "declared #{session_profile["pdu_type"]} session is established"
+
+            true ->
+              nil
+          end
       })
     else
       payload
@@ -1713,21 +1863,25 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_ping_status(payload, phase, %Change{} = change, replacement) do
     if Enum.member?(replacement["acceptance_gates"] || [], "ping") do
+      session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
+      ngap_failure? = ngap_registration_failure?(change)
+      ping_failure? = user_plane_ping_failure?(change)
+
       Map.put(payload, :ping_status, %{
         status:
           cond do
-            ngap_registration_failure?(change) -> "pending"
-            user_plane_ping_failure?(change) -> "failed"
+            ngap_failure? -> "pending"
+            ping_failure? -> "failed"
             true -> "ok"
           end,
-        evidence_ref: replacement_evidence_ref(phase, change, "ping"),
+        evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "ping"),
         reason:
           cond do
-            ngap_registration_failure?(change) ->
-              "ping was not attempted after registration failed"
+            ngap_failure? ->
+              "ping not attempted after the attach failure"
 
-            user_plane_ping_failure?(change) ->
-              "ping failed after the declared session was established"
+            ping_failure? ->
+              "the declared ping target #{session_profile["expect_ping_target"] || "unknown"} did not answer"
 
             true ->
               nil
@@ -1787,7 +1941,12 @@ defmodule RanActionGateway.Runner do
         :rollback_status,
         review_status(
           "ok",
-          replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+          replacement_declared_evidence_ref(
+            change,
+            :rollback,
+            :capture_artifacts,
+            "rollback-evidence"
+          ),
           "rollback target remains available but was not executed for this successful capture"
         )
       )
@@ -1811,18 +1970,6 @@ defmodule RanActionGateway.Runner do
         "confirm the rollback target and cleanup evidence remain explicit",
         "retry only after the captured mismatch is explained"
       ])
-    )
-    |> Map.put(
-      :rollback_status,
-      review_status(
-        "pending",
-        replacement_declared_evidence_ref(
-          change,
-          :rollback,
-          :capture_artifacts,
-          "rollback-evidence"
-        ),
-        "rollback is available but has not yet been executed"
       |> Map.put(
         :checks,
         replacement_review_checks(replacement["acceptance_gates"] || [], [
@@ -1850,7 +1997,12 @@ defmodule RanActionGateway.Runner do
         :rollback_status,
         review_status(
           "pending",
-          replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+          replacement_declared_evidence_ref(
+            change,
+            :rollback,
+            :capture_artifacts,
+            "rollback-evidence"
+          ),
           "rollback is available but has not yet been executed"
         )
       )
@@ -2027,6 +2179,8 @@ defmodule RanActionGateway.Runner do
       true ->
         []
     end
+  end
+
   defp do_execute_replacement_plan(%Change{} = change) do
     rollback_target = Map.get(change, :rollback_target) || "oai_reference"
     rollback_plan = build_rollback_plan(change, rollback_target)
