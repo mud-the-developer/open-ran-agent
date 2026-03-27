@@ -123,6 +123,12 @@
         "null"
       ]
     },
+    "restored_from": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
     "approval_required": {
       "type": "boolean"
     },

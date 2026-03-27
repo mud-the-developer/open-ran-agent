@@ -12,84 +12,36 @@
     "evidence_tier": "milestone_proof",
     "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   },
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": null,
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "dnn": "internet",
+      "gtpu_port": 2152,
+      "slice": {
+        "sd": "000001",
+        "sst": 1
+      },
+      "upf_host": "10.41.83.45"
+    }
+  },
   "gate_class": "pass",
-  "summary": "Rollback returned the lane to the declared OAI reference target after a failed cutover.",
-  "target_backend": "oai_reference",
-  "rollback_target": "oai_reference",
-  "approval_required": true,
-  "rollback_available": true,
-  "artifacts": [
-    "artifacts/replacement/rollback/rollback-plan.json",
-    "artifacts/replacement/rollback/post-rollback-verify.json",
-    "artifacts/replacement/rollback/debug-pack.txt"
-  ],
-  "suggested_next": [
-    "review the compare report that triggered rollback",
-    "keep the lane shadowed until the first failure is corrected",
-    "rerun precheck after the rollback target is confirmed clean"
-  ],
-  "checks": [
-    {
-      "name": "rollback_target_known",
-      "status": "ok",
-      "detail": "declared rollback target is present and auditable"
-    },
-    {
-      "name": "approval_evidence_present",
-      "status": "ok",
-      "detail": "approval gate was captured before the cutover"
-    },
-    {
-      "name": "oai_reference_ready",
-      "status": "ok",
-      "detail": "reference backend was restored cleanly"
-    }
-  ],
-  "rollback_status": {
-    "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/post-rollback-verify.json",
-    "reason": "rollback target restored and verified"
-  },
-  "interface_status": {
-    "ngap": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/ngap.json",
-      "reason": null
-    },
-    "f1_c": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/f1-c.json",
-      "reason": null
-    },
-    "e1ap": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/e1ap.json",
-      "reason": null
-    },
-    "f1_u": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/f1-u.json",
-      "reason": null
-    },
-    "gtpu": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/gtpu.json",
-      "reason": null
-    },
-    "ru_fronthaul": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/ru-fronthaul.json",
-      "reason": null
-    },
-    "ptp": {
-      "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/ptp.json",
-      "reason": null
-    }
-  },
   "failure_class": "cutover_or_rollback_failure",
   "ngap_subset": {
-    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
     "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
     "required_procedures": [
       "NG Setup",
@@ -98,14 +50,145 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "optional_procedures": [
-      "Error Indication",
-      "Reset"
-    ],
-    "deferred_procedures": [
-      "Paging",
-      "Handover Preparation",
-      "Path Switch Request"
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+  },
+  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed.",
+  "target_backend": "oai_reference",
+  "rollback_target": "oai_reference",
+  "restored_from": "replacement_primary",
+  "approval_required": true,
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/changes/chg-ran-repl-rollback-001.json",
+    "artifacts/approvals/chg-ran-repl-rollback-001-rollback.json",
+    "artifacts/rollback_plans/chg-ran-repl-rollback-001.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/rollback-evidence.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/attach.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap-setup.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/initial-ue-message.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/uplink-nas-transport.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/downlink-nas-transport.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gnb-n79-lab-01.json"
+  ],
+  "suggested_next": [
+    "review the compare report that triggered rollback",
+    "keep the lane shadowed until the captured mismatch is corrected",
+    "rerun precheck after the rollback target is confirmed clean"
+  ],
+  "checks": [
+    {
+      "detail": "declared rollback target is present and auditable",
+      "name": "rollback_target_known",
+      "status": "ok"
+    },
+    {
+      "detail": "approval evidence was captured before rollback was executed",
+      "name": "approval_evidence_present",
+      "status": "ok"
+    },
+    {
+      "detail": "cleanup evidence remains explicit after rollback",
+      "name": "UE Context Release",
+      "status": "ok"
+    },
+    {
+      "detail": "registration-path evidence is part of the review bundle",
+      "name": "registration_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "session-path evidence remains attached to the review bundle",
+      "name": "pdu_session_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "probe evidence remains attached to the review bundle",
+      "name": "ping_reviewed",
+      "status": "ok"
+    }
+  ],
+  "interface_status": {
+    "f1_c": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json"
+    },
+    "f1_u": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json"
+    },
+    "gtpu": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json"
+    },
+    "ngap": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json"
+    }
+  },
+  "attach_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/attach.json"
+  },
+  "release_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json"
+  },
+  "rollback_status": {
+    "reason": "rollback target restored and verified",
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json"
+  },
+  "ngap_procedure_trace": {
+    "last_observed": "UE Context Release",
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap-setup.json",
+        "detail": "the declared Open5GS AMF accepted the NG setup handshake"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/uplink-nas-transport.json",
+        "detail": "uplink NAS transport carried the registration request toward the declared core profile"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/downlink-nas-transport.json",
+        "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
+        "detail": "UE context release completed and the cleanup state is auditable"
+      }
     ]
+  },
+  "core_link_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json"
   }
 }

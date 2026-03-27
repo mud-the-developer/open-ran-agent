@@ -1,0 +1,29 @@
+{
+  "command": "verify",
+  "phase": "post_rollback",
+  "change_id": "chg-ran-repl-rollback-001",
+  "incident_id": "inc-ran-repl-rollback-001",
+  "rollback_target": "oai_reference",
+  "restored_from": "replacement_primary",
+  "captured_at": "2026-03-27T07:03:27Z",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "evidence_refs": [
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json",
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json"
+  ],
+  "verification_checks": [
+    "rollback_target_restored",
+    "post_rollback_verify_recorded",
+    "recovery_path_auditable"
+  ],
+  "restored_state": {
+    "summary": "Post-rollback verification confirms the declared oai_reference target is reviewable without SSH archaeology.",
+    "core_link_status": "ok",
+    "release_status": "ok",
+    "ru_status": "unknown"
+  }
+}
