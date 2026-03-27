@@ -1,0 +1,8 @@
+{
+  "kind": "session",
+  "status": "ok",
+  "summary": "Simulated PDU session was established for the repo-local RFsim rehearsal lane.",
+  "dnn": "oai",
+  "pdu_type": "ipv4",
+  "ping_target": "198.51.100.10"
+}

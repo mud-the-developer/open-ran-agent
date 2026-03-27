@@ -8,6 +8,7 @@ defmodule RanActionGateway.Runner do
   alias RanActionGateway.ArtifactRetention
   alias RanActionGateway.Change
   alias RanActionGateway.ControlState
+  alias RanActionGateway.OaiSimulation
   alias RanActionGateway.OaiRuntime
   alias RanActionGateway.ReplacementReview
   alias RanActionGateway.RuntimeContract
@@ -106,6 +107,7 @@ defmodule RanActionGateway.Runner do
 
   defp do_execute(:precheck, change) do
     runtime_precheck = runtime_precheck(change)
+    simulation_precheck = simulation_precheck(change)
     runtime_contract = runtime_precheck_contract(change, runtime_precheck)
     config_report = RanConfig.validation_report()
     cell_group_check = validate_requested_cell_group(change)
@@ -128,7 +130,8 @@ defmodule RanActionGateway.Runner do
     checks =
       checks ++
         native_probe_checks(native_probe) ++
-        operational_checks(change, control_state) ++ runtime_checks(runtime_precheck)
+        operational_checks(change, control_state) ++
+        runtime_checks(runtime_precheck) ++ simulation_checks(simulation_precheck)
 
     failed? = Enum.any?(checks, &(&1["status"] == "failed"))
 
@@ -152,6 +155,7 @@ defmodule RanActionGateway.Runner do
         next: if(failed?, do: ["observe"], else: ["plan"])
       }
       |> maybe_add_precheck_artifact(change)
+      |> put_oai_simulation_result(simulation_precheck)
       |> maybe_put_replacement_status(:precheck, change, checks)
       |> materialize_replacement_artifacts(:precheck, change)
       |> persist_precheck(change)
@@ -252,7 +256,8 @@ defmodule RanActionGateway.Runner do
     with {:ok, state} <- load_change_state_for_verify(change),
          {:ok, plan} <- load_plan_for_verify(change),
          {:ok, runtime_contract} <- RuntimeContract.ensure_planned_contract(:verify, change, plan),
-         {:ok, runtime_verify} <- maybe_verify_runtime(change) do
+         {:ok, runtime_verify} <- maybe_verify_runtime(change),
+         {:ok, simulation_verify} <- maybe_verify_oai_simulation(change) do
       control_state = control_state_snapshot(change)
       native_probe = maybe_native_probe(change)
 
@@ -265,6 +270,7 @@ defmodule RanActionGateway.Runner do
         end)
         |> Kernel.++(native_probe_checks(native_probe))
         |> maybe_append_runtime_verify(runtime_verify)
+        |> Kernel.++(simulation_checks({:ok, simulation_verify}))
 
       failed? = Enum.any?(checks, &(&1["status"] == "failed"))
 
@@ -285,6 +291,7 @@ defmodule RanActionGateway.Runner do
         }
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_verify)
+        |> put_oai_simulation_result({:ok, simulation_verify})
         |> maybe_put_replacement_status(:verify, change, checks)
         |> materialize_replacement_artifacts(:verify, change)
 
@@ -389,10 +396,11 @@ defmodule RanActionGateway.Runner do
   defp do_execute(:capture_artifacts, change) do
     ref = change.incident_id || change.change_id || "ad-hoc-capture"
 
-    with {:ok, runtime_capture} <- maybe_capture_runtime(change) do
+    with {:ok, runtime_capture} <- maybe_capture_runtime(change),
+         {:ok, simulation_capture} <- maybe_capture_oai_simulation(change) do
       snapshots = capture_supporting_snapshots(change, ref)
       review = ReplacementReview.capture_review(change, ref)
-      bundle = capture_bundle(change, ref, runtime_capture, snapshots, review)
+      bundle = capture_bundle(change, ref, runtime_capture, simulation_capture, snapshots, review)
 
       bundle =
         %{
@@ -406,6 +414,7 @@ defmodule RanActionGateway.Runner do
           bundle: bundle
         }
         |> put_runtime_result(runtime_capture)
+        |> put_oai_simulation_result({:ok, simulation_capture})
         |> maybe_put_replacement_status(:capture_artifacts, change, [])
         |> materialize_replacement_artifacts(:capture_artifacts, change)
 
@@ -2581,6 +2590,14 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp simulation_precheck(%Change{metadata: metadata}) do
+    if OaiSimulation.simulation_requested?(metadata) do
+      OaiSimulation.precheck(metadata)
+    else
+      {:ok, nil}
+    end
+  end
+
   defp runtime_plan(%Change{change_id: change_id, cell_group: cell_group, metadata: metadata}) do
     if OaiRuntime.runtime_requested?(metadata) do
       OaiRuntime.plan(change_id, cell_group, metadata)
@@ -2645,9 +2662,29 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp maybe_verify_oai_simulation(%Change{change_id: change_id, metadata: metadata}) do
+    if OaiSimulation.simulation_requested?(metadata) do
+      OaiSimulation.verify(change_id, metadata)
+    else
+      {:ok, nil}
+    end
+  end
+
+  defp maybe_capture_oai_simulation(%Change{change_id: change_id, metadata: metadata}) do
+    if OaiSimulation.simulation_requested?(metadata) do
+      OaiSimulation.capture_artifacts(change_id, metadata)
+    else
+      {:ok, nil}
+    end
+  end
+
   defp runtime_checks({:ok, %{checks: checks}}) when is_list(checks), do: checks
   defp runtime_checks({:error, _payload}), do: [check("oai_runtime_resolved", false)]
   defp runtime_checks(_), do: []
+
+  defp simulation_checks({:ok, %{checks: checks}}) when is_list(checks), do: checks
+  defp simulation_checks({:error, _payload}), do: [check("oai_simulation_resolved", false)]
+  defp simulation_checks(_), do: []
 
   defp native_probe_checks(nil), do: []
 
@@ -2663,6 +2700,33 @@ defmodule RanActionGateway.Runner do
   defp runtime_payload({:ok, payload}), do: payload
   defp runtime_payload({:error, payload}), do: payload
   defp runtime_payload(_), do: nil
+
+  defp simulation_payload({:ok, nil}), do: nil
+  defp simulation_payload({:ok, payload}), do: payload
+  defp simulation_payload({:error, payload}), do: payload
+  defp simulation_payload(_), do: nil
+
+  defp put_oai_simulation_result(payload, simulation_result) do
+    case simulation_payload(simulation_result) do
+      nil ->
+        payload
+
+      simulation ->
+        lane = simulation[:lane] || simulation["lane"]
+
+        payload
+        |> put_optional(:simulation_lane, lane)
+        |> maybe_put_simulation_status(:attach_status, simulation)
+        |> maybe_put_simulation_status(:registration_status, simulation)
+        |> maybe_put_simulation_status(:session_status, simulation)
+        |> maybe_put_simulation_status(:ping_status, simulation)
+    end
+  end
+
+  defp maybe_put_simulation_status(payload, key, simulation) do
+    value = simulation[key] || simulation[Atom.to_string(key)]
+    if value, do: Map.put(payload, key, value), else: payload
+  end
 
   defp runtime_precheck_contract(%Change{} = change, runtime_precheck) do
     if OaiRuntime.runtime_requested?(change.metadata) and
@@ -2834,7 +2898,14 @@ defmodule RanActionGateway.Runner do
     end
   end
 
-  defp capture_bundle(%Change{} = change, ref, runtime_capture, snapshots, review) do
+  defp capture_bundle(
+         %Change{} = change,
+         ref,
+         runtime_capture,
+         simulation_capture,
+         snapshots,
+         review
+       ) do
     %{
       manifest: %{
         ref: ref,
@@ -2864,7 +2935,8 @@ defmodule RanActionGateway.Runner do
       runtime: %{
         compose_path: runtime_capture_path(runtime_capture, :compose_path),
         logs: runtime_logs(runtime_capture),
-        configs: runtime_configs(change.change_id)
+        configs: runtime_configs(change.change_id),
+        simulation: runtime_simulation_bundle(simulation_capture)
       }
     }
     |> put_optional(:review, review)
@@ -3362,6 +3434,32 @@ defmodule RanActionGateway.Runner do
     |> Path.join("*.conf")
     |> Path.wildcard()
     |> Enum.sort()
+  end
+
+  defp runtime_simulation_bundle(nil), do: nil
+
+  defp runtime_simulation_bundle(simulation_capture) when is_map(simulation_capture) do
+    lane = simulation_capture[:lane] || simulation_capture["lane"] || %{}
+
+    %{
+      lane_id: lane[:lane_id] || lane["lane_id"],
+      claim_scope: lane[:claim_scope] || lane["claim_scope"],
+      evidence_tier: lane[:evidence_tier] || lane["evidence_tier"],
+      live_lab_claim: lane[:live_lab_claim] || lane["live_lab_claim"] || false,
+      ue_conf_path: lane[:ue_conf_path] || lane["ue_conf_path"],
+      attach:
+        get_in(simulation_capture, [:attach_status, :evidence_ref]) ||
+          get_in(simulation_capture, ["attach_status", "evidence_ref"]),
+      registration:
+        get_in(simulation_capture, [:registration_status, :evidence_ref]) ||
+          get_in(simulation_capture, ["registration_status", "evidence_ref"]),
+      session:
+        get_in(simulation_capture, [:session_status, :evidence_ref]) ||
+          get_in(simulation_capture, ["session_status", "evidence_ref"]),
+      ping:
+        get_in(simulation_capture, [:ping_status, :evidence_ref]) ||
+          get_in(simulation_capture, ["ping_status", "evidence_ref"])
+    }
   end
 
   defp replacement_capture_evidence_bundle(%Change{} = change) do

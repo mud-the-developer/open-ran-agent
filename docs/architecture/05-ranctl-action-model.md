@@ -125,10 +125,13 @@ In the current bootstrap implementation, `precheck` also returns:
 - optional `control_state` details for attach freeze and drain workflow
 - optional `native_probe` details when `metadata.native_probe` is present
 - optional `runtime` details when `metadata.oai_runtime` is present
+- optional `simulation_lane`, `attach_status`, `registration_status`, `session_status`, and `ping_status` details when `metadata.oai_simulation` is present
 
 ## OAI Runtime Extension
 
 `ranctl` can now orchestrate an external OpenAirInterface DU stack without moving runtime hot paths into the BEAM. This path is enabled through `metadata.oai_runtime`.
+
+The same request may also carry `metadata.oai_simulation` to declare repo-local UE/core/session rehearsal evidence. That simulation metadata is intentionally reviewer-facing only: it augments `precheck`, `verify`, and `capture-artifacts`, but it does not change the live-lab support claim.
 
 Runtime-enabled lifecycle commands now also require `metadata.runtime_contract` so the release unit, entrypoint, release reference, and expected runtime mode are explicit on the control surface.
 
@@ -145,12 +148,19 @@ Example:
       "runtime_mode": "docker_compose_rfsim_f1"
     },
     "oai_runtime": {
-      "repo_root": "/opt/openairinterface5g",
-      "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
-      "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
-      "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf",
+      "repo_root": "examples/oai",
+      "du_conf_path": "examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example",
+      "cucp_conf_path": "examples/oai/gnb-cucp.sa.f1.conf.example",
+      "cuup_conf_path": "examples/oai/gnb-cuup.sa.f1.conf.example",
       "project_name": "ran-oai-du-cg-001",
       "pull_images": true
+    },
+    "oai_simulation": {
+      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
+      "attach_evidence_path": "examples/oai/simulation/attach.json",
+      "registration_evidence_path": "examples/oai/simulation/registration.json",
+      "session_evidence_path": "examples/oai/simulation/session.json",
+      "ping_evidence_path": "examples/oai/simulation/ping.json"
     }
   }
 }
@@ -166,7 +176,8 @@ With this metadata:
 - source conf files remain untouched and are only used as overlay inputs
 - `apply` runs `docker compose up -d` for `oai-cucp`, `oai-cuup`, and `oai-du`
 - `precheck` validates split markers and required address patch points in the source confs
-- `verify` inspects container liveness and captures log tails
+- `verify` inspects container liveness, captures log tails, and can surface repo-local simulated attach, registration, session, and ping evidence refs
+- `capture-artifacts` preserves those runtime and simulation refs together in one bundle
 - `rollback` runs `docker compose down -v --remove-orphans`
 
 Reference examples:

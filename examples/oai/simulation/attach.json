@@ -1,0 +1,7 @@
+{
+  "kind": "attach",
+  "status": "ok",
+  "summary": "OAI UE simulator completed the repo-local split RFsim attach rehearsal.",
+  "ue": "oai-nr-ue-rfsim",
+  "imsi": "001010000000001"
+}
