@@ -1077,6 +1077,13 @@ defmodule RanActionGateway.CLITest do
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_cucp_conf_path"])
       assert File.exists?(plan["runtime_plan"].runtime_spec["rendered_cuup_conf_path"])
 
+      compose_body = File.read!(plan["runtime_plan"].compose_path)
+
+      assert compose_body =~ "hostname: oai-cucp"
+      assert compose_body =~ "hostname: oai-cuup"
+      assert compose_body =~ "hostname: oai-du"
+      assert compose_body =~ "--MACRLCs.[0].remote_n_address 10.213.72.2"
+
       assert File.read!(plan["runtime_plan"].runtime_spec["rendered_du_conf_path"]) =~
                "remote_n_address = \"oai-cucp\""
 
@@ -1141,6 +1148,84 @@ defmodule RanActionGateway.CLITest do
                _ ->
                  false
              end)
+    end)
+  end
+
+  @tag :runtime_contract
+  test "public split-only OAI RFsim example requests support the lightweight repo-local operator lane",
+       %{tmp_dir: tmp_dir} do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    repo_root = Path.join(__DIR__, "../../../..") |> Path.expand()
+
+    load = fn name ->
+      Path.join(repo_root, "examples/ranctl/#{name}")
+      |> File.read!()
+      |> JSON.decode!()
+      |> absolutize_public_oai_paths(repo_root)
+    end
+
+    File.cd!(tmp_dir, fn ->
+      precheck_payload = load.("precheck-oai-du-rfsim-local.json") |> JSON.encode!()
+      plan_payload = load.("plan-oai-du-rfsim-local.json") |> JSON.encode!()
+      apply_payload = load.("apply-oai-du-rfsim-local.json") |> JSON.encode!()
+      verify_payload = load.("verify-oai-du-rfsim-local.json") |> JSON.encode!()
+      rollback_payload = load.("rollback-oai-du-rfsim-local.json") |> JSON.encode!()
+
+      assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_payload])
+      assert precheck.status == "ok"
+      refute Map.has_key?(precheck, :simulation_lane)
+
+      assert {:ok, plan} = CLI.run(["plan", "--json", plan_payload])
+      assert plan.status == "planned"
+      assert plan["runtime_plan"].project_name == "ran-oai-du-local-rfsim"
+      assert length(plan["runtime_plan"].containers) == 3
+      refute Enum.any?(plan["runtime_plan"].containers, &String.ends_with?(&1, "-nr-ue"))
+
+      compose_body = File.read!(plan["runtime_plan"].compose_path)
+
+      assert compose_body =~ "hostname: oai-cucp"
+      assert compose_body =~ "hostname: oai-cuup"
+      assert compose_body =~ "hostname: oai-du"
+      assert compose_body =~ "--MACRLCs.[0].remote_n_address 10.213.72.2"
+
+      assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", apply_payload])
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.status == "verified"
+      refute Map.has_key?(verify, :simulation_lane)
+
+      assert Enum.any?(
+               verify.checks,
+               &(&1["name"] == "du_log_f1_setup_complete" and &1["status"] == "passed")
+             )
+
+      assert Enum.any?(
+               verify.checks,
+               &(&1["name"] == "cuup_log_e1_established" and &1["status"] == "passed")
+             )
+
+      assert {:ok, rollback} = CLI.run(["rollback", "--json", rollback_payload])
+      assert rollback.status == "rolled_back"
+      assert rollback["runtime_result"].project_name == "ran-oai-du-local-rfsim"
     end)
   end
 

@@ -1,0 +1,31 @@
+{
+  "scope": "cell_group",
+  "cell_group": "cg-001",
+  "target_backend": "local_fapi_profile",
+  "change_id": "chg-oai-du-001",
+  "reason": "plan repo-local OAI split rfsim runtime",
+  "idempotency_key": "chg-oai-du-001",
+  "verify_window": {
+    "duration": "30s",
+    "checks": [
+      "gateway_healthy"
+    ]
+  },
+  "metadata": {
+    "runtime_contract": {
+      "version": "ranctl.runtime.v1",
+      "release_unit": "bootstrap_source_bundle",
+      "release_ref": "source-checkout@cg-001",
+      "entrypoint": "bin/ranctl",
+      "runtime_mode": "docker_compose_rfsim_f1"
+    },
+    "oai_runtime": {
+      "repo_root": ".",
+      "du_conf_path": "examples/oai/gnb-du-rfsim-split.conf.example",
+      "cucp_conf_path": "examples/oai/gnb-cucp-rfsim-split.conf.example",
+      "cuup_conf_path": "examples/oai/gnb-cuup-rfsim-split.conf.example",
+      "project_name": "ran-oai-du-local-rfsim",
+      "pull_images": false
+    }
+  }
+}

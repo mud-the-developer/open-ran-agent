@@ -1,0 +1,161 @@
+Active_gNBs = ( "open-ran-agent-gnb-rfsim");
+Asn1_verbosity = "none";
+
+gNBs =
+(
+ {
+    gNB_ID    = 0xe00;
+    gNB_DU_ID = 0xe01;
+    gNB_name  = "open-ran-agent-gnb-rfsim";
+    tracking_area_code = 100;
+    plmn_list = ({ mcc = 001; mnc = 01; mnc_length = 2; snssaiList = ({ sst = 1; sd = 1;}); });
+
+    nr_cellid = 1;
+
+    pdsch_AntennaPorts_XP = 2;
+    pdsch_AntennaPorts_N1 = 2;
+    do_CSIRS              = 1;
+    do_SRS                = 0;
+    sib1_tda              = 5;
+    min_rxtxtime          = 6;
+
+    servingCellConfigCommon = (
+    {
+      physCellId                         = 0;
+      absoluteFrequencySSB               = 715680;
+      dl_frequencyBand                   = 79;
+      dl_absoluteFrequencyPointA         = 714724;
+      dl_offstToCarrier                  = 0;
+      dl_subcarrierSpacing               = 1;
+      dl_carrierBandwidth                = 273;
+      initialDLBWPlocationAndBandwidth   = 1099;
+      initialDLBWPsubcarrierSpacing      = 1;
+      initialDLBWPcontrolResourceSetZero = 4;
+      initialDLBWPsearchSpaceZero        = 0;
+      ul_frequencyBand                   = 79;
+      ul_offstToCarrier                  = 0;
+      ul_subcarrierSpacing               = 1;
+      ul_carrierBandwidth                = 273;
+      pMax                               = 23;
+      initialULBWPlocationAndBandwidth   = 1099;
+      initialULBWPsubcarrierSpacing      = 1;
+      prach_ConfigurationIndex           = 159;
+      prach_msg1_FDM                     = 0;
+      prach_msg1_FrequencyStart          = 22;
+      zeroCorrelationZoneConfig          = 15;
+      preambleReceivedTargetPower        = -104;
+      preambleTransMax                   = 7;
+      powerRampingStep                   = 2;
+      ra_ResponseWindow                  = 5;
+      ssb_perRACH_OccasionAndCB_PreamblesPerSSB_PR = 3;
+      ssb_perRACH_OccasionAndCB_PreamblesPerSSB    = 15;
+      ra_ContentionResolutionTimer       = 7;
+      rsrp_ThresholdSSB                  = 19;
+      prach_RootSequenceIndex_PR         = 2;
+      prach_RootSequenceIndex            = 1;
+      msg1_SubcarrierSpacing             = 1,
+      restrictedSetConfig                = 0,
+      msg3_DeltaPreamble                 = 2;
+      p0_NominalWithGrant                = -96;
+      pucchGroupHopping                  = 0;
+      hoppingId                          = 0;
+      p0_nominal                         = -96;
+      ssb_PositionsInBurst_PR            = 2;
+      ssb_PositionsInBurst_Bitmap        = 0x1;
+      ssb_periodicityServingCell         = 2;
+      dmrs_TypeA_Position                = 0;
+      subcarrierSpacing                  = 1;
+      referenceSubcarrierSpacing         = 1;
+      dl_UL_TransmissionPeriodicity      = 5;
+      nrofDownlinkSlots                  = 3;
+      nrofDownlinkSymbols                = 6;
+      nrofUplinkSlots                    = 1;
+      nrofUplinkSymbols                  = 4;
+      ssPBCH_BlockPower                  = 0;
+    }
+    );
+
+    SCTP :
+    {
+        SCTP_INSTREAMS  = 2;
+        SCTP_OUTSTREAMS = 2;
+    };
+
+    NETWORK_INTERFACES :
+    {
+        GNB_INTERFACE_NAME_FOR_NG_AMF = "eth0";
+        GNB_IPV4_ADDRESS_FOR_NG_AMF   = "192.168.70.20";
+        GNB_INTERFACE_NAME_FOR_NGU    = "eth0";
+        GNB_IPV4_ADDRESS_FOR_NGU      = "192.168.70.20";
+        GNB_PORT_FOR_S1U              = 2152;
+    };
+ }
+);
+
+MACRLCs = (
+{
+  num_cc               = 1;
+  tr_s_preference      = "local_L1";
+  tr_n_preference      = "f1";
+  local_n_address     = "10.213.72.3";
+  remote_n_address    = "oai-cucp";
+  pusch_TargetSNRx10   = 300;
+  pucch_TargetSNRx10   = 200;
+  ul_bler_target_upper = .35;
+  ul_bler_target_lower = .15;
+  pusch_FailureThres   = 100;
+}
+);
+
+L1s = (
+{
+  num_cc               = 1;
+  tr_n_preference      = "local_mac";
+  local_n_address_f1u = "10.213.73.3";
+  prach_dtx_threshold  = 130;
+  pucch0_dtx_threshold = 80;
+  pusch_dtx_threshold  = 10;
+  tx_amp_backoff_dB    = 36;
+  L1_rx_thread_core    = 8;
+  L1_tx_thread_core    = 10;
+  phase_compensation   = 0;
+}
+);
+
+RUs = (
+{
+  local_rf                      = "yes";
+  nb_tx                         = 4;
+  nb_rx                         = 4;
+  att_tx                        = 0;
+  att_rx                        = 0;
+  bands                         = [79];
+  max_pdschReferenceSignalPower = -27;
+  max_rxgain                    = 75;
+  sf_extension                  = 0;
+  eNB_instances                 = [0];
+}
+);
+
+rfsimulator = (
+  {
+    serveraddr = "server";
+    serverport = 4043;
+    options = ();
+    modelname = "AWGN";
+    IQfile = "/tmp/rfsimulator.iqs";
+  }
+);
+
+log_config :
+{
+  global_log_level = "info";
+  hw_log_level     = "info";
+  phy_log_level    = "info";
+  mac_log_level    = "info";
+  rlc_log_level    = "info";
+  pdcp_log_level   = "info";
+  rrc_log_level    = "debug";
+  ngap_log_level   = "debug";
+  f1ap_log_level   = "debug";
+};
