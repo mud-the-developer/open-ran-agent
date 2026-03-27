@@ -7,8 +7,9 @@ The fixtures are aligned to the current replacement status schema and keep the
 scope fixed to `n79 / real RU / real UE / real Open5GS`.
 
 They are current support for schema-backed operator evidence and review flows.
-They are not claims that live runtime cutover is already supported for the
-replacement lane or for future `Aerial` / `cuMAC` / broader-profile work.
+They do not replace the live-lab runtime proof already bound to the declared
+`n79_single_ru_single_ue_lab_v1` lane, and they do not by themselves claim
+vendor-backed `Aerial`, external-worker `cuMAC`, or broader-profile support.
 
 Fixture set:
 

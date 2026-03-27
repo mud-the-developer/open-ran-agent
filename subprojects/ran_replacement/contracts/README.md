@@ -7,12 +7,16 @@ These schemas are part of the current hardened-now review posture: they make
 status, compare reports, rollback evidence, and target-profile assumptions
 explicit and schema-backed.
 
-They do not, by themselves, claim supported live runtime cutover, `Aerial`
-runtime ownership, `cuMAC` scheduler ownership, or broader interoperability
-beyond the declared `n79` plus real `Open5GS` lane.
+They do not, by themselves, claim vendor-backed `Aerial` runtime ownership,
+external-worker `cuMAC` scheduler ownership, or broader interoperability beyond
+the declared `n79` plus real `Open5GS` lane.
 
-For the `cuMAC` scheduler lane specifically, the current contract posture is
-still roadmap-only:
+The repo's current clean-room runtime proof for `Aerial` and `cuMAC` lives in
+capability metadata, architecture docs, and runtime tests rather than in these
+schemas alone.
+
+For the `cuMAC` scheduler lane specifically, contracts alone still do not prove
+these future-expansion claims:
 
 - the host boundary exists
 - the placeholder adapter exists
