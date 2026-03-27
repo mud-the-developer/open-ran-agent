@@ -428,9 +428,9 @@ The repo includes an executable bridge from `ranctl` to a real OpenAirInterface 
 - runtime spec comes from `metadata.oai_runtime` and optional `cell_group` defaults
 - `plan` renders `artifacts/runtime/<change_id>/docker-compose.yml`
 - `plan` also renders patched overlay confs under `artifacts/runtime/<change_id>/conf/*.conf`
-- `apply` brings up `CUCP + CUUP + DU` in RFsim F1 split mode
-- `precheck` validates split markers and required patch points in the source confs
-- `verify` inspects container state, captures log tails, and accepts steady-state DU activity for long-running containers
+- `apply` brings up `CUCP + CUUP + DU` in RFsim F1 split mode, and also launches `OAI NR UE` when `metadata.oai_runtime.ue_conf_path` is present
+- `precheck` validates split markers, required patch points, and optional UE image/conf `/dev/net/tun` prerequisites
+- `verify` inspects container state, captures log tails, accepts steady-state DU activity for long-running containers, and records UE log/tunnel evidence when the UE lane is enabled
 - `rollback` tears the stack down deterministically
 
 Example flow:
@@ -441,6 +441,16 @@ bin/ranctl plan --file examples/ranctl/apply-oai-du-docker.json
 bin/ranctl apply --file examples/ranctl/apply-oai-du-docker.json
 bin/ranctl verify --file examples/ranctl/verify-oai-du-docker.json
 bin/ranctl rollback --file examples/ranctl/rollback-oai-du-docker.json
+```
+
+Repo-local split + UE flow from the repo root:
+
+```bash
+bin/ranctl precheck --file examples/ranctl/precheck-oai-du-ue-repo-local.json
+bin/ranctl plan --file examples/ranctl/apply-oai-du-ue-repo-local.json
+bin/ranctl apply --file examples/ranctl/apply-oai-du-ue-repo-local.json
+bin/ranctl verify --file examples/ranctl/verify-oai-du-ue-repo-local.json
+bin/ranctl rollback --file examples/ranctl/rollback-oai-du-ue-repo-local.json
 ```
 
 To run against your own OAI conf set, replace the three `*_conf_path` fields in `examples/ranctl/apply-oai-du-docker-template.json` and reuse the same metadata for `precheck`, `plan`, `apply`, and `verify`.

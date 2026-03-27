@@ -149,6 +149,7 @@ Example:
       "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
       "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
       "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf",
+      "ue_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/nrue.uicc.conf",
       "project_name": "ran-oai-du-cg-001",
       "pull_images": true
     }
@@ -164,9 +165,9 @@ With this metadata:
 - `plan` writes a generated Compose asset under `artifacts/runtime/<change_id>/docker-compose.yml`
 - `plan` also writes patched overlay confs under `artifacts/runtime/<change_id>/conf/`
 - source conf files remain untouched and are only used as overlay inputs
-- `apply` runs `docker compose up -d` for `oai-cucp`, `oai-cuup`, and `oai-du`
-- `precheck` validates split markers and required address patch points in the source confs
-- `verify` inspects container liveness and captures log tails
+- `apply` runs `docker compose up -d` for `oai-cucp`, `oai-cuup`, `oai-du`, and optionally `oai-nr-ue`
+- `precheck` validates split markers, required address patch points, and optional UE conf/image/tun prerequisites
+- `verify` inspects container liveness, captures log tails, and records UE tunnel configuration evidence when the UE lane is enabled
 - `rollback` runs `docker compose down -v --remove-orphans`
 
 Reference examples:

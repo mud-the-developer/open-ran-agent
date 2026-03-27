@@ -22,7 +22,8 @@ defmodule RanActionGateway.MockDockerRunner do
       {"docker", ["image", "inspect", image]}
       when image in [
              "oaisoftwarealliance/oai-gnb:develop",
-             "oaisoftwarealliance/oai-nr-cuup:develop"
+             "oaisoftwarealliance/oai-nr-cuup:develop",
+             "oaisoftwarealliance/oai-nr-ue:develop"
            ] ->
         {"[]", 0}
 
@@ -69,6 +70,13 @@ defmodule RanActionGateway.MockDockerRunner do
 
             String.ends_with?(container_name, "-cuup") ->
               "E1 connection established\n"
+
+            String.ends_with?(container_name, "-nr-ue") ->
+              """
+              == Starting NR UE soft modem
+              [NR_RRC] I rrcReconfigurationComplete Encoded 10 bits (2 bytes)
+              [OIP] I Interface oaitun_ue1 successfully configured, ip address 12.1.1.3, mask 255.255.255.0 broadcast address 12.1.1.255
+              """
 
             true ->
               "log output for #{container_name}\n"
@@ -1189,6 +1197,75 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  @tag :runtime_contract
+  test "oai runtime path optionally launches an OAI UE simulator", %{tmp_dir: tmp_dir} do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    runtime_fixture = build_runtime_fixture(tmp_dir)
+
+    payload =
+      base_payload(%{
+        "approval" => approval_payload(),
+        "metadata" => %{
+          "oai_runtime" =>
+            oai_runtime_payload(runtime_fixture, %{
+              "project_name" => "test-oai-du-ue",
+              "ue_conf_path" => runtime_fixture.ue_conf_path
+            }),
+          "runtime_contract" => runtime_contract_payload()
+        }
+      })
+      |> JSON.encode!()
+
+    File.cd!(tmp_dir, fn ->
+      assert {:ok, %{status: "ok", runtime: runtime}} = CLI.run(["precheck", "--json", payload])
+      assert Enum.any?(runtime.checks, &(&1["name"] == "ue_conf_present"))
+      assert Enum.any?(runtime.checks, &(&1["name"] == "ue_image_present_or_pull_enabled"))
+      assert Enum.any?(runtime.checks, &(&1["name"] == "ue_tun_device_present"))
+      assert Enum.any?(runtime.checks, &(&1["name"] == "ue_conf_declares_rfsimulator"))
+
+      assert {:ok, plan} = CLI.run(["plan", "--json", payload])
+      assert "oai-nr-ue" in plan["runtime_plan"].services
+      assert "test-oai-du-ue-nr-ue" in plan["runtime_plan"].containers
+      assert "oaisoftwarealliance/oai-nr-ue:develop" in Map.values(plan["runtime_plan"].images)
+
+      compose = File.read!(plan["runtime_plan"].compose_path)
+      assert compose =~ "oai-nr-ue:"
+      assert compose =~ "/dev/net/tun:/dev/net/tun"
+      assert compose =~ "--rfsimulator.[0].serveraddr oai-du"
+
+      assert {:ok, apply} = CLI.run(["apply", "--json", payload])
+      assert apply["runtime_result"].project_name == "test-oai-du-ue"
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", payload])
+      assert Enum.any?(verify.checks, &(&1["name"] == "ue_log_started"))
+      assert Enum.any?(verify.checks, &(&1["name"] == "ue_log_tun_configured"))
+      assert File.exists?(Store.runtime_log_path("chg-test-001", "test-oai-du-ue-nr-ue"))
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", payload])
+      assert length(capture.bundle.runtime.logs) == 4
+      assert length(capture.bundle.runtime.configs) == 3
+    end)
+  end
+
   test "control state flows into verify, observe, rollback, and capture snapshots", %{
     tmp_dir: tmp_dir
   } do
@@ -1472,6 +1549,7 @@ defmodule RanActionGateway.CLITest do
     du_conf_path = Path.join(conf_dir, "gnb-du.conf")
     cucp_conf_path = Path.join(conf_dir, "gnb-cucp.conf")
     cuup_conf_path = Path.join(conf_dir, "gnb-cuup.conf")
+    ue_conf_path = Path.join(conf_dir, "nr-ue.conf")
 
     File.write!(
       du_conf_path,
@@ -1495,11 +1573,25 @@ defmodule RanActionGateway.CLITest do
       """
     )
 
+    File.write!(
+      ue_conf_path,
+      """
+      uicc0 = {
+        imsi = "001010000000001";
+        key = "00112233445566778899aabbccddeeff";
+        opc = "0102030405060708090a0b0c0d0e0f10";
+        pdu_sessions = ({ dnn = "oai"; nssai_sst = 1; });
+      }
+      rfsimulator = ({ serveraddr = "127.0.0.1"; });
+      """
+    )
+
     %{
       repo_root: repo_root,
       du_conf_path: du_conf_path,
       cucp_conf_path: cucp_conf_path,
-      cuup_conf_path: cuup_conf_path
+      cuup_conf_path: cuup_conf_path,
+      ue_conf_path: ue_conf_path
     }
   end
 end
