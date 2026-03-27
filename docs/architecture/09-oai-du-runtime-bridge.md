@@ -154,6 +154,30 @@ and the request set:
 
 The repo-local public examples already point at `examples/oai/*.example` so the documented RFsim split lane can be exercised from the checkout without `/opt/openairinterface5g`.
 
+For the lighter split-only operator lane used by YON-87, the committed repo-local
+flow uses:
+
+- `examples/oai/gnb-du-rfsim-split.conf.example`
+- `examples/oai/gnb-cucp-rfsim-split.conf.example`
+- `examples/oai/gnb-cuup-rfsim-split.conf.example`
+- `examples/ranctl/precheck-oai-du-rfsim-local.json`
+- `examples/ranctl/plan-oai-du-rfsim-local.json`
+- `examples/ranctl/apply-oai-du-rfsim-local.json`
+- `examples/ranctl/verify-oai-du-rfsim-local.json`
+- `examples/ranctl/rollback-oai-du-rfsim-local.json`
+- `mise.toml`
+
+From the repo root, operators can drive that lane with:
+
+```bash
+mise run oai-rfsim-lifecycle
+mise run oai-rfsim-rollback
+```
+
+`oai-rfsim-lifecycle` wraps `precheck -> plan -> apply -> verify` and keeps
+polling `verify` until the JSON payload reaches `status=verified`, which avoids
+false negatives during OAI warm-up.
+
 Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 
 - read your source confs as-is

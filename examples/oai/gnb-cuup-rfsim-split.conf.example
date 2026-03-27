@@ -1,0 +1,49 @@
+Active_gNBs = ( "open-ran-agent-gnb-rfsim");
+Asn1_verbosity = "none";
+
+gNBs =
+(
+ {
+    gNB_ID = 0xe00;
+    gNB_CU_UP_ID = 0xe01;
+    gNB_name = "open-ran-agent-gnb-rfsim";
+    tracking_area_code = 100;
+    plmn_list = ({ mcc = 001; mnc = 01; mnc_length = 2; snssaiList = ({ sst = 1; sd = 1; }); });
+
+    tr_s_preference = "f1";
+    local_s_address = "10.213.73.2";
+    remote_s_address = "127.0.0.1";
+    local_s_portd = 2153;
+    remote_s_portd = 2153;
+
+    SCTP :
+    {
+        SCTP_INSTREAMS  = 2;
+        SCTP_OUTSTREAMS = 2;
+    };
+
+    E1_INTERFACE =
+    (
+      {
+        type = "up";
+        ipv4_cucp = "10.213.77.2";
+        ipv4_cuup = "10.213.77.3";
+      }
+    );
+
+    NETWORK_INTERFACES :
+    {
+        GNB_IPV4_ADDRESS_FOR_NG_AMF = "192.168.71.161/24";
+        GNB_IPV4_ADDRESS_FOR_NGU    = "192.168.71.161/24";
+        GNB_PORT_FOR_S1U            = 2152;
+    };
+ }
+);
+
+log_config :
+{
+  global_log_level = "info";
+  pdcp_log_level   = "info";
+  f1ap_log_level   = "info";
+  ngap_log_level   = "info";
+};

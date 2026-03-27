@@ -458,6 +458,19 @@ bin/ranctl verify --file examples/ranctl/verify-oai-du-ue-repo-local.json
 bin/ranctl rollback --file examples/ranctl/rollback-oai-du-ue-repo-local.json
 ```
 
+If you only need the split `CUCP + CUUP + DU` repo-local bringup lane, the
+lighter operator entrypoint is now:
+
+```bash
+mise run oai-rfsim-lifecycle
+mise run oai-rfsim-rollback
+```
+
+Those tasks wrap the repo-local split request set under `examples/ranctl/*-oai-du-rfsim-local.json`,
+use the split conf fixtures under `examples/oai/gnb-*-rfsim-split.conf.example`,
+and keep the verify step in a short poll loop until `ranctl` reports JSON status
+`verified` instead of only trusting the first process exit code.
+
 To run against your own OAI conf set, replace the three `*_conf_path` fields in `examples/ranctl/apply-oai-du-docker-template.json` and reuse the same metadata for `precheck`, `plan`, `apply`, and `verify`. Add `metadata.oai_runtime.ue_conf_path` when you want the bounded UE bringup lane, and keep `metadata.oai_simulation` only for simulation-only proof; it is intentionally not a live-lab claim.
 
 See [docs/architecture/09-oai-du-runtime-bridge.md](docs/architecture/09-oai-du-runtime-bridge.md) for the current scope and limitations.

@@ -1,0 +1,53 @@
+[tasks.setup]
+run = "mix deps.get && npm ci"
+
+[tasks.oai-rfsim-precheck]
+run = "bin/ranctl precheck --file examples/ranctl/precheck-oai-du-rfsim-local.json"
+
+[tasks.oai-rfsim-plan]
+run = "bin/ranctl plan --file examples/ranctl/plan-oai-du-rfsim-local.json"
+
+[tasks.oai-rfsim-apply]
+run = "bin/ranctl apply --file examples/ranctl/apply-oai-du-rfsim-local.json"
+
+[tasks.oai-rfsim-verify]
+run = "bin/ranctl verify --file examples/ranctl/verify-oai-du-rfsim-local.json"
+
+[tasks.oai-rfsim-verify-ready]
+run = """python - <<'PY2'
+import json, subprocess, sys, time
+cmd = ["bin/ranctl", "verify", "--file", "examples/ranctl/verify-oai-du-rfsim-local.json"]
+for attempt in range(6):
+    proc = subprocess.run(cmd, capture_output=True, text=True)
+    if proc.stdout:
+        print(proc.stdout, end="")
+    if proc.stderr:
+        print(proc.stderr, end="", file=sys.stderr)
+
+    payload = None
+    for line in reversed(proc.stdout.splitlines()):
+        line = line.strip()
+        if line.startswith("{") and line.endswith("}"):
+            try:
+                payload = json.loads(line)
+                break
+            except json.JSONDecodeError:
+                pass
+
+    if payload and payload.get("status") == "verified":
+        sys.exit(0)
+
+    if attempt < 5:
+        time.sleep(5)
+
+sys.exit(1)
+PY2"""
+
+[tasks.oai-rfsim-rollback]
+run = "bin/ranctl rollback --file examples/ranctl/rollback-oai-du-rfsim-local.json"
+
+[tasks.oai-rfsim-lifecycle]
+run = "mise run oai-rfsim-precheck && mise run oai-rfsim-plan && mise run oai-rfsim-apply && mise run oai-rfsim-verify-ready"
+
+[tasks.target-host-preview]
+run = "bin/ran-install --target-host ran-lab-sim --deploy-profile lab_attach"
