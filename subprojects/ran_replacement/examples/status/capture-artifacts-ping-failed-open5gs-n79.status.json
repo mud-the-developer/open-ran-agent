@@ -1,0 +1,221 @@
+{
+  "status": "ok",
+  "command": "capture-artifacts",
+  "scope": "ue_session",
+  "change_id": "chg-ran-repl-capture-ping-001",
+  "incident_id": "inc-ran-repl-ping-001",
+  "target_ref": "ue-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "conformance_claim": {
+    "profile": "oai_visible_5g_standards_baseline_v1",
+    "evidence_tier": "milestone_proof",
+    "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+  },
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": null,
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "dnn": "internet",
+      "gtpu_port": 2152,
+      "slice": {
+        "sd": "000001",
+        "sst": 1
+      },
+      "upf_host": "10.41.83.45"
+    }
+  },
+  "gate_class": "degraded",
+  "failure_class": "user_plane_failure",
+  "ngap_subset": {
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+  },
+  "summary": "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
+  "target_backend": "replacement_primary",
+  "rollback_target": "oai_reference",
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/captures/inc-ran-repl-ping-001.json",
+    "artifacts/captures/inc-ran-repl-ping-001.json",
+    "artifacts/captures/inc-ran-repl-ping-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-ping-001-request.json",
+    "artifacts/captures/inc-ran-repl-ping-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ping.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/core-link.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/e1ap.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-c.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-u.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/gtpu.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap-setup.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/initial-ue-message.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/uplink-nas-transport.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/downlink-nas-transport.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/user-plane.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-n79-lab-01.json"
+  ],
+  "suggested_next": [
+    "inspect the compare report before another replacement mutation",
+    "confirm the rollback target and cleanup evidence remain explicit",
+    "retry only after the captured mismatch is explained"
+  ],
+  "checks": [
+    {
+      "detail": "the compare report is preserved for review",
+      "name": "compare_report_ready",
+      "status": "ok"
+    },
+    {
+      "detail": "rollback target remains explicit for recovery",
+      "name": "rollback_target_known",
+      "status": "ok"
+    },
+    {
+      "detail": "cleanup evidence remains explicit in the preserved review bundle",
+      "name": "UE Context Release",
+      "status": "ok"
+    },
+    {
+      "detail": "registration-path evidence is part of the review bundle",
+      "name": "registration_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "session-path evidence remains attached to the review bundle",
+      "name": "pdu_session_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "probe evidence remains attached to the review bundle",
+      "name": "ping_reviewed",
+      "status": "ok"
+    }
+  ],
+  "plane_status": {
+    "u_plane": {
+      "reason": "captured evidence shows the declared user-plane route is not yet trusted",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/user-plane.json"
+    }
+  },
+  "interface_status": {
+    "e1ap": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/e1ap.json"
+    },
+    "f1_c": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-c.json"
+    },
+    "f1_u": {
+      "reason": "forwarding state does not yet prove the declared attach-plus-ping path",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-u.json"
+    },
+    "gtpu": {
+      "reason": "tunnel evidence exists, but end-to-end reachability did not complete",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/gtpu.json"
+    },
+    "ngap": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap.json"
+    }
+  },
+  "attach_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/attach.json"
+  },
+  "pdu_session_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/pdu-session.json"
+  },
+  "ping_status": {
+    "reason": "ping failed after the declared session was established",
+    "status": "failed",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ping.json"
+  },
+  "release_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json"
+  },
+  "rollback_status": {
+    "reason": "rollback is available but has not yet been executed",
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/rollback-evidence.json"
+  },
+  "ngap_procedure_trace": {
+    "last_observed": "UE Context Release",
+    "procedures": [
+      {
+        "name": "NG Setup",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ngap-setup.json",
+        "detail": "the declared Open5GS AMF accepted the NG setup handshake"
+      },
+      {
+        "name": "Initial UE Message",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/initial-ue-message.json",
+        "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
+      },
+      {
+        "name": "Uplink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/uplink-nas-transport.json",
+        "detail": "uplink NAS transport carried the registration request toward the declared core profile"
+      },
+      {
+        "name": "Downlink NAS Transport",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/downlink-nas-transport.json",
+        "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
+      },
+      {
+        "name": "UE Context Release",
+        "status": "ok",
+        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json",
+        "detail": "UE context release completed and the cleanup state is auditable"
+      }
+    ]
+  },
+  "core_link_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/core-link.json"
+  }
+}

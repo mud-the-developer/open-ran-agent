@@ -17,17 +17,38 @@ defmodule RanSchedulerHost.CumacScheduler do
       supports_replay: true,
       supports_external_acceleration: true,
       status: :bootstrap,
-      promotion_state: :roadmap_only,
+      support_posture: :bounded_clean_room_runtime,
+      promotion_state: :bounded_clean_room_runtime,
+      declared_target_profile: "cumac_scheduler_clean_room_runtime_v1",
+      rollback_target: :cpu_scheduler,
+      failure_domain: :cell_group,
+      supported_claims: [
+        :executable_slot_plan_runtime,
+        :cell_group_scoped_scheduler_ownership,
+        :explicit_cpu_rollback_target
+      ],
       unsupported_claims: [
         :external_scheduler_worker_proof,
-        :runtime_timing_proof,
+        :runtime_timing_guarantee,
         :attach_validation_claim
       ],
-      promotion_requirements: [
-        :declared_scheduler_worker_contract,
-        :failure_domain_evidence,
-        :cutover_and_rollback_coverage,
-        :bounded_scheduler_ownership
+      verify_evidence_refs: [
+        "apps/ran_scheduler_host/test/ran_scheduler_host/cumac_scheduler_test.exs",
+        "apps/ran_du_high/test/ran_du_high_test.exs"
+      ],
+      rollback_evidence_refs: [
+        "apps/ran_scheduler_host/test/ran_scheduler_host/cumac_scheduler_test.exs",
+        "apps/ran_du_high/test/ran_du_high_test.exs"
+      ],
+      health_model_ref: "docs/architecture/03-failure-domains.md",
+      failure_domain_refs: [
+        "docs/architecture/02-otp-apps-and-supervision.md",
+        "docs/architecture/03-failure-domains.md"
+      ],
+      future_expansion_requirements: [
+        :external_scheduler_worker_contract,
+        :runtime_timing_guarantee,
+        :attach_validation_evidence
       ]
     }
   end
@@ -38,6 +59,10 @@ defmodule RanSchedulerHost.CumacScheduler do
      %{
        adapter: :cumac_scheduler,
        pipeline_ref: Keyword.get(opts, :pipeline_ref, default_pipeline_ref()),
+       declared_target_profile: "cumac_scheduler_clean_room_runtime_v1",
+       rollback_target: Keyword.get(opts, :rollback_target, :cpu_scheduler),
+       failure_domain: :cell_group,
+       support_posture: :bounded_clean_room_runtime,
        opts: opts,
        status: :active
      }}
@@ -61,7 +86,11 @@ defmodule RanSchedulerHost.CumacScheduler do
           scheduler_mode: :cumac_contract_host,
           pipeline_ref: pipeline_ref,
           replay_token: "cumac-#{frame}-#{slot}",
-          external_acceleration: true
+          external_acceleration: true,
+          declared_target_profile: "cumac_scheduler_clean_room_runtime_v1",
+          rollback_target: Keyword.get(opts, :rollback_target, :cpu_scheduler),
+          failure_domain: :cell_group,
+          support_posture: :bounded_clean_room_runtime
         }),
       status: :planned
     }

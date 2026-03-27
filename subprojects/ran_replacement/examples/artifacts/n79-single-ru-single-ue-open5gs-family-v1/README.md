@@ -11,9 +11,15 @@ Family identity:
 
 Bundle contents:
 
+- [compare-report-failed-ru-sync-open5gs-n79.json](compare-report-failed-ru-sync-open5gs-n79.json)
 - [compare-report-registration-rejected-open5gs-n79.json](compare-report-registration-rejected-open5gs-n79.json)
 - [compare-report-ping-failed-open5gs-n79.json](compare-report-ping-failed-open5gs-n79.json)
+- [compare-report-failed-cutover-open5gs-n79.json](compare-report-failed-cutover-open5gs-n79.json)
+- [rollback-evidence-failed-ru-sync-open5gs-n79.json](rollback-evidence-failed-ru-sync-open5gs-n79.json)
+- [rollback-evidence-registration-rejected-open5gs-n79.json](rollback-evidence-registration-rejected-open5gs-n79.json)
+- [rollback-evidence-ping-failed-open5gs-n79.json](rollback-evidence-ping-failed-open5gs-n79.json)
 - [rollback-evidence-failed-cutover-open5gs-n79.json](rollback-evidence-failed-cutover-open5gs-n79.json)
+- [post-rollback-verify-gnb-cutover-open5gs-n79.json](post-rollback-verify-gnb-cutover-open5gs-n79.json)
 
 Use this bundle only for the declared family. New RU/core/profile families must
 add sibling bundles instead of widening this one.

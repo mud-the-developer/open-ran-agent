@@ -1,0 +1,161 @@
+{
+  "status": "ok",
+  "command": "capture-artifacts",
+  "scope": "ru_link",
+  "change_id": "chg-ran-repl-capture-ru-sync-001",
+  "incident_id": "inc-ran-repl-ru-sync-001",
+  "target_ref": "ru-link-n79-lab-01",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "conformance_claim": {
+    "profile": "oai_visible_5g_standards_baseline_v1",
+    "evidence_tier": "milestone_proof",
+    "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+  },
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": null,
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "dnn": "internet",
+      "gtpu_port": 2152,
+      "slice": {
+        "sd": "000001",
+        "sst": 1
+      },
+      "upf_host": "10.41.83.45"
+    }
+  },
+  "gate_class": "degraded",
+  "failure_class": "ru_failure",
+  "ngap_subset": {
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+  },
+  "summary": "Capture preserved the RU failure evidence bundle for rollback review on the declared lane.",
+  "target_backend": "replacement_shadow",
+  "rollback_target": "oai_reference",
+  "rollback_available": true,
+  "artifacts": [
+    "artifacts/captures/inc-ran-repl-ru-sync-001.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-request.json",
+    "artifacts/captures/inc-ran-repl-ru-sync-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ping.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/core-link.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ptp.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ru-fronthaul.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ru-sync.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ptp-state.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/host-state.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/control-plane.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/user-plane.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ru-link-n79-lab-01.json"
+  ],
+  "suggested_next": [
+    "inspect the compare report before another replacement mutation",
+    "confirm the rollback target and cleanup evidence remain explicit",
+    "retry only after the captured mismatch is explained"
+  ],
+  "checks": [
+    {
+      "detail": "the compare report is preserved for review",
+      "name": "compare_report_ready",
+      "status": "ok"
+    },
+    {
+      "detail": "rollback target remains explicit for recovery",
+      "name": "rollback_target_known",
+      "status": "ok"
+    },
+    {
+      "detail": "cleanup evidence remains explicit in the preserved review bundle",
+      "name": "UE Context Release",
+      "status": "ok"
+    },
+    {
+      "detail": "host readiness evidence is part of the review bundle",
+      "name": "host_preflight_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "RU sync evidence remains attached to the review bundle",
+      "name": "ru_sync_reviewed",
+      "status": "ok"
+    }
+  ],
+  "plane_status": {
+    "s_plane": {
+      "reason": "timing source is visible but not stable",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ptp-state.json"
+    },
+    "m_plane": {
+      "reason": null,
+      "status": "ok",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/host-state.json"
+    },
+    "c_plane": {
+      "reason": "control-plane stays shadow-only until RU sync stabilizes",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/control-plane.json"
+    },
+    "u_plane": {
+      "reason": "user-plane must not be trusted before RU sync stabilizes",
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/user-plane.json"
+    }
+  },
+  "interface_status": {
+    "ptp": {
+      "reason": "timing source is visible but not stable enough for attach",
+      "status": "degraded",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ptp.json"
+    },
+    "ru_fronthaul": {
+      "reason": "stable RU sync is not yet proven on the declared fronthaul path",
+      "status": "blocked",
+      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ru-fronthaul.json"
+    }
+  },
+  "ru_status": {
+    "reason": "RU sync has not been confirmed for the declared lane",
+    "status": "blocked",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/ru-sync.json"
+  },
+  "core_link_status": {
+    "reason": null,
+    "status": "ok",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/core-link.json"
+  },
+  "rollback_status": {
+    "reason": "rollback is available but has not yet been executed",
+    "status": "pending",
+    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ru-sync-001/rollback-evidence.json"
+  }
+}

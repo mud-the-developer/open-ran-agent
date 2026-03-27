@@ -25,10 +25,15 @@
     "bundle_id": "n79_single_ru_single_ue_open5gs_family_v1",
     "artifact_root": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/",
     "compare_reports": [
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-failed-ru-sync-open5gs-n79.json",
       "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json",
-      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json"
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json",
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-failed-cutover-open5gs-n79.json"
     ],
     "rollback_evidence": [
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-ru-sync-open5gs-n79.json",
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-registration-rejected-open5gs-n79.json",
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-ping-failed-open5gs-n79.json",
       "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json"
     ]
   },
