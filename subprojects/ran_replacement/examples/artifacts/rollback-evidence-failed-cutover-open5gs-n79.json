@@ -28,6 +28,11 @@
   "evidence_refs": [
     "subprojects/ran_replacement/examples/ranctl/rollback-gnb-cutover-open5gs-n79.json",
     "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md",
     "subprojects/ran_replacement/notes/13-milestone-1-acceptance-runbook.md"
   ],

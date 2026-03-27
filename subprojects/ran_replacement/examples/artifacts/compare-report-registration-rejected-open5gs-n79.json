@@ -67,6 +67,8 @@
   "evidence_refs": [
     "subprojects/ran_replacement/examples/status/observe-registration-rejected-open5gs-n79.status.json",
     "subprojects/ran_replacement/examples/ranctl/observe-registration-rejected-open5gs-n79.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
     "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
