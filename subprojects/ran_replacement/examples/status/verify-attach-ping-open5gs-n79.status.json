@@ -38,11 +38,10 @@
   "rollback_available": true,
   "artifacts": [
     "artifacts/replacement/verify/ue-n79-lab-01.json",
-    "artifacts/replacement/verify/attach-log.txt",
-    "artifacts/replacement/verify/ping-result.txt",
-    "artifacts/replacement/verify/core-link.json",
-    "artifacts/replacement/verify/ngap-procedures.json",
-    "artifacts/replacement/verify/ue-context-release.json"
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
   ],
   "suggested_next": [
     "capture artifacts for the verified lane",
@@ -109,14 +108,14 @@
     },
     "u_plane": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/verify/user-plane.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
       "reason": null
     }
   },
   "interface_status": {
     "ngap": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/verify/ngap.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": null
     },
     "f1_c": {
@@ -131,12 +130,12 @@
     },
     "f1_u": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/verify/f1-u.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
       "reason": null
     },
     "gtpu": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/verify/gtpu.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
       "reason": null
     },
     "ru_fronthaul": {
@@ -152,7 +151,7 @@
   },
   "core_link_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/verify/core-link.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "reason": null
   },
   "ngap_procedure_trace": {
@@ -161,53 +160,53 @@
       {
         "name": "NG Setup",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/verify/ngap-setup.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the declared Open5GS AMF accepted the NG setup handshake"
       },
       {
         "name": "Initial UE Message",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/verify/initial-ue-message.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the first UE-originated NAS message reached the declared Open5GS core lane"
       },
       {
         "name": "Uplink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/verify/uplink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "uplink NAS transport stayed aligned with the declared subscriber profile"
       },
       {
         "name": "Downlink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/verify/downlink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
       },
       {
         "name": "UE Context Release",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/verify/ue-context-release.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the UE context was released cleanly after the declared soak window"
       }
     ]
   },
   "attach_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/verify/attach.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
     "reason": null
   },
   "pdu_session_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/verify/pdu-session.json",
-    "reason": null
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "reason": "declared ipv4 session is established"
   },
   "ping_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/verify/ping.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
     "reason": null
   },
   "release_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/verify/ue-context-release.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "reason": null
   },
   "failure_class": null,

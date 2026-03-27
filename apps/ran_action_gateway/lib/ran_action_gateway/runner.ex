@@ -827,6 +827,7 @@ defmodule RanActionGateway.Runner do
       |> maybe_put_attach_status(phase, change, replacement, base_status)
       |> maybe_put_replacement_review_semantics(phase, change, replacement)
       |> maybe_put_target_host_precheck_semantics(phase, change, replacement)
+      |> maybe_put_declared_replacement_artifacts(phase, change)
       |> ReplacementReview.enrich(phase, change, checks)
     else
       payload
@@ -1050,6 +1051,55 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp replacement_declared_evidence_refs(%Change{} = change) do
+    profile = replacement_target_profile_contract(change)
+    overlay = replacement_target_profile_overlay(change)
+
+    %{
+      attach:
+        get_in(overlay, ["ue_inventory", "attach_artifact"]) ||
+          get_in(profile, ["ue_boundary", "attach_evidence_ref"]),
+      registration:
+        replacement_overlay_artifact(
+          overlay,
+          ["core_inventory", "artifacts"],
+          "registration.json"
+        ) ||
+          get_in(profile, ["core_boundary", "registration_evidence_ref"]),
+      pdu_session:
+        replacement_overlay_artifact(overlay, ["core_inventory", "artifacts"], "pdu-session.json") ||
+          get_in(profile, ["core_boundary", "pdu_session_evidence_ref"]),
+      ping:
+        get_in(overlay, ["ue_inventory", "ping_artifact"]) ||
+          get_in(profile, ["ue_boundary", "ping_evidence_ref"]),
+      preflight: get_in(profile, ["host_boundary", "preflight_evidence_ref"]),
+      ru_readiness:
+        replacement_overlay_artifact(
+          overlay,
+          ["ru_inventory", "readiness_artifacts"],
+          "ru-readiness.json"
+        ) ||
+          get_in(profile, ["ru_boundary", "readiness_evidence_ref"]),
+      ptp:
+        replacement_overlay_artifact(overlay, ["ru_inventory", "readiness_artifacts"], "ptp.json"),
+      rollback: get_in(profile, ["evidence_paths", "rollback_evidence_ref"])
+    }
+  end
+
+  defp replacement_overlay_artifact(overlay, path, suffix) do
+    overlay
+    |> get_in(path)
+    |> List.wrap()
+    |> Enum.find(fn value -> is_binary(value) and String.ends_with?(value, suffix) end)
+  end
+
+  defp replacement_declared_evidence_ref(%Change{} = change, key, phase, fallback_suffix) do
+    case replacement_declared_evidence_refs(change)[key] do
+      value when is_binary(value) and value != "" -> value
+      _ -> replacement_evidence_ref(phase, change, fallback_suffix)
+    end
+  end
+
   defp replacement_gate_class(:precheck, "failed"), do: "blocked"
   defp replacement_gate_class(:precheck, _status), do: "degraded"
   defp replacement_gate_class(:observe, _status), do: "degraded"
@@ -1083,40 +1133,147 @@ defmodule RanActionGateway.Runner do
   defp replacement_core_link_status(phase, %Change{} = change, replacement, status) do
     core = replacement["open5gs_core"] || %{}
     profile = core["profile"] || replacement["core_profile"]
+    ngap_failure? = ngap_registration_failure?(change)
 
     %{
-      status: if(status == "failed", do: "failed", else: "ok"),
-      evidence_ref: replacement_evidence_ref(phase, change, "core-link"),
-      reason:
-        if(status == "failed",
-          do: "replacement control surface has not yet proven the real Open5GS core path",
-          else: nil
-        ),
+      status: replacement_core_link_state(status, ngap_failure?),
+      evidence_ref: replacement_declared_evidence_ref(change, :registration, phase, "core-link"),
+      reason: replacement_core_link_reason(status, ngap_failure?),
       profile: profile
     }
   end
 
+  defp replacement_core_link_state(_status, true), do: "failed"
+  defp replacement_core_link_state("failed", _ngap_failure?), do: "failed"
+  defp replacement_core_link_state(_status, _ngap_failure?), do: "ok"
+
+  defp replacement_core_link_reason(_status, true),
+    do: "the real Open5GS core rejected the declared subscriber or identity context"
+
+  defp replacement_core_link_reason("failed", _ngap_failure?),
+    do: "replacement control surface has not yet proven the real Open5GS core path"
+
+  defp replacement_core_link_reason(_status, _ngap_failure?), do: nil
+
   defp replacement_interface_status(phase, %Change{} = change, replacement, status) do
+    ngap_failure? = ngap_registration_failure?(change)
+    ping_failure? = user_plane_ping_failure?(change)
+
     replacement
     |> Map.get("required_interfaces", [])
     |> Enum.map(fn interface ->
       {interface,
        %{
-         status: replacement_interface_state(status),
-         evidence_ref: replacement_evidence_ref(phase, change, interface),
-         reason: replacement_interface_reason(status)
+         status: replacement_interface_state(interface, status, ngap_failure?),
+         evidence_ref:
+           replacement_interface_evidence_ref(
+             interface,
+             phase,
+             change,
+             ngap_failure?,
+             ping_failure?
+           ),
+         reason: replacement_interface_reason(interface, status, ngap_failure?)
        }}
     end)
     |> Enum.into(%{})
   end
 
-  defp replacement_interface_state("failed"), do: "pending"
-  defp replacement_interface_state(_status), do: "ok"
+  defp replacement_interface_state("ngap", _status, true), do: "failed"
 
-  defp replacement_interface_reason("failed"),
+  defp replacement_interface_state(interface, _status, true) when interface in ["f1_u", "gtpu"],
+    do: "pending"
+
+  defp replacement_interface_state(_interface, "failed", _ngap_failure?), do: "pending"
+  defp replacement_interface_state(_interface, _status, _ngap_failure?), do: "ok"
+
+  defp replacement_interface_reason("ngap", _status, true),
+    do: "the last observed NGAP procedure ended in registration rejection"
+
+  defp replacement_interface_reason("f1_u", _status, true), do: "user-plane was not exercised"
+
+  defp replacement_interface_reason("gtpu", _status, true),
+    do: "session establishment and ping were not reached"
+
+  defp replacement_interface_reason(_interface, "failed", _ngap_failure?),
     do: "replacement evidence for this interface is not yet fully surfaced by the control surface"
 
-  defp replacement_interface_reason(_status), do: nil
+  defp replacement_interface_reason(_interface, _status, _ngap_failure?), do: nil
+
+  defp replacement_interface_evidence_ref(
+         "ngap",
+         phase,
+         %Change{} = change,
+         _ngap_failure?,
+         _ping_failure?
+       ),
+       do: replacement_declared_evidence_ref(change, :registration, phase, "ngap")
+
+  defp replacement_interface_evidence_ref(
+         "f1_u",
+         phase,
+         %Change{} = change,
+         ngap_failure?,
+         ping_failure?
+       ),
+       do:
+         replacement_user_plane_interface_ref(change, phase, ngap_failure?, ping_failure?, "f1_u")
+
+  defp replacement_interface_evidence_ref(
+         "gtpu",
+         phase,
+         %Change{} = change,
+         ngap_failure?,
+         ping_failure?
+       ),
+       do:
+         replacement_user_plane_interface_ref(change, phase, ngap_failure?, ping_failure?, "gtpu")
+
+  defp replacement_interface_evidence_ref(
+         "ru_fronthaul",
+         phase,
+         %Change{} = change,
+         _ngap_failure?,
+         _ping_failure?
+       ),
+       do: replacement_declared_evidence_ref(change, :ru_readiness, phase, "ru-fronthaul")
+
+  defp replacement_interface_evidence_ref(
+         "ptp",
+         phase,
+         %Change{} = change,
+         _ngap_failure?,
+         _ping_failure?
+       ) do
+    refs = replacement_declared_evidence_refs(change)
+    refs.ptp || refs.preflight || replacement_evidence_ref(phase, change, "ptp")
+  end
+
+  defp replacement_interface_evidence_ref(
+         interface,
+         phase,
+         %Change{} = change,
+         _ngap_failure?,
+         _ping_failure?
+       ),
+       do: replacement_evidence_ref(phase, change, interface)
+
+  defp replacement_user_plane_interface_ref(
+         %Change{} = change,
+         phase,
+         ngap_failure?,
+         ping_failure?,
+         suffix
+       ) do
+    key =
+      cond do
+        ngap_failure? -> :pdu_session
+        ping_failure? -> :ping
+        true -> :pdu_session
+      end
+
+    replacement_declared_evidence_ref(change, key, phase, suffix)
+  end
 
   defp maybe_put_ngap_procedure_trace(payload, phase, %Change{} = change, replacement, status) do
     if ngap_scope?(replacement) do
@@ -1133,7 +1290,8 @@ defmodule RanActionGateway.Runner do
     if ngap_scope?(replacement) do
       Map.put(payload, :release_status, %{
         status: "ok",
-        evidence_ref: replacement_evidence_ref(phase, change, "ue-context-release"),
+        evidence_ref:
+          replacement_declared_evidence_ref(change, :registration, phase, "ue-context-release"),
         reason: nil
       })
     else
@@ -1170,21 +1328,21 @@ defmodule RanActionGateway.Runner do
 
     [
       {"NG Setup", replacement_ngap_status(:ng_setup, status, ngap_failure?),
-       replacement_evidence_ref(phase, change, "ngap-setup"),
+       replacement_declared_evidence_ref(change, :registration, phase, "ngap-setup"),
        replacement_ngap_detail(:ng_setup, status)},
       {"Initial UE Message", replacement_ngap_status(:initial_ue_message, status, ngap_failure?),
-       replacement_evidence_ref(phase, change, "initial-ue-message"),
+       replacement_declared_evidence_ref(change, :registration, phase, "initial-ue-message"),
        replacement_ngap_detail(:initial_ue_message, status)},
       {"Uplink NAS Transport",
        replacement_ngap_status(:uplink_nas_transport, status, ngap_failure?),
-       replacement_evidence_ref(phase, change, "uplink-nas-transport"),
+       replacement_declared_evidence_ref(change, :registration, phase, "uplink-nas-transport"),
        replacement_ngap_detail(:uplink_nas_transport, status)},
       {"Downlink NAS Transport",
        replacement_ngap_status(:downlink_nas_transport, status, ngap_failure?),
-       replacement_evidence_ref(phase, change, "downlink-nas-transport"),
+       replacement_declared_evidence_ref(change, :registration, phase, "downlink-nas-transport"),
        replacement_ngap_detail(:downlink_nas_transport, status)},
       {"UE Context Release", replacement_ngap_status(:ue_context_release, status, ngap_failure?),
-       replacement_evidence_ref(phase, change, "ue-context-release"),
+       replacement_declared_evidence_ref(change, :registration, phase, "ue-context-release"),
        replacement_ngap_detail(:ue_context_release, status)}
     ]
     |> Enum.map(fn {name, proc_status, evidence_ref, detail} ->
@@ -1265,7 +1423,8 @@ defmodule RanActionGateway.Runner do
             do: "pending",
             else: "ok"
           ),
-        evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
+        evidence_ref:
+          replacement_declared_evidence_ref(change, :rollback, :observe, "rollback-evidence"),
         reason:
           if(control_plane_cutover_review?(change) or status == "failed",
             do: "rollback is available but not yet executed",
@@ -1338,7 +1497,7 @@ defmodule RanActionGateway.Runner do
     if user_plane_scope?(replacement) do
       payload
       |> maybe_put_user_plane_status(phase, change)
-      |> maybe_put_session_status(phase, change, replacement)
+      |> maybe_put_pdu_session_and_ping_status(phase, change, replacement)
       |> maybe_put_user_plane_interfaces(phase, change)
       |> maybe_put_user_plane_rollback_status(phase, change)
     else
@@ -1357,27 +1516,38 @@ defmodule RanActionGateway.Runner do
   defp maybe_put_user_plane_status(payload, phase, %Change{} = change)
        when phase in [:verify, :observe, :capture_artifacts] do
     base = Map.get(payload, :plane_status, %{})
+    ngap_failure? = ngap_registration_failure?(change)
 
     user_plane =
       cond do
+        ngap_failure? ->
+          %{
+            status: "blocked",
+            evidence_ref:
+              replacement_declared_evidence_ref(change, :registration, phase, "user-plane"),
+            reason: "user-plane was not reached after the control-plane rejection"
+          }
+
         phase == :verify and not user_plane_ping_failure?(change) ->
           %{
             status: "ok",
-            evidence_ref: replacement_evidence_ref(:verify, change, "user-plane"),
+            evidence_ref: replacement_declared_evidence_ref(change, :ping, :verify, "user-plane"),
             reason: nil
           }
 
         user_plane_ping_failure?(change) and phase == :observe ->
           %{
             status: "degraded",
-            evidence_ref: replacement_evidence_ref(:observe, change, "user-plane"),
+            evidence_ref:
+              replacement_declared_evidence_ref(change, :ping, :observe, "user-plane"),
             reason: "user-plane confidence is incomplete after ping failed on the declared route"
           }
 
         user_plane_ping_failure?(change) and phase == :capture_artifacts ->
           %{
             status: "degraded",
-            evidence_ref: replacement_evidence_ref(:capture_artifacts, change, "user-plane"),
+            evidence_ref:
+              replacement_declared_evidence_ref(change, :ping, :capture_artifacts, "user-plane"),
             reason: "captured evidence shows the declared user-plane route is not yet trusted"
           }
 
@@ -1394,45 +1564,95 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_user_plane_status(payload, _phase, _change), do: payload
 
-  defp maybe_put_session_status(payload, phase, %Change{} = change, replacement)
+  defp maybe_put_pdu_session_and_ping_status(payload, phase, %Change{} = change, replacement)
        when phase in [:verify, :observe, :capture_artifacts] do
     session_profile = get_in(replacement, ["open5gs_core", "session_profile"]) || %{}
+    ngap_failure? = ngap_registration_failure?(change)
+    ping_failure? = user_plane_ping_failure?(change)
 
-    Map.put(payload, :session_status, %{
+    payload
+    |> Map.put(:pdu_session_status, %{
       status:
-        if(user_plane_ping_failure?(change),
-          do: "established_but_ping_failed",
-          else: "established"
-        ),
-      pdu_type: session_profile["pdu_type"],
-      ping_target: session_profile["expect_ping_target"],
-      evidence_ref: replacement_evidence_ref(phase, change, "session"),
+        cond do
+          ngap_failure? -> "pending"
+          true -> "ok"
+        end,
+      evidence_ref: replacement_declared_evidence_ref(change, :pdu_session, phase, "pdu-session"),
       reason:
-        if(user_plane_ping_failure?(change),
-          do: "PDU session exists, but the declared route did not complete a successful ping",
-          else: nil
-        )
+        cond do
+          ngap_failure? ->
+            "session setup not reached after the NGAP rejection"
+
+          ping_failure? ->
+            "PDU session is established, but the declared route did not complete a successful ping"
+
+          is_binary(session_profile["pdu_type"]) ->
+            "declared #{session_profile["pdu_type"]} session is established"
+
+          true ->
+            nil
+        end
+    })
+    |> Map.put(:ping_status, %{
+      status:
+        cond do
+          ngap_failure? -> "pending"
+          ping_failure? -> "failed"
+          true -> "ok"
+        end,
+      evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "ping"),
+      reason:
+        cond do
+          ngap_failure? ->
+            "ping not attempted after the attach failure"
+
+          ping_failure? ->
+            "the declared ping target #{session_profile["expect_ping_target"] || "unknown"} did not answer"
+
+          true ->
+            nil
+        end
     })
   end
 
-  defp maybe_put_session_status(payload, _phase, _change, _replacement), do: payload
+  defp maybe_put_pdu_session_and_ping_status(payload, _phase, _change, _replacement),
+    do: payload
 
   defp maybe_put_user_plane_interfaces(payload, phase, %Change{} = change)
        when phase in [:verify, :observe, :capture_artifacts] do
     interface_status = Map.get(payload, :interface_status, %{})
+    ngap_failure? = ngap_registration_failure?(change)
 
     {f1_u, gtpu} =
       cond do
+        ngap_failure? ->
+          {
+            %{
+              status: "pending",
+              evidence_ref:
+                replacement_declared_evidence_ref(change, :pdu_session, phase, "f1_u"),
+              reason: "user-plane was not exercised"
+            },
+            %{
+              status: "pending",
+              evidence_ref:
+                replacement_declared_evidence_ref(change, :pdu_session, phase, "gtpu"),
+              reason: "session establishment and ping were not reached"
+            }
+          }
+
         phase == :verify and not user_plane_ping_failure?(change) ->
           {
             %{
               status: "ok",
-              evidence_ref: replacement_evidence_ref(:verify, change, "f1_u"),
+              evidence_ref:
+                replacement_declared_evidence_ref(change, :pdu_session, :verify, "f1_u"),
               reason: nil
             },
             %{
               status: "ok",
-              evidence_ref: replacement_evidence_ref(:verify, change, "gtpu"),
+              evidence_ref:
+                replacement_declared_evidence_ref(change, :pdu_session, :verify, "gtpu"),
               reason: nil
             }
           }
@@ -1441,12 +1661,12 @@ defmodule RanActionGateway.Runner do
           {
             %{
               status: "degraded",
-              evidence_ref: replacement_evidence_ref(phase, change, "f1_u"),
+              evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "f1_u"),
               reason: "forwarding state does not yet prove the declared attach-plus-ping path"
             },
             %{
               status: "degraded",
-              evidence_ref: replacement_evidence_ref(phase, change, "gtpu"),
+              evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "gtpu"),
               reason: "tunnel evidence exists, but end-to-end reachability did not complete"
             }
           }
@@ -1474,7 +1694,8 @@ defmodule RanActionGateway.Runner do
     if user_plane_ping_failure?(change) do
       Map.put(payload, :rollback_status, %{
         status: "pending",
-        evidence_ref: replacement_evidence_ref(:observe, change, "rollback-evidence"),
+        evidence_ref:
+          replacement_declared_evidence_ref(change, :rollback, :observe, "rollback-evidence"),
         reason: "rollback is available while the user-plane route remains unresolved"
       })
     else
@@ -1505,11 +1726,22 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_attach_status(payload, phase, %Change{} = change, replacement, status) do
     if Enum.member?(replacement["acceptance_gates"] || [], "registration") do
+      ngap_failure? = ngap_registration_failure?(change)
+
       Map.put(payload, :attach_status, %{
-        status: if(status == "failed", do: "pending", else: "ok"),
-        evidence_ref: replacement_evidence_ref(phase, change, "attach"),
+        status:
+          cond do
+            ngap_failure? -> "failed"
+            status == "failed" -> "pending"
+            true -> "ok"
+          end,
+        evidence_ref: replacement_declared_evidence_ref(change, :attach, phase, "attach"),
         reason:
-          if(status == "failed", do: "replacement attach path is not yet fully proven", else: nil)
+          cond do
+            ngap_failure? -> "attach did not progress beyond the NGAP registration stage"
+            status == "failed" -> "replacement attach path is not yet fully proven"
+            true -> nil
+          end
       })
     else
       payload
@@ -1566,7 +1798,12 @@ defmodule RanActionGateway.Runner do
       :rollback_status,
       review_status(
         "pending",
-        replacement_evidence_ref(:capture_artifacts, change, "rollback-evidence"),
+        replacement_declared_evidence_ref(
+          change,
+          :rollback,
+          :capture_artifacts,
+          "rollback-evidence"
+        ),
         "rollback is available but has not yet been executed"
       )
     )
@@ -1616,7 +1853,7 @@ defmodule RanActionGateway.Runner do
       :rollback_status,
       review_status(
         "ok",
-        replacement_evidence_ref(:rollback, change, "post-rollback-verify"),
+        replacement_declared_evidence_ref(change, :rollback, :rollback, "post-rollback-verify"),
         "rollback target restored and verified"
       )
     )
@@ -1698,6 +1935,39 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_append_check(checks, true, check), do: checks ++ [check]
   defp maybe_append_check(checks, false, _check), do: checks
+
+  defp maybe_put_declared_replacement_artifacts(payload, phase, %Change{} = change) do
+    refs = replacement_artifacts_for_phase(phase, change)
+
+    if refs == [] do
+      payload
+    else
+      Map.update(payload, :artifacts, refs, fn artifacts -> Enum.uniq(artifacts ++ refs) end)
+    end
+  end
+
+  defp replacement_artifacts_for_phase(phase, %Change{} = change) do
+    refs = replacement_declared_evidence_refs(change)
+
+    lane_refs =
+      [refs.attach, refs.registration, refs.pdu_session, refs.ping]
+      |> Enum.reject(&is_nil/1)
+
+    rollback_refs =
+      [refs.rollback]
+      |> Enum.reject(&is_nil/1)
+
+    cond do
+      change.scope == "ue_session" and phase in [:verify, :observe, :capture_artifacts] ->
+        lane_refs
+
+      change.scope == "replacement_cutover" and phase in [:observe, :capture_artifacts, :rollback] ->
+        lane_refs ++ rollback_refs
+
+      true ->
+        []
+    end
+  end
 
   defp replacement_virtual_plan(%Change{} = change) do
     %{
@@ -2202,6 +2472,7 @@ defmodule RanActionGateway.Runner do
       }
     }
     |> put_optional(:review, review)
+    |> put_optional(:declared_lane_evidence, replacement_capture_evidence_bundle(change))
   end
 
   defp existing_path(nil), do: nil
@@ -2230,6 +2501,27 @@ defmodule RanActionGateway.Runner do
     |> Path.join("*.conf")
     |> Path.wildcard()
     |> Enum.sort()
+  end
+
+  defp replacement_capture_evidence_bundle(%Change{} = change) do
+    refs = replacement_declared_evidence_refs(change)
+
+    evidence = %{
+      target_profile: replacement_metadata(change)["target_profile"],
+      attach_ref: refs.attach,
+      registration_ref: refs.registration,
+      pdu_session_ref: refs.pdu_session,
+      ping_ref: refs.ping,
+      rollback_ref: refs.rollback
+    }
+
+    if Enum.any?(Map.delete(evidence, :target_profile), fn {_key, value} ->
+         is_binary(value) and value != ""
+       end) do
+      evidence
+    else
+      nil
+    end
   end
 
   defp recent_change_refs(limit) do

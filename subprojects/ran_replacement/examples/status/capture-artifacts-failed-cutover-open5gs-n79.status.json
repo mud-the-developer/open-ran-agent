@@ -20,7 +20,12 @@
   "artifacts": [
     "subprojects/ran_replacement/examples/artifacts/compare-report-registration-rejected-open5gs-n79.json",
     "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
-    "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json"
+    "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
   ],
   "suggested_next": [
     "inspect the compare report before another replacement mutation",
@@ -61,13 +66,13 @@
   ],
   "rollback_status": {
     "status": "pending",
-    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/rollback-evidence.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "reason": "rollback is available but has not yet been executed"
   },
   "gate_class": "blocked",
   "release_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ue-context-release.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "reason": null
   },
   "ngap_procedure_trace": {
@@ -76,31 +81,31 @@
       {
         "name": "NG Setup",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ngap-setup.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the declared Open5GS AMF accepted the NG setup handshake"
       },
       {
         "name": "Initial UE Message",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/initial-ue-message.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
       },
       {
         "name": "Uplink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/uplink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "uplink NAS transport carried the registration request toward the declared core profile"
       },
       {
         "name": "Downlink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/downlink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
       },
       {
         "name": "UE Context Release",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ue-context-release.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "UE context release completed and the cleanup state is auditable"
       }
     ]
@@ -108,7 +113,7 @@
   "interface_status": {
     "ngap": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ngap.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": null
     },
     "f1_c": {

@@ -89,7 +89,7 @@
   },
   "rollback_status": {
     "status": "pending",
-    "evidence_ref": "subprojects/ran_replacement/examples/artifacts/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "reason": "rollback is available but not yet executed"
   },
   "failure_class": "cutover_or_rollback_failure",

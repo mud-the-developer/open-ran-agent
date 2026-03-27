@@ -21,7 +21,12 @@
   "artifacts": [
     "artifacts/replacement/rollback/rollback-plan.json",
     "artifacts/replacement/rollback/post-rollback-verify.json",
-    "artifacts/replacement/rollback/debug-pack.txt"
+    "artifacts/replacement/rollback/debug-pack.txt",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
   ],
   "suggested_next": [
     "review the compare report that triggered rollback",
@@ -47,13 +52,13 @@
   ],
   "rollback_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/post-rollback-verify.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "reason": "rollback target restored and verified"
   },
   "interface_status": {
     "ngap": {
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/ngap.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": null
     },
     "f1_c": {

@@ -37,10 +37,10 @@
   "approval_required": false,
   "rollback_available": true,
   "artifacts": [
-    "artifacts/replacement/observe/registration-rejected/ngap.json",
-    "artifacts/replacement/observe/registration-rejected/core.log",
-    "artifacts/replacement/observe/registration-rejected/attach.json",
-    "artifacts/replacement/observe/registration-rejected/ue-context-release.json"
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
   ],
   "suggested_next": [
     "capture artifacts for the registration rejection",
@@ -77,19 +77,19 @@
   "plane_status": {
     "c_plane": {
       "status": "failed",
-      "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": "registration did not progress to acceptance on the NGAP-facing edge"
     },
     "u_plane": {
       "status": "blocked",
-      "evidence_ref": "artifacts/replacement/observe/registration-rejected/gtpu.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": "user-plane was not reached after the control-plane rejection"
     }
   },
   "interface_status": {
     "ngap": {
       "status": "failed",
-      "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
       "reason": "the last observed NGAP procedure ended in registration rejection"
     },
     "f1_c": {
@@ -104,18 +104,18 @@
     },
     "f1_u": {
       "status": "pending",
-      "evidence_ref": "artifacts/replacement/observe/registration-rejected/f1-u.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
       "reason": "user-plane was not exercised"
     },
     "gtpu": {
       "status": "pending",
-      "evidence_ref": "artifacts/replacement/observe/registration-rejected/gtpu.json",
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
       "reason": "session establishment and ping were not reached"
     }
   },
   "core_link_status": {
     "status": "failed",
-    "evidence_ref": "artifacts/replacement/observe/registration-rejected/core.log",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "reason": "the real Open5GS core rejected the declared subscriber or identity context"
   },
   "ngap_procedure_trace": {
@@ -124,53 +124,53 @@
       {
         "name": "NG Setup",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/observe/registration-rejected/ngap-setup.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the declared AMF accepted NG setup before registration began"
       },
       {
         "name": "Initial UE Message",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/observe/registration-rejected/initial-ue-message.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the first UE-originated NAS message reached the NGAP-facing edge"
       },
       {
         "name": "Uplink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/observe/registration-rejected/uplink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "uplink NAS transport carried the registration request to the real core"
       },
       {
         "name": "Downlink NAS Transport",
         "status": "failed",
-        "evidence_ref": "artifacts/replacement/observe/registration-rejected/downlink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "downlink NAS transport returned a registration rejection from the declared core profile"
       },
       {
         "name": "UE Context Release",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/observe/registration-rejected/ue-context-release.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "UE context release completed and the cleanup state is auditable"
       }
     ]
   },
   "attach_status": {
     "status": "failed",
-    "evidence_ref": "artifacts/replacement/observe/registration-rejected/attach.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
     "reason": "attach did not progress beyond the NGAP registration stage"
   },
   "pdu_session_status": {
     "status": "pending",
-    "evidence_ref": "artifacts/replacement/observe/registration-rejected/pdu-session.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
     "reason": "session setup not reached after the NGAP rejection"
   },
   "ping_status": {
     "status": "pending",
-    "evidence_ref": "artifacts/replacement/observe/registration-rejected/ping.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
     "reason": "ping not attempted after the attach failure"
   },
   "release_status": {
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/observe/registration-rejected/ue-context-release.json",
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "reason": null
   },
   "failure_class": "core_failure",
