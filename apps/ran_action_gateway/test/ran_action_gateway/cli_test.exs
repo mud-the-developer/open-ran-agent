@@ -227,11 +227,11 @@ defmodule RanActionGateway.CLITest do
       assert Enum.all?(precheck.artifacts, &File.exists?/1)
       assert File.exists?(Store.precheck_path("chg-ran-repl-precheck-001"))
 
-      assert get_in(precheck, [:core_link_status, :evidence_ref]) =~
-               "artifacts/replacement/precheck/"
+      assert get_in(precheck, [:core_link_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/precheck/"
+      assert get_in(precheck, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
       assert get_in(precheck, [:plane_status, :s_plane, :status]) == "blocked"
       assert get_in(precheck, [:plane_status, :m_plane, :status]) == "ok"
@@ -283,24 +283,35 @@ defmodule RanActionGateway.CLITest do
 
       assert verify.gate_class in ["degraded", "pass"]
 
-      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/verify/"
+      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:core_link_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
 
       assert get_in(verify, [:plane_status, :u_plane, :status]) == "ok"
-      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) =~ "/user-plane.json"
+
+      assert get_in(verify, [:plane_status, :u_plane, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+
       assert get_in(verify, [:session_status, :status]) == "established"
       assert get_in(verify, [:session_status, :pdu_type]) == "ipv4"
       assert get_in(verify, [:session_status, :ping_target]) == "8.8.8.8"
       assert get_in(verify, [:session_status, :evidence_ref]) =~ "/session.json"
+
       assert get_in(verify, [:pdu_session_status, :status]) == "ok"
-      assert get_in(verify, [:pdu_session_status, :evidence_ref]) =~ "/pdu-session.json"
+
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+
       assert get_in(verify, [:ping_status, :status]) == "ok"
-      assert get_in(verify, [:ping_status, :evidence_ref]) =~ "/ping.json"
+
+      assert get_in(verify, [:ping_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+
       assert get_in(verify, [:interface_status, "f1_u", :status]) == "ok"
       assert get_in(verify, [:interface_status, "gtpu", :status]) == "ok"
       assert verify.summary =~ "UE attach, PDU session, and ping are all proven"
@@ -325,7 +336,18 @@ defmodule RanActionGateway.CLITest do
                procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
              end)
 
-      assert get_in(verify, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+      assert get_in(verify, [:release_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+
+      assert Enum.all?(
+               [
+                 "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+                 "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+                 "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+                 "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+               ],
+               &(&1 in verify.artifacts)
+             )
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
       assert capture.status == "ok"
@@ -452,14 +474,14 @@ defmodule RanActionGateway.CLITest do
       assert observe.core_profile == "open5gs_nsa_lab_v1"
       assert observe.gate_class == "degraded"
 
-      assert get_in(observe, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/observe/"
+      assert get_in(observe, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(observe, [:core_link_status, :evidence_ref]) =~
-               "artifacts/replacement/observe/"
+      assert get_in(observe, [:core_link_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(observe, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(observe, [:attach_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
 
       assert observe.ngap_procedure_trace.last_observed == "UE Context Release"
 
@@ -475,7 +497,8 @@ defmodule RanActionGateway.CLITest do
                procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
              end)
 
-      assert get_in(observe, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+      assert get_in(observe, [:release_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
     end)
   end
 
@@ -499,7 +522,9 @@ defmodule RanActionGateway.CLITest do
       assert capture.rollback_target == "oai_reference"
       assert capture.rollback_available == true
       assert capture.ngap_procedure_trace.last_observed == "UE Context Release"
-      assert get_in(capture, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+
+      assert get_in(capture, [:release_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
       assert Map.new(capture.ngap_procedure_trace.procedures, &{&1.name, &1.status}) == %{
                "NG Setup" => "ok",
@@ -516,6 +541,12 @@ defmodule RanActionGateway.CLITest do
       assert Enum.any?(capture.checks, fn check ->
                check["name"] == "UE Context Release" and check["status"] == "ok"
              end)
+
+      assert get_in(capture, [:bundle, :declared_lane_evidence, :attach_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
+
+      assert get_in(capture, [:bundle, :declared_lane_evidence, :registration_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
     end)
   end
 
@@ -634,8 +665,8 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(observe, [:rollback_status, :status]) == "pending"
 
-      assert get_in(observe, [:rollback_status, :evidence_ref]) =~
-               "/rollback-evidence"
+      assert get_in(observe, [:rollback_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
 
       assert get_in(observe, [:rollback_status, :reason]) =~
                "rollback is available but not yet executed"
@@ -660,13 +691,20 @@ defmodule RanActionGateway.CLITest do
       assert verify.core_profile == "open5gs_nsa_lab_v1"
       assert verify.gate_class in ["degraded", "pass"]
 
-      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/verify/"
+      assert get_in(verify, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(verify, [:core_link_status, :evidence_ref]) =~ "artifacts/replacement/verify/"
+      assert get_in(verify, [:core_link_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(verify, [:attach_status, :evidence_ref]) =~
-               "/attach.json"
+      assert get_in(verify, [:attach_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
+
+      assert get_in(verify, [:pdu_session_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+
+      assert get_in(verify, [:ping_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
 
       assert verify.ngap_procedure_trace.last_observed == "UE Context Release"
 
@@ -701,8 +739,16 @@ defmodule RanActionGateway.CLITest do
       assert observe.failure_class == "user_plane_failure"
       assert observe.summary =~ "ping diverged on the declared route"
       assert get_in(observe, [:plane_status, :u_plane, :status]) == "degraded"
-      assert get_in(observe, [:session_status, :status]) == "established_but_ping_failed"
-      assert get_in(observe, [:session_status, :ping_target]) == "8.8.8.8"
+      assert get_in(observe, [:pdu_session_status, :status]) == "ok"
+
+      assert get_in(observe, [:pdu_session_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
+
+      assert get_in(observe, [:ping_status, :status]) == "failed"
+
+      assert get_in(observe, [:ping_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+
       assert get_in(observe, [:interface_status, "f1_u", :status]) == "degraded"
       assert get_in(observe, [:interface_status, "gtpu", :status]) == "degraded"
       assert get_in(observe, [:rollback_status, :status]) == "pending"
@@ -722,7 +768,8 @@ defmodule RanActionGateway.CLITest do
       assert capture.failure_class == "user_plane_failure"
       assert capture.summary =~ "user-plane evidence bundle after ping failed"
       assert get_in(capture, [:plane_status, :u_plane, :status]) == "degraded"
-      assert get_in(capture, [:session_status, :status]) == "established_but_ping_failed"
+      assert get_in(capture, [:pdu_session_status, :status]) == "ok"
+      assert get_in(capture, [:ping_status, :status]) == "failed"
       assert get_in(capture, [:interface_status, "f1_u", :status]) == "degraded"
       assert get_in(capture, [:interface_status, "gtpu", :status]) == "degraded"
       assert get_in(capture, [:rollback_status, :status]) == "pending"
@@ -755,12 +802,17 @@ defmodule RanActionGateway.CLITest do
 
       assert "inspect the compare report before another replacement mutation" in capture.suggested_next
 
-      assert get_in(capture, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/capture/"
+      assert get_in(capture, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(capture, [:release_status, :evidence_ref]) =~ "/ue-context-release.json"
+      assert get_in(capture, [:release_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+
       assert get_in(capture, [:rollback_status, :status]) == "pending"
-      assert get_in(capture, [:rollback_status, :evidence_ref]) =~ "/rollback-evidence.json"
+
+      assert get_in(capture, [:rollback_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+
       assert get_in(capture, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
 
       assert Enum.any?(
@@ -797,10 +849,12 @@ defmodule RanActionGateway.CLITest do
       assert rollback.conformance_claim.evidence_tier == "milestone_proof"
       assert "review the compare report that triggered rollback" in rollback.suggested_next
       assert get_in(rollback, [:rollback_status, :status]) == "ok"
-      assert get_in(rollback, [:rollback_status, :evidence_ref]) =~ "/post-rollback-verify.json"
 
-      assert get_in(rollback, [:interface_status, "ngap", :evidence_ref]) =~
-               "artifacts/replacement/rollback/"
+      assert get_in(rollback, [:rollback_status, :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+
+      assert get_in(rollback, [:interface_status, "ngap", :evidence_ref]) ==
+               "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
       assert get_in(rollback, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
 

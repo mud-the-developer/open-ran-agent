@@ -52,6 +52,9 @@
     "subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json",
     "subprojects/ran_replacement/examples/ranctl/observe-ping-failed-open5gs-n79.json",
     "subprojects/ran_replacement/examples/ranctl/capture-artifacts-ping-failed-open5gs-n79.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
     "subprojects/ran_replacement/notes/08-f1-u-and-gtpu-standards-subset.md",
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
   ],

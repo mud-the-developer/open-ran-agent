@@ -26,13 +26,13 @@
   },
   "evidence_refs": [
     "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "artifacts/captures/inc-ran-repl-cutover-001.json",
-    "artifacts/captures/inc-ran-repl-cutover-001-request.json",
-    "artifacts/captures/inc-ran-repl-cutover-001-rollback-evidence.json",
-    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/attach.json",
-    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/registration.json",
-    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/pdu-session.json",
-    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ping.json"
+    "artifacts/captures/inc-ran-repl-cutover-001-request.json"
   ],
   "rollback_id": "rbk-chg-ran-repl-capture-cutover-001",
   "rollback_reason": "The captured mismatch keeps rollback explicit until the lane is corrected.",

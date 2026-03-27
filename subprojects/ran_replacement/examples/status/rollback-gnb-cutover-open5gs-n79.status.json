@@ -62,19 +62,14 @@
     "artifacts/changes/chg-ran-repl-rollback-001.json",
     "artifacts/approvals/chg-ran-repl-rollback-001-rollback.json",
     "artifacts/rollback_plans/chg-ran-repl-rollback-001.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/rollback-evidence.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/attach.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap-setup.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/initial-ue-message.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/uplink-nas-transport.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/downlink-nas-transport.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gnb-n79-lab-01.json"
   ],
   "suggested_next": [
@@ -123,33 +118,33 @@
     "f1_u": {
       "reason": null,
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json"
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
     },
     "gtpu": {
       "reason": null,
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json"
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json"
     },
     "ngap": {
       "reason": null,
       "status": "ok",
-      "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json"
+      "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
     }
   },
   "attach_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/attach.json"
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json"
   },
   "release_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json"
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
   },
   "rollback_status": {
     "reason": "rollback target restored and verified",
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json"
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
   },
   "ngap_procedure_trace": {
     "last_observed": "UE Context Release",
@@ -157,31 +152,31 @@
       {
         "name": "NG Setup",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap-setup.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the declared Open5GS AMF accepted the NG setup handshake"
       },
       {
         "name": "Initial UE Message",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/initial-ue-message.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "the first UE-originated NAS message reached the declared NGAP-facing lane"
       },
       {
         "name": "Uplink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/uplink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "uplink NAS transport carried the registration request toward the declared core profile"
       },
       {
         "name": "Downlink NAS Transport",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/downlink-nas-transport.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "downlink NAS transport carried the registration acceptance back toward the UE"
       },
       {
         "name": "UE Context Release",
         "status": "ok",
-        "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ue-context-release.json",
+        "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "UE context release completed and the cleanup state is auditable"
       }
     ]
@@ -189,6 +184,6 @@
   "core_link_status": {
     "reason": null,
     "status": "ok",
-    "evidence_ref": "artifacts/replacement/rollback/chg-ran-repl-rollback-001/core-link.json"
+    "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
   }
 }
