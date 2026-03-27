@@ -17,9 +17,16 @@ The goal is not full `F1-C` or `E1AP` parity. The goal is to make the exact supp
 | `F1-C` cell and serving-cell control | Own the cell-state transitions needed for bring-up and stable attach. | Required | Cell state, activation markers, readiness checks, operator-facing state. | Required. Cell bring-up and cell drain must both be observable. |
 | `F1-C` UE context creation | Create the UE context needed for access and registration progress. | Required | UE context identifiers, context state, attach progress markers. | Required. Context creation failure must cleanly release partial state. |
 | `F1-C` UE context release | Release UE state after failure, cleanup, or cutover. | Required | Release markers, context teardown evidence, failure cause. | Required. This is the primary cleanup path for rollback. |
+| `F1-C` UE context modification | Adjust the declared UE context without widening scope beyond the single-UE lane. | Optional | Modification markers, delta summary, and evidence that the post-change state still matches the target profile. | Medium. Useful when attach or rollback-safe cleanup needs a bounded context update. |
+| `F1-C` reset-driven recovery | Provide a bounded escape hatch when the control-plane relationship is stale or half-open. | Optional | Explicit reset intent, post-reset peer state, and cleanup evidence that shows whether the lane returned to a known-safe state. | High. Must stay explicit because it is a recovery tool, not a happy-path milestone gate. |
+| `F1-C` handover context transfer | Move UE control between DU or cell contexts. | Deferred | None for milestone 1 beyond a non-claim entry in the support matrix. | Low. Outside the single-cell, single-DU lane. |
+| `F1-C` multi-DU context coordination | Coordinate UE state across more than one DU ownership boundary. | Deferred | None for milestone 1. | Low. Topology expansion work must stay separate from the declared lane. |
 | `E1AP` association and setup | Establish the CU-CP and CU-UP control-plane relationship for the declared profile. | Required | Association state, peer identity, setup response, protocol health markers. | Required. Failed setup must not leave the data plane half-open. |
 | `E1AP` bearer or activity-state coordination | Coordinate control-plane state needed for registration and session establishment. | Required | Bearer/activity-state markers, session progression, control-plane health. | Required. A failed transition must be reversible. |
 | `E1AP` release and re-establishment | Support cutover, drain, and recovery behavior without hiding stale state. | Required | Release markers, re-establishment markers, peer state after transition. | Required. This is required for safe switchover and rollback. |
+| `E1AP` bearer context modification | Adjust the declared bearer state without widening scope beyond the single-session lane. | Optional | Modification markers, resulting bearer state, and evidence that the target session remains auditable. | Medium. Useful when the lane must explain a bounded bearer adjustment without claiming broad parity. |
+| `E1AP` multi-CU-UP path re-route | Re-anchor the user-plane relationship across CU-UP paths beyond the declared lane. | Deferred | None for milestone 1. | Low. Multi-path coordination is out of scope until topology expansion. |
+| `E1AP` handover bearer transfer | Carry bearer ownership through mobility-specific control-path changes. | Deferred | None for milestone 1. | Low. Mobility claims stay deferred outside the declared attach-plus-ping lane. |
 
 ## Evidence Expectations
 
@@ -36,6 +43,12 @@ The evidence surface should remain usable by:
 - the dashboard
 - incident review
 - later cutover readiness checks
+
+The support matrix should keep the classification explicit:
+
+- `required` procedures are the currently claimed control-plane subset for the declared lane
+- `optional` procedures may appear in evidence or recovery without becoming part of the required pass path
+- `deferred` procedures remain outside scope until separately evidenced on the same declared lane
 
 ## Rollback Relevance
 
@@ -61,4 +74,3 @@ This note does not claim:
 - vendor-specific extensions outside the supported subset
 - replacement of the real `Open5GS` core
 - RT hot-path implementation details
-
