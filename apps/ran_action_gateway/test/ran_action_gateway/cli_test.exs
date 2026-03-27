@@ -1144,6 +1144,87 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  @tag :runtime_contract
+  test "public OAI RFsim example requests use repo-local proof assets and expose simulation evidence",
+       %{tmp_dir: tmp_dir} do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    repo_root = Path.expand("../../../..", __DIR__)
+
+    load = fn name ->
+      Path.join(repo_root, "examples/ranctl/#{name}")
+      |> File.read!()
+      |> JSON.decode!()
+      |> absolutize_public_oai_paths(repo_root)
+    end
+
+    File.cd!(tmp_dir, fn ->
+      precheck_payload = load.("precheck-oai-du-docker.json") |> JSON.encode!()
+      apply_payload = load.("apply-oai-du-docker.json") |> JSON.encode!()
+      verify_payload = load.("verify-oai-du-docker.json") |> JSON.encode!()
+      rollback_payload = load.("rollback-oai-du-docker.json") |> JSON.encode!()
+
+      assert {:ok, precheck} = CLI.run(["precheck", "--json", precheck_payload])
+      assert precheck.status == "ok"
+      assert precheck.simulation_lane.claim_scope == "repo_local_simulation"
+      assert precheck.simulation_lane.live_lab_claim == false
+
+      assert Enum.any?(
+               precheck.checks,
+               &(&1["name"] == "simulation_attach_evidence_ready" and &1["status"] == "passed")
+             )
+
+      assert {:ok, %{status: "planned"}} = CLI.run(["plan", "--json", apply_payload])
+      assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", apply_payload])
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.status == "verified"
+      assert verify.simulation_lane.claim_scope == "repo_local_simulation"
+      assert get_in(verify, [:attach_status, :status]) == "ok"
+      assert get_in(verify, [:registration_status, :status]) == "ok"
+      assert get_in(verify, [:session_status, :status]) == "established"
+      assert get_in(verify, [:ping_status, :status]) == "ok"
+      assert File.exists?(get_in(verify, [:attach_status, :evidence_ref]))
+      assert File.exists?(get_in(verify, [:registration_status, :evidence_ref]))
+      assert File.exists?(get_in(verify, [:session_status, :evidence_ref]))
+      assert File.exists?(get_in(verify, [:ping_status, :evidence_ref]))
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
+      assert capture.status == "captured"
+
+      assert get_in(capture, [:bundle, :runtime, :simulation, :claim_scope]) ==
+               "repo_local_simulation"
+
+      assert get_in(capture, [:bundle, :runtime, :simulation, :attach]) =~ "attach.json"
+
+      assert get_in(capture, [:bundle, :runtime, :simulation, :registration]) =~
+               "registration.json"
+
+      assert get_in(capture, [:bundle, :runtime, :simulation, :session]) =~ "session.json"
+      assert get_in(capture, [:bundle, :runtime, :simulation, :ping]) =~ "ping.json"
+
+      assert {:ok, %{status: "rolled_back"}} = CLI.run(["rollback", "--json", rollback_payload])
+    end)
+  end
+
   test "apply rejects runtime drift when current runtime metadata no longer matches the plan", %{
     tmp_dir: tmp_dir
   } do
@@ -1539,6 +1620,38 @@ defmodule RanActionGateway.CLITest do
       },
       overrides
     )
+  end
+
+  defp absolutize_public_oai_paths(request, repo_root) do
+    request
+    |> update_path_group(["metadata", "oai_runtime"], repo_root, [
+      "repo_root",
+      "du_conf_path",
+      "cucp_conf_path",
+      "cuup_conf_path"
+    ])
+    |> update_path_group(["metadata", "oai_simulation"], repo_root, [
+      "ue_conf_path",
+      "attach_evidence_path",
+      "registration_evidence_path",
+      "session_evidence_path",
+      "ping_evidence_path"
+    ])
+  end
+
+  defp update_path_group(request, path, repo_root, keys) do
+    update_in(request, path, fn
+      %{} = group ->
+        Enum.reduce(keys, group, fn key, acc ->
+          case acc[key] do
+            value when is_binary(value) -> Map.put(acc, key, Path.expand(value, repo_root))
+            _ -> acc
+          end
+        end)
+
+      other ->
+        other
+    end)
   end
 
   defp build_runtime_fixture(tmp_dir) do

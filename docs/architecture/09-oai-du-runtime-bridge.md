@@ -5,12 +5,14 @@
 `ranctl` now includes a deterministic runtime bridge for OpenAirInterface DU bring-up. The bridge does not move slot-timed work into the BEAM. It only:
 
 - resolves an OAI runtime spec from `cell_group` defaults and request metadata
+- optionally validates repo-local UE/core/session rehearsal evidence through `metadata.oai_simulation`
 - renders a generated Docker Compose asset under `artifacts/runtime/<change_id>/`
 - overlays deterministic bridge networks so upstream OAI example confs can run without editing them in place
 - starts or stops an external OAI stack through `docker compose`
 - lints mounted OAI conf files for expected split and RFsim markers
 - optionally launches one `OAI NR UE` container when `metadata.oai_runtime.ue_conf_path` is present
 - captures logs and container state for verify and rollback
+- surfaces simulation-only attach, registration, session, and ping evidence refs without promoting them to live-lab proof
 
 ## Scope
 
@@ -23,6 +25,7 @@ The first executable path is intentionally narrow:
 - official Docker images
 - user-provided or repo-default OAI conf files used as inputs for generated overlay confs
 - generated overlay confs mounted read-only into the runtime containers
+- optional repo-local UE and simulated-core evidence files for reviewer-facing rehearsal proof
 
 This is a bridge to get a real DU process up from an OAI config with minimal repo-local runtime code.
 
@@ -31,6 +34,10 @@ The bridge now has a similar split to the native contract gateways: shared runti
 ## Request Model
 
 Runtime orchestration is opt-in through `metadata.oai_runtime`, and runtime-enabled lifecycle commands must also carry `metadata.runtime_contract`.
+
+Repo-local rehearsal proof is opt-in through `metadata.oai_simulation`. It never claims live-lab parity. Its only job is to keep UE attach plus simulated core/session evidence reviewer-visible while the lane is still bounded to RFsim.
+
+Repo-visible UE runtime bring-up is separately opt-in through `metadata.oai_runtime.ue_conf_path`. That path launches a bounded `OAI NR UE` beside the split stack so attach or registration failures can be isolated to a concrete runtime or protocol step.
 
 ```json
 {
@@ -59,13 +66,19 @@ Runtime orchestration is opt-in through `metadata.oai_runtime`, and runtime-enab
       "runtime_mode": "docker_compose_rfsim_f1"
     },
     "oai_runtime": {
-      "repo_root": "/opt/openairinterface5g",
-      "du_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-du.sa.band78.106prb.rfsim.conf",
-      "cucp_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cucp.sa.f1.conf",
-      "cuup_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/gnb-cuup.sa.f1.conf",
-      "ue_conf_path": "/opt/openairinterface5g/ci-scripts/conf_files/nrue.uicc.conf",
+      "repo_root": "examples/oai",
+      "du_conf_path": "examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example",
+      "cucp_conf_path": "examples/oai/gnb-cucp.sa.f1.conf.example",
+      "cuup_conf_path": "examples/oai/gnb-cuup.sa.f1.conf.example",
       "project_name": "ran-oai-du-cg-001",
       "pull_images": true
+    },
+    "oai_simulation": {
+      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
+      "attach_evidence_path": "examples/oai/simulation/attach.json",
+      "registration_evidence_path": "examples/oai/simulation/registration.json",
+      "session_evidence_path": "examples/oai/simulation/session.json",
+      "ping_evidence_path": "examples/oai/simulation/ping.json"
     }
   }
 }
@@ -80,12 +93,19 @@ For a runtime-enabled change, `plan` now materializes:
 - `artifacts/runtime/<change_id>/conf/du.conf`
 - `artifacts/runtime/<change_id>/conf/cucp.conf`
 - `artifacts/runtime/<change_id>/conf/cuup.conf`
+- `artifacts/runtime/<change_id>/conf/ue.conf` when `metadata.oai_runtime.ue_conf_path` is present
 
 The plan artifact also persists a `runtime_contract` snapshot with the requested contract fields, the resolved runtime mode, a deterministic runtime digest, and the current release-readiness snapshot. `apply`, `verify`, and `rollback` compare the current request against that planned snapshot before they touch runtime actions.
 
 `verify` and `capture-artifacts` also write:
 
 - `artifacts/runtime/<change_id>/logs/<container>.log`
+
+When `metadata.oai_simulation` is present, `verify` and `capture-artifacts` also surface:
+
+- `simulation_lane` metadata on the command result
+- top-level `attach_status`, `registration_status`, `session_status`, and `ping_status`
+- `bundle.runtime.simulation.*` refs inside the capture bundle
 
 The generated Compose asset uses absolute host paths for these overlay confs so the same plan artifact can be re-applied deterministically.
 
@@ -109,6 +129,8 @@ The generated Compose asset uses absolute host paths for these overlay confs so 
 - DU conf exposes patch points for `local_n_address` and `remote_n_address`
 - CUCP conf exposes patch points for `local_s_address`, `ipv4_cucp`, and `GNB_IPV4_ADDRESS_FOR_NG_AMF`
 - CUUP conf exposes patch points for `local_s_address`, `remote_s_address`, `ipv4_cucp`, `ipv4_cuup`, `GNB_IPV4_ADDRESS_FOR_NG_AMF`, and `GNB_IPV4_ADDRESS_FOR_NGU`
+- UE conf presence plus `imsi` and `pdu_sessions` declarations when `metadata.oai_simulation` is present
+- attach, registration, session, and ping evidence file readiness when `metadata.oai_simulation` is present
 
 If any required patch point is missing, `plan` fails with `runtime_conf_patch_failed` instead of mutating the source conf in place or generating an ambiguous runtime overlay.
 
@@ -129,6 +151,8 @@ and the request set:
 - `examples/ranctl/apply-oai-du-ue-repo-local.json`
 - `examples/ranctl/verify-oai-du-ue-repo-local.json`
 - `examples/ranctl/rollback-oai-du-ue-repo-local.json`
+
+The repo-local public examples already point at `examples/oai/*.example` so the documented RFsim split lane can be exercised from the checkout without `/opt/openairinterface5g`.
 
 Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 
@@ -153,11 +177,19 @@ Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-t
 This matters for long-running containers where startup strings may have rotated out of the captured tail but the DU is still clearly active.
 
 This is enough to prove DU process bring-up, split control-plane wiring, and a repo-visible OAI UE launch path. It is not, by itself, a full attach-path success claim: if no reachable AMF/core is present, `verify` still captures the CUCP and UE logs so the failure can be pinned to NGAP/registration rather than generic setup.
+When `metadata.oai_simulation` is present, `verify` also exposes:
+
+- UE attach evidence ref
+- registration evidence ref
+- session evidence ref
+- ping evidence ref
+
+These simulation refs are intentionally tagged as `repo_local_simulation` and `live_lab_claim=false`. They are rehearsal proof only, not a replacement for real-core or live-lab evidence.
 
 ## Deferred Work
 
 - source-built `nr-softmodem` path alongside Docker
-- CUCP to AMF readiness verification
-- bundled core bring-up plus attach/ping success verification
+- real core or AMF readiness verification beyond the current repo-local blocker capture
+- bundled core bring-up plus attach/ping success verification beyond the repo-local rehearsal lane
 - config linting for OAI-specific address mismatches beyond the current split and RFsim markers
 - support for USRP and 7.2x FH profiles

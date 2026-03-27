@@ -1,0 +1,6 @@
+{
+  "kind": "registration",
+  "status": "ok",
+  "summary": "Simulated core accepted UE registration on the repo-local split RFsim lane.",
+  "amf": "sim-amf-rfsim"
+}
