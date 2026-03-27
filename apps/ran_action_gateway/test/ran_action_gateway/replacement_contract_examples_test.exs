@@ -30,7 +30,7 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "NGAP" in compatibility["required_io_surfaces"]
     assert "GTP-U" in compatibility["required_io_surfaces"]
 
-    assert "the current target profile does not claim multi-cell or multi-DU parity" in compatibility[
+    assert "the current target profile does not claim multi-cell, multi-DU, multi-UE, or mobility parity" in compatibility[
              "declared_deviations"
            ]
 
@@ -101,7 +101,7 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "remote-run summary" in compatibility["operator_surfaces"]
   end
 
-  test "repo-visible docs keep runtime support posture explicit" do
+  test "repo-visible docs keep runtime support posture and topology decomposition explicit" do
     readme = repo_path("README.md") |> File.read!()
     overview = repo_path("docs/architecture/00-system-overview.md") |> File.read!()
 
@@ -119,28 +119,85 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
 
     replacement_readme = repo_path("subprojects/ran_replacement/README.md") |> File.read!()
 
+    topology_note =
+      repo_path("subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md")
+      |> File.read!()
+
     assert readme =~ "Runtime lanes with repo-visible proof are explicit and reviewable"
     assert readme =~ "`aerial_clean_room_runtime_v1`"
     assert readme =~ "`cumac_scheduler_clean_room_runtime_v1`"
-    assert readme =~ "`YON-60`"
+    assert readme =~ "`YON-66`"
     assert readme =~ "Declared live protocol lane"
+    assert readme =~ "Roadmap-only interoperability lanes"
     assert overview =~ "evidence-backed runtime lanes"
-    assert overview =~ "bounded clean-room `aerial_clean_room_runtime_v1` gateway lane"
+    assert overview =~ "`YON-66`"
     assert contract =~ "bounded clean-room runtime support surface"
     assert contract =~ "`aerial_clean_room_runtime_v1`"
     assert contract =~ "`cumac_scheduler_clean_room_runtime_v1`"
+    assert contract =~ "`YON-66`"
     assert posture =~ "Live-lab validated declared lane"
     assert posture =~ "Bounded clean-room runtime support"
     assert posture =~ "Bounded clean-room scheduler support"
     assert posture =~ "schema-backed family bundle"
     assert posture =~ "support-matrix delta"
+    assert posture =~ "Topology-scale claim lanes"
+    assert posture =~ "YON-66"
     assert roadmap =~ "Evidence-backed Runtime Lanes"
     assert roadmap =~ "| `Aerial clean-room runtime` |"
     assert roadmap =~ "| `cuMAC clean-room scheduler` |"
     assert roadmap =~ "vendor-backed NVIDIA Aerial integration"
+    assert roadmap =~ "YON-66"
+    assert roadmap =~ "multi-UE"
+    assert roadmap =~ "mobility"
     assert replacement_readme =~ "schema-backed family bundle"
-    assert replacement_readme =~ "family-specific support-matrix delta"
+    assert replacement_readme =~ "YON-66"
+    assert topology_note =~ "`YON-60`"
+    assert topology_note =~ "`YON-66`"
+    assert topology_note =~ "profile-defined and testable"
+  end
+
+  test "topology-scope examples define bounded future lanes" do
+    multi_cell =
+      read_json(
+        "subprojects/ran_replacement/contracts/examples/topology-scope-multi-cell-v1.example.json"
+      )
+
+    multi_du =
+      read_json(
+        "subprojects/ran_replacement/contracts/examples/topology-scope-multi-du-v1.example.json"
+      )
+
+    multi_ue =
+      read_json(
+        "subprojects/ran_replacement/contracts/examples/topology-scope-multi-ue-v1.example.json"
+      )
+
+    mobility =
+      read_json(
+        "subprojects/ran_replacement/contracts/examples/topology-scope-mobility-v1.example.json"
+      )
+
+    assert multi_cell["scope_class"] == "multi_cell"
+    assert multi_cell["topology"]["cell_count"] == 2
+    assert multi_cell["status"] == "profile_defined_not_runtime_proven"
+
+    assert multi_du["scope_class"] == "multi_du"
+    assert multi_du["topology"]["du_count"] == 2
+
+    assert multi_ue["scope_class"] == "multi_ue"
+    assert multi_ue["topology"]["ue_count"] == 4
+
+    assert mobility["scope_class"] == "mobility"
+    assert mobility["topology"]["mobility_required"] == true
+    assert "no broad topology parity claim outside the declared profile" in mobility["non_claims"]
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)
+
+  defp read_json(path) do
+    path
+    |> repo_path()
+    |> File.read!()
+    |> JSON.decode!()
+  end
 end

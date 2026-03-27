@@ -101,7 +101,8 @@ The current support split is deliberate and evidence-backed:
   - vendor-backed `Aerial` device bring-up and attach validation
   - external `cuMAC` worker ownership and timing guarantees
   - broader profile expansion beyond the declared single-DU, single-cell,
-    single-UE lane, tracked in `YON-60`
+    single-UE lane, including multi-cell, multi-DU, multi-UE, and mobility,
+    decomposed under `YON-66`
 
 Use [docs/architecture/15-production-control-evidence-and-interoperability-lanes.md](docs/architecture/15-production-control-evidence-and-interoperability-lanes.md) for the parent-level posture map that ties those categories together.
 
@@ -560,7 +561,7 @@ Roadmap-only interoperability lanes:
 
 - `Aerial interoperability`: current hardened-now support stops at `aerial_fapi_profile` contract scaffolding, session lifecycle scaffolds, and host-probe gating. Promotion to a real interoperability claim is tracked in `YON-58`.
 - `cuMAC scheduler interoperability`: current hardened-now support stops at the `ran_scheduler_host` boundary and placeholder `cumac_scheduler` adapter surface. Promotion to a real interoperability claim is tracked in `YON-59`.
-- `Broader profile expansion`: current hardened-now support stops at the declared single-DU, single-cell, single-UE bootstrap lane and contract-only backend surfaces. Expansion to multi-cell, multi-DU, or broader vendor/profile coverage is tracked in `YON-60`.
+- `Broader profile expansion`: current hardened-now support stops at the declared single-DU, single-cell, single-UE bootstrap lane and contract-only backend surfaces. Expansion to multi-cell, multi-DU, multi-UE, mobility, or broader vendor/profile coverage is decomposed under `YON-66`.
 
 ## License
 

@@ -63,5 +63,5 @@ Those support claims stay narrow:
   claim external worker ownership, attach validation, or production timing
   guarantees.
 - broader profile expansion remains future work until any multi-cell, multi-DU,
-  or broader vendor/profile lane is separately proven. Track that decomposition
-  in `YON-60`.
+  multi-UE, mobility, or broader vendor/profile lane is separately proven.
+  Track that decomposition in `YON-66`.

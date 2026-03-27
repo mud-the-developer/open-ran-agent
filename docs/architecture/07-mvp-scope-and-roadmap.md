@@ -28,7 +28,7 @@ These lanes are current support claims with repo-visible proof:
 
 | Lane | Current support | Explicit non-claim |
 | --- | --- | --- |
-| `Declared live protocol lane` | `n79_single_ru_single_ue_lab_v1` has real target-host lifecycle, attach, registration, session, ping, and rollback evidence | no multi-cell, multi-DU, or broad profile parity claim |
+| `Declared live protocol lane` | `n79_single_ru_single_ue_lab_v1` has real target-host lifecycle, attach, registration, session, ping, and rollback evidence | no multi-cell, multi-DU, multi-UE, mobility, or broad profile parity claim |
 | `Aerial clean-room runtime` | `aerial_fapi_profile` supports `aerial_clean_room_runtime_v1` through shared Port runtime, strict host probes, and gateway lifecycle proof | no vendor device bring-up proof, no attach-plus-ping proof on Aerial, no production timing claim |
 | `cuMAC clean-room scheduler` | `cumac_scheduler` supports `cumac_scheduler_clean_room_runtime_v1` through executable slot plans, explicit CPU rollback target metadata, and cell-group-scoped ownership | no external scheduler worker proof, no attach validation claim, no production timing claim |
 
@@ -43,6 +43,11 @@ These remain future expansion lanes:
 - vendor-backed NVIDIA Aerial integration
 - external-worker cuMAC scheduler integration
 - live SCTP, NGAP, F1AP, E1AP, and GTP-U integration beyond the declared `n79` lane
+
+Broader profile expansion is decomposed under `YON-66` into separately
+evidenced topology-scope profiles for multi-cell, multi-DU, multi-UE, and
+mobility. Those profiles remain future-lane prerequisites until runtime proof
+exists for each scope.
 
 ## Out Of Scope For This Bootstrap
 

@@ -30,6 +30,7 @@ Current notes:
 - [15-dashboard-fixture-mapping.md](15-dashboard-fixture-mapping.md)
 - [16-milestone-3-live-lab-validation-lanes.md](16-milestone-3-live-lab-validation-lanes.md)
 - [17-n79-single-ru-open5gs-support-matrix-delta.md](17-n79-single-ru-open5gs-support-matrix-delta.md)
+- [17-topology-scale-claim-lanes.md](17-topology-scale-claim-lanes.md)
 
 Reading order:
 
@@ -47,3 +48,4 @@ Reading order:
 12. compare-report and rollback-evidence templates
 13. dashboard fixture mapping
 14. current-family support-matrix delta and evidence-bundle guardrails
+15. topology-scale claim lanes

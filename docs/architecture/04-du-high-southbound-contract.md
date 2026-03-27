@@ -166,9 +166,10 @@ not only a contract-validation placeholder. In this repository:
   `cumac_scheduler_clean_room_runtime_v1` lane: executable slot plans, replay
   metadata, explicit CPU rollback target metadata, and cell-group-scoped
   scheduler ownership are reviewable.
-- vendor-backed `Aerial` bring-up, external `cuMAC` workers, and expansion
-  beyond the current bootstrap profile set remain future work until they have
-  separate proof.
+- vendor-backed `Aerial` bring-up remains future work in `YON-58`; external
+  `cuMAC` workers remain future work in `YON-59`; expansion beyond the current
+  bootstrap profile set, including multi-cell, multi-DU, multi-UE, and
+  mobility, is decomposed under `YON-66` until it has separate proof.
 
 The shared native runtime lives under [native/common/contract_gateway](https://github.com/mud-the-developer/open-ran-agent/blob/main/native/common/contract_gateway/README.md). Adapter-local state machines live under:
 

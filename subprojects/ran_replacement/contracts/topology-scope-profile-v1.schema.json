@@ -1,0 +1,253 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/topology-scope-profile-v1.schema.json",
+  "title": "Topology Scope Profile v1",
+  "description": "Schema-backed future-lane profile for bounded topology expansion beyond the current single-lane replacement target. These profiles are reviewable and testable, but they are not by themselves proof of runtime support.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "scope_class",
+    "status",
+    "based_on_profile",
+    "topology",
+    "blast_radius",
+    "approval",
+    "rollback",
+    "evidence",
+    "validation",
+    "non_claims"
+  ],
+  "properties": {
+    "profile": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+_v1$"
+    },
+    "scope_class": {
+      "type": "string",
+      "enum": ["multi_cell", "multi_du", "multi_ue", "mobility"]
+    },
+    "status": {
+      "type": "string",
+      "const": "profile_defined_not_runtime_proven"
+    },
+    "based_on_profile": {
+      "type": "string",
+      "const": "n79_single_ru_single_ue_lab_v1"
+    },
+    "topology": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "band",
+        "du_count",
+        "cell_count",
+        "ue_count",
+        "mobility_required",
+        "summary"
+      ],
+      "properties": {
+        "band": {
+          "type": "string",
+          "const": "n79"
+        },
+        "du_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "cell_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ue_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mobility_required": {
+          "type": "boolean"
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "blast_radius": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_change_scope",
+        "isolated_failure_domains",
+        "operator_impact",
+        "blocked_until"
+      ],
+      "properties": {
+        "max_change_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "isolated_failure_domains": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "operator_impact": {
+          "type": "string",
+          "minLength": 1
+        },
+        "blocked_until": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required",
+        "approval_scope",
+        "required_checks",
+        "evidence_refs"
+      ],
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "const": true
+        },
+        "approval_scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "required_checks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "rollback": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_ref",
+        "restore_actions",
+        "rollback_triggers",
+        "rollback_evidence_ref"
+      ],
+      "properties": {
+        "target_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "restore_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_triggers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_evidence_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "required_artifacts",
+        "success_criteria",
+        "review_refs"
+      ],
+      "properties": {
+        "required_artifacts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "success_criteria": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "review_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repo_tests",
+        "manual_review"
+      ],
+      "properties": {
+        "repo_tests": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "manual_review": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "non_claims": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

@@ -126,5 +126,8 @@ It does not mean:
 - general `n79` support
 - multi-RU support
 - multi-cell support
+- multi-DU support
+- multi-UE support
 - handover support
+- mobility parity outside the declared attach-plus-ping lane
 - production parity for all labs

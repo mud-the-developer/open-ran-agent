@@ -1,0 +1,82 @@
+{
+  "profile": "n79_multi_ue_single_du_lab_v1",
+  "scope_class": "multi_ue",
+  "status": "profile_defined_not_runtime_proven",
+  "based_on_profile": "n79_single_ru_single_ue_lab_v1",
+  "topology": {
+    "band": "n79",
+    "du_count": 1,
+    "cell_count": 1,
+    "ue_count": 4,
+    "mobility_required": false,
+    "summary": "One DU and one cell serve a declared four-UE cohort with per-UE evidence and rollback visibility."
+  },
+  "blast_radius": {
+    "max_change_scope": "one named DU, one named cell, and the declared UE cohort",
+    "isolated_failure_domains": [
+      "cell_group:cg-001",
+      "scheduler:cpu_scheduler",
+      "ue-cohort:ue-001..ue-004"
+    ],
+    "operator_impact": "A bad change may impact the declared UE cohort, but it must not imply generalized scheduler or throughput parity.",
+    "blocked_until": [
+      "per-UE attach and session evidence is visible",
+      "single-UE fallback remains reviewable",
+      "scheduler saturation assumptions are called out explicitly"
+    ]
+  },
+  "approval": {
+    "required": true,
+    "approval_scope": "declared multi-UE cohort validation run",
+    "required_checks": [
+      "the UE cohort matches the profile",
+      "reviewers can inspect per-UE success and failure outcomes",
+      "the single-lane fallback path remains named"
+    ],
+    "evidence_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md",
+      "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
+    ]
+  },
+  "rollback": {
+    "target_ref": "oai_reference",
+    "restore_actions": [
+      "remove the additional UE state beyond the single-lane baseline",
+      "restore the single-UE attach-plus-ping path"
+    ],
+    "rollback_triggers": [
+      "one or more declared UEs cannot reach a clean verify state",
+      "scheduler or session state becomes non-auditable"
+    ],
+    "rollback_evidence_ref": "artifacts/replacement/topology_scopes/n79_multi_ue_single_du_lab_v1/rollback.json"
+  },
+  "evidence": {
+    "required_artifacts": [
+      "artifacts/replacement/topology_scopes/n79_multi_ue_single_du_lab_v1/precheck.json",
+      "artifacts/replacement/topology_scopes/n79_multi_ue_single_du_lab_v1/ue-cohort-summary.json",
+      "artifacts/replacement/topology_scopes/n79_multi_ue_single_du_lab_v1/rollback.json"
+    ],
+    "success_criteria": [
+      "each declared UE has explicit attach, session, and ping status",
+      "the rollback decision can be replayed for the whole cohort"
+    ],
+    "review_refs": [
+      "subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md#n79_multi_ue_single_du_lab_v1"
+    ]
+  },
+  "validation": {
+    "repo_tests": [
+      "npm run contracts:ran-replacement",
+      "mix test apps/ran_action_gateway/test/ran_action_gateway/replacement_contract_examples_test.exs"
+    ],
+    "manual_review": [
+      "confirm the repo still avoids throughput or scheduler timing claims"
+    ]
+  },
+  "non_claims": [
+    "no multi-cell parity claim",
+    "no multi-DU parity claim",
+    "no mobility parity claim",
+    "no broad topology parity claim outside the declared profile"
+  ]
+}

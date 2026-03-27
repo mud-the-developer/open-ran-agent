@@ -36,6 +36,8 @@ These contracts do not yet claim:
 
 - multi-cell parity
 - multi-DU parity
+- multi-UE parity
+- mobility parity
 - broad RU/core/vendor/profile parity outside that declared lane
 
 Current schema set:
@@ -44,7 +46,9 @@ Current schema set:
 - `ranctl-ran-replacement-status-v1.schema.json`
 - `n79-single-ru-target-profile-v1.schema.json`
 - `n79-single-ru-target-profile-overlay-v1.schema.json`
+- `topology-scope-profile-v1.schema.json`
 - `target-profile-family-bundle-v1.schema.json`
+- `topology-scope-profile-v1.schema.json`
 - `compare-report-v1.schema.json`
 - `rollback-evidence-v1.schema.json`
 - `open5gs-core-link-profile-v1.schema.json`
@@ -55,6 +59,8 @@ The immediate rule is simple:
 - keep the contracts additive to the existing `ranctl` model
 - do not hide runtime-only assumptions in unversioned notes
 - require a family bundle before any broader RU/core/profile claim leaves roadmap-only status
+- keep topology-scope contracts separate until runtime proof exists for each
+  future lane
 
 ## Compatibility Fields
 
@@ -78,8 +84,13 @@ Current draft files:
 - [n79-single-ru-target-profile-v1.schema.json](n79-single-ru-target-profile-v1.schema.json)
 - [n79-single-ru-target-profile-overlay-v1.schema.json](n79-single-ru-target-profile-overlay-v1.schema.json)
 - [target-profile-family-bundle-v1.schema.json](target-profile-family-bundle-v1.schema.json)
+- [topology-scope-profile-v1.schema.json](topology-scope-profile-v1.schema.json)
 - [examples/n79-single-ru-target-profile-v1.example.json](examples/n79-single-ru-target-profile-v1.example.json)
 - [examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
+- [examples/topology-scope-multi-cell-v1.example.json](examples/topology-scope-multi-cell-v1.example.json)
+- [examples/topology-scope-multi-du-v1.example.json](examples/topology-scope-multi-du-v1.example.json)
+- [examples/topology-scope-multi-ue-v1.example.json](examples/topology-scope-multi-ue-v1.example.json)
+- [examples/topology-scope-mobility-v1.example.json](examples/topology-scope-mobility-v1.example.json)
 - [examples/open5gs-core-link-profile-v1.example.json](examples/open5gs-core-link-profile-v1.example.json)
 - [examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json](examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json)
 - [compare-report-v1.schema.json](compare-report-v1.schema.json)
