@@ -71,17 +71,27 @@ surface:
 - explicit rollback targets and reviewable evidence expectations
 
 Those are current support claims for reviewer-visible control and evidence.
-They are not yet claims of supported live runtime cutover.
+They are not, by themselves, the full runtime proof surface.
 
-The following remain future lanes until they have repo-visible proof:
+The repo now has three bounded runtime lanes with repo-visible proof:
 
-- live replacement runtime ownership on the declared `n79` lane
-- real `Aerial` runtime support
-- real `cuMAC` scheduler support beyond the contract-host placeholder
+- the declared `n79_single_ru_single_ue_lab_v1` live-lab lane
+- the clean-room `aerial_clean_room_runtime_v1` gateway lane
+- the clean-room `cumac_scheduler_clean_room_runtime_v1` scheduler lane
+
+This workspace contributes evidence models and fixtures to those claims, but it
+does not replace the runtime-capability metadata and tests that prove the
+clean-room `Aerial` and `cuMAC` lanes.
+
+The following remain future lanes until they have separate repo-visible proof:
+
+- vendor-backed `Aerial` runtime support
+- external-worker `cuMAC` scheduler support beyond the clean-room host lane
 - broader RU, UE, or core profiles beyond the declared `n79` plus real
   `Open5GS` target
 
-For `cuMAC`, current non-claims are explicit:
+For `cuMAC`, current non-claims beyond the clean-room scheduler lane are
+explicit:
 
 - no external scheduler worker proof
 - no runtime timing guarantee

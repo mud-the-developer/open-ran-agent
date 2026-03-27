@@ -46,18 +46,22 @@ The first meaningful target is:
 - exact transport libraries for SCTP and GTP-U
 - real DU-low and Aerial runtime implementations
 
-Roadmap note:
+Runtime support note:
 
-These future interoperability lanes remain in the roadmap-only set until they
-are explicitly proven.
+The repo now has three evidence-backed runtime lanes:
 
-- Hardened-now support stops at the single-DU, single-cell, single-UE bootstrap
-  lane plus contract-level backend and scheduler surfaces.
-- `Aerial interoperability` remains roadmap-only until the `aerial_backend`
-  lane has real external proof. Track promotion work in `YON-58`.
-- `cuMAC scheduler interoperability` remains roadmap-only until the
-  `cumac_scheduler` lane has real external proof. Track promotion work in
-  `YON-59`.
-- `Broader profile expansion` remains roadmap-only until any multi-cell,
-  multi-DU, multi-UE, mobility, or broader vendor/profile lane is separately
-  proven. Track that decomposition in `YON-66`.
+- the declared `n79_single_ru_single_ue_lab_v1` live-lab lane
+- the bounded clean-room `aerial_clean_room_runtime_v1` gateway lane
+- the bounded clean-room `cumac_scheduler_clean_room_runtime_v1` scheduler lane
+
+Those support claims stay narrow:
+
+- `Aerial` support stops at the clean-room gateway/runtime surface and does not
+  claim vendor device bring-up, attach-plus-ping on Aerial, or production
+  timing guarantees.
+- `cuMAC` support stops at the clean-room scheduler-host surface and does not
+  claim external worker ownership, attach validation, or production timing
+  guarantees.
+- broader profile expansion remains future work until any multi-cell, multi-DU,
+  multi-UE, mobility, or broader vendor/profile lane is separately proven.
+  Track that decomposition in `YON-66`.

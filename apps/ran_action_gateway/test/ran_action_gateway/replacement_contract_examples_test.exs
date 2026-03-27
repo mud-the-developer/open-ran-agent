@@ -44,9 +44,13 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "remote-run summary" in compatibility["operator_surfaces"]
   end
 
-  test "repo-visible docs keep interoperability roadmap lanes explicit" do
+  test "repo-visible docs keep runtime support posture and topology decomposition explicit" do
     readme = repo_path("README.md") |> File.read!()
     overview = repo_path("docs/architecture/00-system-overview.md") |> File.read!()
+
+    posture =
+      repo_path("docs/architecture/15-production-control-evidence-and-interoperability-lanes.md")
+      |> File.read!()
 
     contract =
       repo_path("docs/architecture/04-du-high-southbound-contract.md")
@@ -60,23 +64,27 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
       repo_path("subprojects/ran_replacement/notes/17-topology-scale-claim-lanes.md")
       |> File.read!()
 
-    assert readme =~ "Future interoperability lanes are explicit and reviewable"
-    assert readme =~ "`YON-58`"
-    assert readme =~ "`YON-59`"
+    assert readme =~ "Runtime lanes with repo-visible proof are explicit and reviewable"
+    assert readme =~ "`aerial_clean_room_runtime_v1`"
+    assert readme =~ "`cumac_scheduler_clean_room_runtime_v1`"
     assert readme =~ "`YON-66`"
+    assert readme =~ "Declared live protocol lane"
     assert readme =~ "Roadmap-only interoperability lanes"
-    assert overview =~ "future interoperability lanes"
-    assert overview =~ "roadmap-only set"
-    assert contract =~ "not a claim of"
-    assert contract =~ "proven external interoperability"
-    assert contract =~ "roadmap-only in `YON-58`"
-    assert contract =~ "roadmap-only in `YON-59`"
-    assert contract =~ "expansion beyond the current bootstrap profile set remains roadmap-only"
+    assert overview =~ "evidence-backed runtime lanes"
+    assert overview =~ "`YON-66`"
+    assert contract =~ "bounded clean-room runtime support surface"
+    assert contract =~ "`aerial_clean_room_runtime_v1`"
+    assert contract =~ "`cumac_scheduler_clean_room_runtime_v1`"
     assert contract =~ "`YON-66`"
-    assert roadmap =~ "roadmap-only interoperability lanes"
-    assert roadmap =~ "| `Aerial interoperability` |"
-    assert roadmap =~ "| `cuMAC scheduler interoperability` |"
-    assert roadmap =~ "| `broader profile expansion` |"
+    assert posture =~ "Live-lab validated declared lane"
+    assert posture =~ "Bounded clean-room runtime support"
+    assert posture =~ "Bounded clean-room scheduler support"
+    assert posture =~ "Topology-scale claim lanes"
+    assert posture =~ "`YON-66`"
+    assert roadmap =~ "Evidence-backed Runtime Lanes"
+    assert roadmap =~ "`YON-66`"
+    assert roadmap =~ "multi-UE"
+    assert roadmap =~ "mobility"
     assert topology_note =~ "`YON-60`"
     assert topology_note =~ "`YON-66`"
     assert topology_note =~ "profile-defined and testable"

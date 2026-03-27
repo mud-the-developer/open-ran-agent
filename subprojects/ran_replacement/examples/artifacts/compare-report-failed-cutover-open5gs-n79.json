@@ -1,0 +1,82 @@
+{
+  "change_id": "chg-ran-repl-capture-cutover-001",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "rollback_target": "oai_reference",
+  "summary": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane.",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "conformance_claim": {
+    "profile": "oai_visible_5g_standards_baseline_v1",
+    "evidence_tier": "milestone_proof",
+    "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+  },
+  "core_endpoint": {
+    "profile": "open5gs_nsa_lab_v1",
+    "release_ref": null,
+    "n2": {
+      "amf_host": "10.41.83.45",
+      "amf_port": 38412,
+      "bind_host": "10.41.83.34"
+    },
+    "n3": {
+      "dnn": "internet",
+      "gtpu_port": 2152,
+      "slice": {
+        "sd": "000001",
+        "sst": 1
+      },
+      "upf_host": "10.41.83.45"
+    }
+  },
+  "gate_class": "blocked",
+  "core_profile": "open5gs_nsa_lab_v1",
+  "failure_class": "cutover_or_rollback_failure",
+  "report_id": "cmp-chg-ran-repl-capture-cutover-001-capture",
+  "comparison_scope": "cutover",
+  "expected_state": {
+    "attach": "ok",
+    "ping": "ok",
+    "pdu_session": "ok",
+    "release": "ok"
+  },
+  "observed_state": {
+    "attach": "ok",
+    "ping": "ok",
+    "pdu_session": "ok",
+    "release": "ok"
+  },
+  "ngap_subset": {
+    "deferred_procedures": [
+      "Paging",
+      "Handover Preparation",
+      "Path Switch Request"
+    ],
+    "optional_procedures": [
+      "Error Indication",
+      "Reset"
+    ],
+    "procedure_matrix_ref": "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+    "required_procedures": [
+      "NG Setup",
+      "Initial UE Message",
+      "Uplink NAS Transport",
+      "Downlink NAS Transport",
+      "UE Context Release"
+    ],
+    "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md"
+  },
+  "diff_summary": [
+    "The captured evidence bundle preserves the mismatch that blocked or degraded the declared lane.",
+    "The rollback target remains explicit for replay and recovery."
+  ],
+  "evidence_refs": [
+    "artifacts/captures/inc-ran-repl-cutover-001.json",
+    "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
+    "artifacts/captures/inc-ran-repl-cutover-001-request.json",
+    "artifacts/captures/inc-ran-repl-cutover-001-rollback-evidence.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/attach.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/registration.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/pdu-session.json",
+    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ping.json"
+  ],
+  "operator_next_step": "inspect the compare report before another replacement mutation"
+}

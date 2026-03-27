@@ -93,6 +93,11 @@ Minimum sections:
 - `evidence_refs`
 - `operator_notes`
 
+When rollback has executed, `post_rollback_state` should also carry the
+`restored_from` lane and a `post_rollback_verify_ref` so reviewers can inspect
+the verification snapshot directly instead of inferring restored state from
+operator memory.
+
 ### Rollback Evidence Rules
 
 - The rollback evidence must say why rollback was safer than leaving the lane

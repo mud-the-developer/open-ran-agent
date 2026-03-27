@@ -22,26 +22,32 @@
 - keep the core SMF and UPF-control PFCP edge bounded and explicit while it covers the implemented Create*/Modification subset and bounded Remove* grouped-IE handling before any broader PFCP parity claim
 - keep `subprojects/ran_replacement/` as a separate design-first track for an `OAI CU/DU` replacement targeting one `n79` real-RU and real-UE attach-plus-ping lane against a real `Open5GS` core, with an agent-friendly `ranctl` control surface before runtime cutover
 
+## Evidence-backed Runtime Lanes
+
+These lanes are current support claims with repo-visible proof:
+
+| Lane | Current support | Explicit non-claim |
+| --- | --- | --- |
+| `Declared live protocol lane` | `n79_single_ru_single_ue_lab_v1` has real target-host lifecycle, attach, registration, session, ping, and rollback evidence | no multi-cell, multi-DU, multi-UE, mobility, or broad profile parity claim |
+| `Aerial clean-room runtime` | `aerial_fapi_profile` supports `aerial_clean_room_runtime_v1` through shared Port runtime, strict host probes, and gateway lifecycle proof | no vendor device bring-up proof, no attach-plus-ping proof on Aerial, no production timing claim |
+| `cuMAC clean-room scheduler` | `cumac_scheduler` supports `cumac_scheduler_clean_room_runtime_v1` through executable slot plans, explicit CPU rollback target metadata, and cell-group-scoped ownership | no external scheduler worker proof, no attach validation claim, no production timing claim |
+
 ## Later
 
-These items are roadmap-only interoperability lanes. They are not current
-support claims:
+These remain future expansion lanes:
 
 - multi-cell and multi-DU orchestration
 - handover support
-- advanced scheduling coordination
+- advanced scheduling coordination beyond one cell-group lane
 - real DU-low implementation
-- real NVIDIA Aerial adapter
-- real cuMAC scheduler adapter
-- live SCTP, NGAP, F1AP, E1AP, and GTP-U integration
+- vendor-backed NVIDIA Aerial integration
+- external-worker cuMAC scheduler integration
+- live SCTP, NGAP, F1AP, E1AP, and GTP-U integration beyond the declared `n79` lane
 
-For roadmap review, treat them as separate future lanes:
-
-| Lane | Hardened-now support | Explicit non-claim | Tracking issue |
-| --- | --- | --- | --- |
-| `Aerial interoperability` | `aerial_fapi_profile` contract scaffolding, shared Port bootstrap runtime, session lifecycle scaffolds, and host-probe gating | no vendor device bring-up proof, no attach-plus-ping proof, no production timing claim | `YON-58` |
-| `cuMAC scheduler interoperability` | `ran_scheduler_host` boundary plus placeholder `cumac_scheduler` adapter surface | no external scheduler worker proof, no runtime timing proof, no attach validation claim | `YON-59` |
-| `broader profile expansion` | one DU, one cell group, one UE bootstrap lane plus contract-only backend surfaces | no multi-cell parity claim, no multi-DU parity claim, no multi-UE parity claim, no mobility parity claim, no broad vendor/profile parity claim | `YON-66` |
+Broader profile expansion is decomposed under `YON-66` into separately
+evidenced topology-scope profiles for multi-cell, multi-DU, multi-UE, and
+mobility. Those profiles remain future-lane prerequisites until runtime proof
+exists for each scope.
 
 ## Out Of Scope For This Bootstrap
 

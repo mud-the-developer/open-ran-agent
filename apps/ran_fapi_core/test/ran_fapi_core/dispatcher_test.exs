@@ -59,7 +59,18 @@ defmodule RanFapiCore.DispatcherTest do
     assert %Capability{status: :bootstrap, profile: :aerial_fapi_profile} = aerial_capabilities
     assert aerial_capabilities.metadata[:adapter_owner] == "clean_room_scaffold"
     assert aerial_capabilities.metadata[:integration_boundary] == "clean_room_vendor_profile"
-    assert aerial_capabilities.metadata[:promotion_state] == "roadmap_only"
+    assert aerial_capabilities.metadata[:support_posture] == "bounded_clean_room_runtime"
+    assert aerial_capabilities.metadata[:promotion_state] == "bounded_clean_room_runtime"
+
+    assert aerial_capabilities.metadata[:declared_target_profile] ==
+             "aerial_clean_room_runtime_v1"
+
+    assert aerial_capabilities.metadata[:supported_claims] == [
+             "clean_room_session_lifecycle",
+             "strict_host_probe_gating",
+             "health_drain_resume_restart",
+             "deterministic_verify_and_rollback_artifacts"
+           ]
 
     assert aerial_capabilities.metadata[:unsupported_claims] == [
              "vendor_device_bringup",
@@ -67,12 +78,28 @@ defmodule RanFapiCore.DispatcherTest do
              "production_timing_guarantee"
            ]
 
-    assert aerial_capabilities.metadata[:promotion_requirements] == [
-             "declared_target_profile",
-             "host_probe_evidence",
-             "target_host_deploy_path",
-             "verify_and_rollback_evidence",
-             "stable_runtime_health_model"
+    assert aerial_capabilities.metadata[:verify_evidence_refs] == [
+             "apps/ran_fapi_core/test/ran_fapi_core/native_gateway_contract_test.exs",
+             "apps/ran_fapi_core/test/ran_fapi_core/native_gateway_transport_state_test.exs"
+           ]
+
+    assert aerial_capabilities.metadata[:rollback_evidence_refs] == [
+             "apps/ran_fapi_core/test/ran_fapi_core/native_gateway_contract_test.exs",
+             "apps/ran_fapi_core/test/ran_fapi_core/native_gateway_transport_state_test.exs"
+           ]
+
+    assert aerial_capabilities.metadata[:health_model_ref] ==
+             "docs/architecture/04-du-high-southbound-contract.md"
+
+    assert aerial_capabilities.metadata[:failure_domain_refs] == [
+             "docs/architecture/03-failure-domains.md",
+             "docs/architecture/04-du-high-southbound-contract.md"
+           ]
+
+    assert aerial_capabilities.metadata[:future_expansion_requirements] == [
+             "vendor_device_bringup",
+             "real_aerial_attach_plus_ping",
+             "production_timing_guarantee"
            ]
   end
 

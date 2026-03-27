@@ -550,6 +550,76 @@ defmodule RanActionGateway.CLITest do
     end)
   end
 
+  test "replacement RU observe and capture preserve replayable failure-class evidence",
+       %{tmp_dir: tmp_dir} do
+    File.cd!(tmp_dir, fn ->
+      repo_root = Path.expand("../../../..", __DIR__)
+
+      observe_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/observe-failed-ru-sync-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.gate_class == "degraded"
+      assert observe.failure_class == "ru_failure"
+      assert observe.summary =~ "RU sync is degraded"
+      assert get_in(observe, [:ru_status, :status]) == "blocked"
+      assert get_in(observe, [:plane_status, :s_plane, :status]) == "degraded"
+      assert get_in(observe, [:plane_status, :u_plane, :status]) == "blocked"
+      assert get_in(observe, [:interface_status, "ru_fronthaul", :status]) == "blocked"
+
+      capture_payload =
+        Path.join(
+          repo_root,
+          "subprojects/ran_replacement/examples/ranctl/capture-artifacts-failed-ru-sync-open5gs-n79.json"
+        )
+        |> File.read!()
+        |> JSON.decode!()
+        |> JSON.encode!()
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", capture_payload])
+      assert capture.gate_class == "degraded"
+      assert capture.failure_class == "ru_failure"
+      assert capture.summary =~ "RU failure evidence bundle"
+      assert get_in(capture, [:ru_status, :status]) == "blocked"
+      assert get_in(capture, [:rollback_status, :status]) == "pending"
+
+      assert Enum.any?(capture.checks, fn check ->
+               check["name"] == "host_preflight_reviewed" and check["status"] == "ok"
+             end)
+
+      assert Enum.any?(capture.checks, fn check ->
+               check["name"] == "ru_sync_reviewed" and check["status"] == "ok"
+             end)
+
+      compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert compare_report["failure_class"] == "ru_failure"
+      assert compare_report["comparison_scope"] == "ru_sync"
+
+      rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert rollback_evidence["failure_class"] == "ru_failure"
+
+      assert get_in(rollback_evidence, ["ngap_subset", "standards_subset_ref"]) =~
+               "06-ngap-and-registration-standards-subset.md"
+
+      assert get_in(rollback_evidence, ["post_rollback_state", "restored_from"]) ==
+               "replacement_shadow"
+    end)
+  end
+
   test "replacement control-plane observe surfaces f1-c/e1ap and rollback evidence",
        %{tmp_dir: tmp_dir} do
     File.cd!(tmp_dir, fn ->
@@ -772,6 +842,8 @@ defmodule RanActionGateway.CLITest do
       assert rollback.rollback_target == "oai_reference"
       assert rollback.rollback_available == true
       assert rollback.approval_required == true
+      assert rollback.restored_from == "replacement_primary"
+      assert rollback.summary =~ "from replacement_primary to the declared oai_reference target"
       assert rollback.summary =~ "declared oai_reference target"
       assert rollback.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert rollback.conformance_claim.evidence_tier == "milestone_proof"
@@ -796,6 +868,19 @@ defmodule RanActionGateway.CLITest do
       assert File.exists?(Store.rollback_plan_path("chg-ran-repl-rollback-001"))
       assert File.exists?(get_in(rollback, [:rollback_status, :evidence_ref]))
       assert File.exists?(get_in(rollback, [:attach_status, :evidence_ref]))
+
+      post_rollback_verify =
+        get_in(rollback, [:rollback_status, :evidence_ref])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert post_rollback_verify["restored_from"] == "replacement_primary"
+      assert post_rollback_verify["rollback_target"] == "oai_reference"
+
+      assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~
+               "reviewable without SSH archaeology"
+
+      assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
     end)
   end
 
