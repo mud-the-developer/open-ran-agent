@@ -1,0 +1,159 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://open-ran-agent.local/subprojects/ran_replacement/contracts/target-profile-family-bundle-v1.schema.json",
+  "title": "Target Profile Family Bundle v1",
+  "description": "Schema-backed manifest for one bounded RU/core/profile family. Each family bundle must name its target-profile contract/example, support-matrix delta, and evidence bundle before broader profile claims are allowed.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "family_id",
+    "summary",
+    "target_profile",
+    "ru_family",
+    "core_family",
+    "support_matrix_delta_refs",
+    "evidence_bundle",
+    "guardrails"
+  ],
+  "properties": {
+    "family_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target_profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "contract_ref",
+        "example_ref",
+        "lab_overlay_contract_ref",
+        "lab_overlay_example_ref"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contract_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lab_overlay_contract_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "lab_overlay_example_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "ru_family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "summary",
+        "boundary_ref"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "boundary_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "core_family": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "profile",
+        "contract_ref",
+        "example_ref"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contract_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "example_ref": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "support_matrix_delta_refs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "evidence_bundle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bundle_id",
+        "artifact_root",
+        "compare_reports",
+        "rollback_evidence"
+      ],
+      "properties": {
+        "bundle_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact_root": {
+          "type": "string",
+          "minLength": 1
+        },
+        "compare_reports": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "rollback_evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "guardrails": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    }
+  }
+}

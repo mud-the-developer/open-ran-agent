@@ -48,14 +48,14 @@ defmodule RanActionGateway.ReplacementExamplesTest do
   test "replacement compare reports carry explicit summaries" do
     registration_report =
       repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-registration-rejected-open5gs-n79.json"
+        "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json"
       )
       |> File.read!()
       |> JSON.decode!()
 
     ping_report =
       repo_path(
-        "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json"
+        "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json"
       )
       |> File.read!()
       |> JSON.decode!()
@@ -80,6 +80,27 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json" in registration_report[
              "evidence_refs"
+           ]
+  end
+
+  test "failed-cutover capture example preserves the bounded family bundle paths" do
+    status =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/capture-artifacts-failed-cutover-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json" in status[
+             "artifacts"
            ]
   end
 

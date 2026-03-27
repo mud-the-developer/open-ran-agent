@@ -57,7 +57,7 @@ That target delegates to [scripts/validate_contracts.sh](scripts/validate_contra
 - ranctl request fixtures
 - status fixtures
 - compare-report and rollback-evidence artifacts
-- target-profile and lab-owner overlay examples
+- target-profile, family-bundle, and lab-owner overlay examples
 - package-local request/status fixtures
 
 ## Current Support Posture
@@ -93,6 +93,14 @@ For broader profile expansion, current non-claims are explicit:
 - no multi-DU parity claim
 - no broad vendor/profile parity claim outside the declared `n79_single_ru_single_ue_lab_v1` lane
 
+Broader profile expansion must now route through a schema-backed family bundle:
+
+- a target-profile contract and example
+- a family-specific support-matrix delta
+- a family-specific evidence bundle
+
+If a future lane cannot name those artifacts separately, it is still roadmap-only.
+
 ## Current Deliverables
 
 - [task.md](task.md)
@@ -115,12 +123,16 @@ For broader profile expansion, current non-claims are explicit:
 - [notes/14-compare-report-and-rollback-evidence-templates.md](notes/14-compare-report-and-rollback-evidence-templates.md)
 - [notes/15-dashboard-fixture-mapping.md](notes/15-dashboard-fixture-mapping.md)
 - [notes/16-milestone-3-live-lab-validation-lanes.md](notes/16-milestone-3-live-lab-validation-lanes.md)
+- [notes/17-n79-single-ru-open5gs-support-matrix-delta.md](notes/17-n79-single-ru-open5gs-support-matrix-delta.md)
 - [notes/README.md](notes/README.md)
 - [contracts/README.md](contracts/README.md)
 - [contracts/n79-single-ru-target-profile-v1.schema.json](contracts/n79-single-ru-target-profile-v1.schema.json)
 - [contracts/n79-single-ru-target-profile-overlay-v1.schema.json](contracts/n79-single-ru-target-profile-overlay-v1.schema.json)
+- [contracts/target-profile-family-bundle-v1.schema.json](contracts/target-profile-family-bundle-v1.schema.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.example.json](contracts/examples/n79-single-ru-target-profile-v1.example.json)
 - [contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json](contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json)
+- [contracts/examples/open5gs-core-link-profile-v1.example.json](contracts/examples/open5gs-core-link-profile-v1.example.json)
+- [contracts/examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json](contracts/examples/n79-single-ru-single-ue-open5gs-family-bundle-v1.example.json)
 - [packages/README.md](packages/README.md)
 - [packages/ngap_edge/README.md](packages/ngap_edge/README.md)
 - [packages/ngap_edge/CONTRACT.md](packages/ngap_edge/CONTRACT.md)
@@ -133,6 +145,7 @@ For broader profile expansion, current non-claims are explicit:
 - [examples/ranctl/README.md](examples/ranctl/README.md)
 - [examples/status/README.md](examples/status/README.md)
 - [examples/artifacts/README.md](examples/artifacts/README.md)
+- [examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/README.md](examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/README.md)
 - [examples/incidents/README.md](examples/incidents/README.md)
 - [scripts/validate_contracts.sh](scripts/validate_contracts.sh)
 

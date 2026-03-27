@@ -117,7 +117,8 @@ lanes, not be described as current support.
   an external worker contract, failure-domain evidence, and cutover/rollback
   proof exist without hidden ownership handoffs.
 - Treat broader profile expansion specifically as roadmap-only until each new
-  RU/core/profile family is declared separately; do not promote the current
+  RU/core/profile family is declared through its own schema-backed family
+  bundle, support-matrix delta, and evidence bundle; do not promote the current
   single-`n79` lane into multi-cell, multi-DU, or broad profile parity claims.
 
 ## Cross References

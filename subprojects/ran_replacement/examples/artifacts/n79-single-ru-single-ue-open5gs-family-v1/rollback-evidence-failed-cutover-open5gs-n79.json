@@ -7,7 +7,7 @@
   "rollback_reason": "The failed cutover left the replacement lane in a state that was less explainable than the known-good OAI reference lane.",
   "triggering_gate": "blocked",
   "pre_rollback_state": {
-    "compare_report_ref": "subprojects/ran_replacement/examples/artifacts/compare-report-ping-failed-open5gs-n79.json",
+    "compare_report_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json",
     "gate_class": "degraded",
     "cutover_state": "replacement_primary",
     "observed_problem": "The lane could not prove attach-plus-ping against the declared target profile after cutover."

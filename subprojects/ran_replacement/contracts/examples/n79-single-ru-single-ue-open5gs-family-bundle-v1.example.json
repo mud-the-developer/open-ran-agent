@@ -1,0 +1,40 @@
+{
+  "family_id": "n79_single_ru_single_ue_open5gs_family_v1",
+  "summary": "Bounded family bundle for the current n79 single-RU, single-UE, real Open5GS attach-plus-ping lane.",
+  "target_profile": {
+    "profile": "n79_single_ru_single_ue_lab_v1",
+    "contract_ref": "subprojects/ran_replacement/contracts/n79-single-ru-target-profile-v1.schema.json",
+    "example_ref": "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.example.json",
+    "lab_overlay_contract_ref": "subprojects/ran_replacement/contracts/n79-single-ru-target-profile-overlay-v1.schema.json",
+    "lab_overlay_example_ref": "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.lab-owner-overlay.example.json"
+  },
+  "ru_family": {
+    "name": "single_ru_ecpri_ptp_lab_v1",
+    "summary": "Single real RU with eCPRI transport, PTP-derived sync, and one operator-visible readiness lane.",
+    "boundary_ref": "subprojects/ran_replacement/contracts/examples/n79-single-ru-target-profile-v1.example.json#/ru_boundary"
+  },
+  "core_family": {
+    "profile": "open5gs_nsa_lab_v1",
+    "contract_ref": "subprojects/ran_replacement/contracts/open5gs-core-link-profile-v1.schema.json",
+    "example_ref": "subprojects/ran_replacement/contracts/examples/open5gs-core-link-profile-v1.example.json"
+  },
+  "support_matrix_delta_refs": [
+    "subprojects/ran_replacement/notes/17-n79-single-ru-open5gs-support-matrix-delta.md"
+  ],
+  "evidence_bundle": {
+    "bundle_id": "n79_single_ru_single_ue_open5gs_family_v1",
+    "artifact_root": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/",
+    "compare_reports": [
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json",
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-ping-failed-open5gs-n79.json"
+    ],
+    "rollback_evidence": [
+      "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json"
+    ]
+  },
+  "guardrails": [
+    "Do not reuse this family bundle as evidence for Aerial, cuMAC, multi-cell, multi-DU, or other RU/core families.",
+    "Every new RU/core/profile family must add its own target-profile contract/example, support-matrix delta, and evidence bundle before any parity or interoperability claim is made.",
+    "Profile expansion must stay additive; the current n79 lane remains the baseline family until a sibling family bundle proves otherwise."
+  ]
+}
