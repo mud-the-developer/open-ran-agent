@@ -18,14 +18,18 @@
   ],
   "verification_checks": [
     "rollback_target_restored",
+    "stale_tunnel_cleanup_confirmed",
+    "single_session_retry_reviewable",
     "post_rollback_verify_recorded",
     "recovery_path_auditable"
   ],
   "restored_state": {
-    "summary": "Post-rollback verification confirms the declared oai_reference target is reviewable without SSH archaeology.",
+    "summary": "Post-rollback verification confirms the declared oai_reference target is reviewable without SSH archaeology, stale tunnel cleanup is explicit, and same-UE recovery stays bounded.",
     "core_link_status": "ok",
     "release_status": "ok",
-    "ru_status": "unknown"
+    "ru_status": "unknown",
+    "stale_tunnel_cleanup": "stale tunnel and forwarding cleanup are explicit before another session attempt",
+    "session_scope": "recovery remains bounded to the declared UE lane and does not claim broader multi-session parity"
   },
   "protocol_claims": {
     "ngap": {

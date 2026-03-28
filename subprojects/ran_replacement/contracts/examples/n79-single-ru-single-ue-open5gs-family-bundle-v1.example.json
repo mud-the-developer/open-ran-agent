@@ -1,6 +1,6 @@
 {
   "family_id": "n79_single_ru_single_ue_open5gs_family_v1",
-  "summary": "Bounded family bundle for the current n79 single-RU, single-UE, real Open5GS attach-plus-ping lane.",
+  "summary": "Bounded family bundle for the current n79 single-RU, single-UE, real Open5GS attach-plus-ping lane, including stale-tunnel cleanup review and bounded same-UE session recovery semantics.",
   "target_profile": {
     "profile": "n79_single_ru_single_ue_lab_v1",
     "contract_ref": "subprojects/ran_replacement/contracts/n79-single-ru-target-profile-v1.schema.json",
@@ -39,6 +39,7 @@
   },
   "guardrails": [
     "Do not reuse this family bundle as evidence for Aerial, cuMAC, multi-cell, multi-DU, or other RU/core families.",
+    "Do not read the stale-tunnel cleanup or same-UE next-session evidence here as proof of concurrent multi-session or multi-UE parity.",
     "Every new RU/core/profile family must add its own target-profile contract/example, support-matrix delta, and evidence bundle before any parity or interoperability claim is made.",
     "Profile expansion must stay additive; the current n79 lane remains the baseline family until a sibling family bundle proves otherwise."
   ]

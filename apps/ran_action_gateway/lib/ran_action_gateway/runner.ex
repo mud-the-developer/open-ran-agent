@@ -1248,10 +1248,10 @@ defmodule RanActionGateway.Runner do
         "Capture preserved the RU failure evidence bundle for rollback review on the declared lane."
 
       phase == :observe and user_plane_ping_failure?(change) ->
-        "User-plane observe confirms attach and session hold, but ping diverged on the declared route."
+        "User-plane observe confirms the primary session holds, but ping diverged on the declared route and stale tunnel cleanup remains under review before another session attempt."
 
       phase == :capture_artifacts and user_plane_ping_failure?(change) ->
-        "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
+        "Capture preserved the user-plane evidence bundle after ping failed on the declared route, keeping stale tunnel cleanup and bounded same-UE session review explicit."
 
       phase == :observe and control_plane_scope?(change) ->
         "Control-plane replacement observe confirms that association state diverged from the planned cutover lane."
@@ -1888,12 +1888,14 @@ defmodule RanActionGateway.Runner do
             %{
               status: "degraded",
               evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "f1_u"),
-              reason: "forwarding state does not yet prove the declared attach-plus-ping path"
+              reason:
+                "forwarding state does not yet prove the declared attach-plus-ping path or that stale forwarding was drained before another session attempt"
             },
             %{
               status: "degraded",
               evidence_ref: replacement_declared_evidence_ref(change, :ping, phase, "gtpu"),
-              reason: "tunnel evidence exists, but end-to-end reachability did not complete"
+              reason:
+                "tunnel evidence exists, but end-to-end reachability did not complete and stale TEID cleanup remains under review"
             }
           }
 
@@ -1922,7 +1924,8 @@ defmodule RanActionGateway.Runner do
         status: "pending",
         evidence_ref:
           replacement_declared_evidence_ref(change, :rollback, :observe, "rollback-evidence"),
-        reason: "rollback is available while the user-plane route remains unresolved"
+        reason:
+          "rollback is available while the user-plane route remains unresolved and stale tunnel cleanup is still under review"
       })
     else
       payload
@@ -2134,7 +2137,7 @@ defmodule RanActionGateway.Runner do
             "Capture preserved the RU failure evidence bundle for rollback review on the declared lane."
 
           user_plane_ping_failure?(change) ->
-            "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
+            "Capture preserved the user-plane evidence bundle after ping failed on the declared route, keeping stale tunnel cleanup and bounded same-UE session review explicit."
 
           true ->
             "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
@@ -2143,11 +2146,7 @@ defmodule RanActionGateway.Runner do
       |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
       |> put_optional(:rollback_target, rollback_target)
       |> Map.put(:rollback_available, not is_nil(rollback_target))
-      |> Map.put(:suggested_next, [
-        "inspect the compare report before another replacement mutation",
-        "confirm the rollback target and cleanup evidence remain explicit",
-        "retry only after the captured mismatch is explained"
-      ])
+      |> Map.put(:suggested_next, replacement_failure_suggested_next(change))
       |> Map.put(
         :checks,
         replacement_review_checks(replacement["acceptance_gates"] || [], [
@@ -2170,6 +2169,7 @@ defmodule RanActionGateway.Runner do
             "cleanup evidence remains explicit in the preserved review bundle"
           )
         ])
+        |> maybe_append_user_plane_recovery_review_checks(change, :capture_artifacts)
       )
       |> Map.put(
         :rollback_status,
@@ -2181,7 +2181,7 @@ defmodule RanActionGateway.Runner do
             :capture_artifacts,
             "rollback-evidence"
           ),
-          "rollback is available but has not yet been executed"
+          replacement_review_pending_reason(change)
         )
       )
     end
@@ -2197,7 +2197,7 @@ defmodule RanActionGateway.Runner do
     payload
     |> Map.put(
       :summary,
-      rollback_summary(target_role, restored_from, rollback_target)
+      replacement_review_rollback_summary(target_role, restored_from, rollback_target, change)
     )
     |> put_optional(:rollback_target, rollback_target)
     |> Map.put(:approval_required, true)
@@ -2229,13 +2229,14 @@ defmodule RanActionGateway.Runner do
           "cleanup evidence remains explicit after rollback"
         )
       ])
+      |> maybe_append_user_plane_recovery_review_checks(change, :rollback)
     )
     |> Map.put(
       :rollback_status,
       review_status(
         "ok",
         replacement_declared_evidence_ref(change, :rollback, :rollback, "post-rollback-verify"),
-        "rollback target restored and verified"
+        replacement_review_ok_reason(change)
       )
     )
   end
@@ -2332,6 +2333,84 @@ defmodule RanActionGateway.Runner do
       Enum.member?(acceptance_gates, "ping"),
       review_check("ping_reviewed", "ok", "probe evidence remains attached to the review bundle")
     )
+  end
+
+  defp maybe_append_user_plane_recovery_review_checks(checks, %Change{} = change, phase) do
+    cond do
+      phase == :capture_artifacts and user_plane_ping_failure?(change) ->
+        checks ++
+          [
+            review_check(
+              "stale_tunnel_cleanup_reviewed",
+              "ok",
+              "the review bundle keeps stale tunnel and forwarding cleanup explicit before another session attempt"
+            ),
+            review_check(
+              "bounded_multi_session_scope_reviewed",
+              "ok",
+              "the review stays bounded to the primary session plus same-UE recovery semantics and does not claim broader multi-session parity"
+            )
+          ]
+
+      phase == :rollback and bounded_user_plane_session_review?(change) ->
+        checks ++
+          [
+            review_check(
+              "stale_tunnel_cleanup_confirmed",
+              "ok",
+              "post-rollback evidence confirms stale tunnel and forwarding cleanup before another session attempt"
+            ),
+            review_check(
+              "bounded_multi_session_scope_reviewed",
+              "ok",
+              "post-rollback review remains bounded to the declared UE lane and does not claim broader multi-session parity"
+            )
+          ]
+
+      true ->
+        checks
+    end
+  end
+
+  defp bounded_user_plane_session_review?(%Change{} = change) do
+    replacement = replacement_metadata(change)
+    required_interfaces = replacement["required_interfaces"] || []
+    acceptance_gates = replacement["acceptance_gates"] || []
+
+    Enum.any?(required_interfaces, &(&1 in ["f1_u", "gtpu"])) and
+      Enum.any?(acceptance_gates, &(&1 in ["pdu_session", "ping"]))
+  end
+
+  defp replacement_failure_suggested_next(%Change{} = change) do
+    if user_plane_ping_failure?(change) do
+      [
+        "inspect stale tunnel cleanup and forwarding evidence before another session attempt",
+        "confirm the rollback target and bounded same-UE session scope remain explicit",
+        "retry only after the captured mismatch is explained"
+      ]
+    else
+      [
+        "inspect the compare report before another replacement mutation",
+        "confirm the rollback target and cleanup evidence remain explicit",
+        "retry only after the captured mismatch is explained"
+      ]
+    end
+  end
+
+  defp replacement_review_pending_reason(%Change{} = change) do
+    if user_plane_ping_failure?(change) do
+      "rollback is available and stale tunnel cleanup remains under review before another session attempt"
+    else
+      "rollback is available but has not yet been executed"
+    end
+  end
+
+  defp replacement_review_ok_reason(%Change{} = change) do
+    if bounded_user_plane_session_review?(change) do
+      "rollback target restored, stale tunnel cleanup reviewed, and next-session safety is explicit"
+    else
+      "rollback target restored and verified"
+    end
   end
 
   defp review_status(status, evidence_ref, reason) do
@@ -2475,6 +2554,22 @@ defmodule RanActionGateway.Runner do
       "Rollback returned the #{target_role} lane from #{restored_from} to the declared #{target} target after replacement review failed."
     else
       "Rollback returned the #{target_role} lane to the declared #{target} target after replacement review failed."
+    end
+  end
+
+  defp replacement_review_rollback_summary(
+         target_role,
+         restored_from,
+         rollback_target,
+         %Change{} = change
+       ) do
+    summary = rollback_summary(target_role, restored_from, rollback_target)
+
+    if bounded_user_plane_session_review?(change) do
+      summary <>
+        " Stale tunnel cleanup and same-UE retry safety remain explicit on the restored lane."
+    else
+      summary
     end
   end
 
@@ -3529,43 +3624,41 @@ defmodule RanActionGateway.Runner do
       incident_id: change.incident_id || "#{change.change_id}-capture",
       target_profile: payload[:target_profile] || payload["target_profile"],
       rollback_target: rollback_target,
-      rollback_reason: replacement_rollback_reason(phase, gate_class),
+      rollback_reason: replacement_rollback_reason(phase, gate_class, failure_class),
       triggering_gate: gate_class,
       failure_class: failure_class,
       ngap_subset: ngap_subset,
-      pre_rollback_state: %{
-        compare_report_ref: compare_report_path,
-        gate_class: gate_class,
-        cutover_state: payload[:target_backend] || payload["target_backend"],
-        observed_problem: payload[:summary] || payload["summary"]
-      },
-      post_rollback_state: %{
-        rollback_target: rollback_target,
-        restored_from: restored_from,
-        cutover_state: if(phase == :rollback, do: "rolled_back", else: "not_executed"),
-        repair_state:
-          if(phase == :rollback,
-            do: "rollback target restored and ready for another bounded run",
-            else: "rollback remains available and explicit for the next mutation"
-          ),
-        post_rollback_verify_ref: post_rollback_verify_ref
-      },
+      pre_rollback_state:
+        %{
+          compare_report_ref: compare_report_path,
+          gate_class: gate_class,
+          cutover_state: payload[:target_backend] || payload["target_backend"],
+          observed_problem: payload[:summary] || payload["summary"]
+        }
+        |> Map.merge(replacement_user_plane_pre_rollback_state(failure_class)),
+      post_rollback_state:
+        %{
+          rollback_target: rollback_target,
+          restored_from: restored_from,
+          cutover_state: if(phase == :rollback, do: "rolled_back", else: "not_executed"),
+          repair_state:
+            if(phase == :rollback,
+              do: "rollback target restored and ready for another bounded run",
+              else: "rollback remains available and explicit for the next mutation"
+            ),
+          post_rollback_verify_ref: post_rollback_verify_ref
+        }
+        |> Map.merge(replacement_user_plane_post_rollback_state(phase, failure_class)),
       recovery_check: %{
         status: replacement_recovery_status(phase, gate_class),
-        checks: replacement_recovery_checks(phase, gate_class)
+        checks: replacement_recovery_checks(phase, gate_class, failure_class)
       },
       evidence_refs:
         ([compare_report_path, post_rollback_verify_ref] ++
            replacement_report_evidence_refs(payload, change, phase))
         |> Enum.reject(&is_nil/1)
         |> Enum.uniq(),
-      operator_notes:
-        if(phase == :rollback,
-          do:
-            "Rollback preserved a reviewable recovery path and kept the reference lane explicit.",
-          else:
-            "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
-        )
+      operator_notes: replacement_operator_notes(phase, failure_class)
     }
   end
 
@@ -3598,6 +3691,7 @@ defmodule RanActionGateway.Runner do
     release_status = payload[:release_status] || payload["release_status"]
     core_link_status = payload[:core_link_status] || payload["core_link_status"]
     ru_status = payload[:ru_status] || payload["ru_status"]
+    failure_class = payload[:failure_class] || payload["failure_class"]
 
     %{
       captured_at: now_iso8601(),
@@ -3608,14 +3702,15 @@ defmodule RanActionGateway.Runner do
       target_profile: payload[:target_profile] || payload["target_profile"],
       rollback_target: rollback_target,
       restored_from: restored_from,
-      verification_checks: replacement_recovery_checks(:rollback, "pass"),
-      restored_state: %{
-        summary:
-          "Post-rollback verification confirms the declared #{rollback_target} target is reviewable without SSH archaeology.",
-        release_status: status_label(release_status),
-        core_link_status: status_label(core_link_status),
-        ru_status: status_label(ru_status)
-      },
+      verification_checks: replacement_recovery_checks(:rollback, "pass", failure_class),
+      restored_state:
+        %{
+          summary: replacement_post_rollback_summary(rollback_target, failure_class),
+          release_status: status_label(release_status),
+          core_link_status: status_label(core_link_status),
+          ru_status: status_label(ru_status)
+        }
+        |> Map.merge(replacement_post_rollback_restored_state(failure_class)),
       evidence_refs:
         ([release_status, core_link_status, ru_status] ++ Map.values(interface_status))
         |> Enum.map(fn
@@ -3634,6 +3729,20 @@ defmodule RanActionGateway.Runner do
       ru_sync: "ok",
       timing_source: "stable",
       fronthaul: "ok"
+    }
+  end
+
+  defp replacement_expected_state(_payload, failure_class)
+       when failure_class in ["user_plane_failure", :user_plane_failure] do
+    %{
+      attach: "registration remains healthy on the declared Open5GS lane",
+      pdu_session: "the primary declared PDU session remains established",
+      ping:
+        "the declared attach-plus-ping lane completes without leaving stale forwarding behind",
+      stale_tunnel_cleanup:
+        "forwarding is either healthy or explicitly drained before another session attempt, and TEID state is explicitly cleaned when recovery is required",
+      session_scope: "only the primary session plus bounded same-UE recovery review are in scope",
+      release: "release and rollback evidence stay reviewable if recovery is needed"
     }
   end
 
@@ -3660,6 +3769,21 @@ defmodule RanActionGateway.Runner do
         status_label(
           Map.get(interface_status, "ru_fronthaul") || Map.get(interface_status, :ru_fronthaul)
         )
+    }
+  end
+
+  defp replacement_observed_state(_payload, failure_class)
+       when failure_class in ["user_plane_failure", :user_plane_failure] do
+    %{
+      attach:
+        "registration completed against the declared Open5GS endpoint before the user-plane failure",
+      pdu_session: "the primary declared PDU session is still established",
+      ping: "the declared ping probe failed after session setup",
+      stale_tunnel_cleanup:
+        "forwarding evidence is degraded and stale forwarding or TEID cleanup remains under review",
+      session_scope:
+        "the review remains bounded to the primary session plus same-UE next-session safety",
+      release: "rollback remains available while the user-plane recovery state is reviewed"
     }
   end
 
@@ -3700,8 +3824,8 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_diff_summary(_gate_class, "user_plane_failure") do
     [
-      "Registration and PDU session completed, but the declared user-plane route did not finish a successful ping.",
-      "The failure is isolated to the user-plane evidence bundle until proven otherwise."
+      "Registration and the primary declared PDU session completed, but the declared user-plane route did not finish a successful ping.",
+      "The recovery review keeps stale tunnel cleanup and same-UE next-session safety explicit without widening into broader multi-session parity."
     ]
   end
 
@@ -3740,32 +3864,180 @@ defmodule RanActionGateway.Runner do
     end
   end
 
-  defp replacement_rollback_reason(:rollback, _gate_class),
+  defp replacement_rollback_reason(:rollback, _gate_class, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ],
+       do:
+         "The captured mismatch made the declared rollback target safer than leaving the changed lane active with stale tunnel or forwarding state."
+
+  defp replacement_rollback_reason(:rollback, _gate_class, _failure_class),
     do:
       "The captured mismatch made the declared rollback target safer than leaving the changed lane active."
 
-  defp replacement_rollback_reason(_phase, "pass"),
+  defp replacement_rollback_reason(_phase, "pass", _failure_class),
     do:
       "Rollback was not required because the declared lane stayed within the live-lab proof envelope."
 
-  defp replacement_rollback_reason(_phase, _gate_class),
+  defp replacement_rollback_reason(_phase, _gate_class, failure_class)
+       when failure_class in ["user_plane_failure", :user_plane_failure],
+       do:
+         "The captured mismatch keeps rollback explicit until stale tunnel cleanup and same-UE retry safety are explained."
+
+  defp replacement_rollback_reason(_phase, _gate_class, failure_class)
+       when failure_class in ["cutover_or_rollback_failure", :cutover_or_rollback_failure],
+       do:
+         "The captured mismatch keeps rollback explicit until post-cutover cleanup and same-UE retry safety are explained."
+
+  defp replacement_rollback_reason(_phase, _gate_class, _failure_class),
     do: "The captured mismatch keeps rollback explicit until the lane is corrected."
 
   defp replacement_recovery_status(:rollback, _gate_class), do: "ok"
   defp replacement_recovery_status(_phase, "pass"), do: "ok"
   defp replacement_recovery_status(_phase, gate_class), do: gate_class
 
-  defp replacement_recovery_checks(:rollback, _gate_class) do
+  defp replacement_recovery_checks(:rollback, _gate_class, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ] do
+    [
+      "rollback_target_restored",
+      "stale_tunnel_cleanup_confirmed",
+      "single_session_retry_reviewable",
+      "post_rollback_verify_recorded",
+      "recovery_path_auditable"
+    ]
+  end
+
+  defp replacement_recovery_checks(:rollback, _gate_class, _failure_class) do
     ["rollback_target_restored", "post_rollback_verify_recorded", "recovery_path_auditable"]
   end
 
-  defp replacement_recovery_checks(_phase, "pass") do
+  defp replacement_recovery_checks(_phase, "pass", _failure_class) do
     ["bundle_fetchable", "rollback_target_explicit", "live_lab_proof_preserved"]
   end
 
-  defp replacement_recovery_checks(_phase, _gate_class) do
+  defp replacement_recovery_checks(_phase, _gate_class, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ] do
+    [
+      "rollback_target_explicit",
+      "stale_tunnel_cleanup_reviewable",
+      "single_session_scope_explicit",
+      "compare_report_preserved",
+      "review_path_auditable"
+    ]
+  end
+
+  defp replacement_recovery_checks(_phase, _gate_class, _failure_class) do
     ["rollback_target_explicit", "compare_report_preserved", "review_path_auditable"]
   end
+
+  defp replacement_user_plane_pre_rollback_state(failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ] do
+    %{
+      stale_tunnel_cleanup:
+        "the declared lane still needs explicit TEID or forwarding cleanup evidence before another session attempt",
+      session_scope:
+        "the recovery review is bounded to the primary session plus same-UE retry semantics"
+    }
+  end
+
+  defp replacement_user_plane_pre_rollback_state(_failure_class), do: %{}
+
+  defp replacement_user_plane_post_rollback_state(phase, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ] do
+    %{
+      stale_tunnel_cleanup:
+        if(phase == :rollback,
+          do: "confirmed on the declared rollback target before another session attempt",
+          else:
+            "still pending explicit rollback or cleanup evidence before another session attempt"
+        ),
+      session_scope:
+        "recovery remains bounded to the same UE lane and does not claim broader multi-session parity"
+    }
+  end
+
+  defp replacement_user_plane_post_rollback_state(_phase, _failure_class), do: %{}
+
+  defp replacement_operator_notes(:rollback, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ],
+       do:
+         "Rollback preserved a reviewable recovery path, explicit stale tunnel cleanup state, and bounded same-UE retry semantics."
+
+  defp replacement_operator_notes(:rollback, _failure_class),
+    do: "Rollback preserved a reviewable recovery path and kept the reference lane explicit."
+
+  defp replacement_operator_notes(_phase, failure_class)
+       when failure_class in ["user_plane_failure", :user_plane_failure],
+       do:
+         "Rollback was not executed, but the captured evidence keeps stale tunnel cleanup and bounded same-UE retry review explicit."
+
+  defp replacement_operator_notes(_phase, failure_class)
+       when failure_class in ["cutover_or_rollback_failure", :cutover_or_rollback_failure],
+       do:
+         "Rollback was not executed, but the captured evidence keeps post-cutover cleanup and bounded same-UE retry review explicit."
+
+  defp replacement_operator_notes(_phase, _failure_class),
+    do:
+      "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
+
+  defp replacement_post_rollback_summary(rollback_target, failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ],
+       do:
+         "Post-rollback verification confirms the declared #{rollback_target} target is reviewable without SSH archaeology, stale tunnel cleanup is explicit, and same-UE recovery stays bounded."
+
+  defp replacement_post_rollback_summary(rollback_target, _failure_class),
+    do:
+      "Post-rollback verification confirms the declared #{rollback_target} target is reviewable without SSH archaeology."
+
+  defp replacement_post_rollback_restored_state(failure_class)
+       when failure_class in [
+              "user_plane_failure",
+              :user_plane_failure,
+              "cutover_or_rollback_failure",
+              :cutover_or_rollback_failure
+            ] do
+    %{
+      stale_tunnel_cleanup:
+        "stale tunnel and forwarding cleanup are explicit before another session attempt",
+      session_scope:
+        "recovery remains bounded to the declared UE lane and does not claim broader multi-session parity"
+    }
+  end
+
+  defp replacement_post_rollback_restored_state(_failure_class), do: %{}
 
   defp runtime_capture_path(nil, _key), do: nil
 

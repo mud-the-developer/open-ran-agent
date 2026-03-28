@@ -144,7 +144,7 @@
       ]
     }
   },
-  "summary": "Capture preserved the user-plane evidence bundle after ping failed on the declared route.",
+  "summary": "Capture preserved the user-plane evidence bundle after ping failed on the declared route, keeping stale tunnel cleanup and bounded same-UE session review explicit.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
   "rollback_available": true,
@@ -175,8 +175,8 @@
     "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-n79-lab-01.json"
   ],
   "suggested_next": [
-    "inspect the compare report before another replacement mutation",
-    "confirm the rollback target and cleanup evidence remain explicit",
+    "inspect stale tunnel cleanup and forwarding evidence before another session attempt",
+    "confirm the rollback target and bounded same-UE session scope remain explicit",
     "retry only after the captured mismatch is explained"
   ],
   "checks": [
@@ -206,6 +206,16 @@
       "status": "ok"
     },
     {
+      "detail": "the review bundle keeps stale tunnel and forwarding cleanup explicit before another session attempt",
+      "name": "stale_tunnel_cleanup_reviewed",
+      "status": "ok"
+    },
+    {
+      "detail": "the review stays bounded to the primary session plus same-UE recovery semantics and does not claim broader multi-session parity",
+      "name": "bounded_multi_session_scope_reviewed",
+      "status": "ok"
+    },
+    {
       "detail": "probe evidence remains attached to the review bundle",
       "name": "ping_reviewed",
       "status": "ok"
@@ -230,12 +240,12 @@
       "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-c.json"
     },
     "f1_u": {
-      "reason": "forwarding state does not yet prove the declared attach-plus-ping path",
+      "reason": "forwarding state does not yet prove the declared attach-plus-ping path or that stale forwarding was drained before another session attempt",
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/f1-u.json"
     },
     "gtpu": {
-      "reason": "tunnel evidence exists, but end-to-end reachability did not complete",
+      "reason": "tunnel evidence exists, but end-to-end reachability did not complete and stale TEID cleanup remains under review",
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/gtpu.json"
     },
@@ -266,7 +276,7 @@
     "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ue-context-release.json"
   },
   "rollback_status": {
-    "reason": "rollback is available but has not yet been executed",
+    "reason": "rollback is available and stale tunnel cleanup remains under review before another session attempt",
     "status": "pending",
     "evidence_ref": "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/rollback-evidence.json"
   },

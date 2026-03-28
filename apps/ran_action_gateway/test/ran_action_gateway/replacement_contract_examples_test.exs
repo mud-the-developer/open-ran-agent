@@ -57,8 +57,10 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
 
     compare_reports = get_in(bundle, ["evidence_bundle", "compare_reports"])
     rollback_evidence = get_in(bundle, ["evidence_bundle", "rollback_evidence"])
+    guardrails = bundle["guardrails"] || []
 
     assert bundle["family_id"] == "n79_single_ru_single_ue_open5gs_family_v1"
+    assert bundle["summary"] =~ "stale-tunnel cleanup review"
     assert get_in(bundle, ["target_profile", "profile"]) == "n79_single_ru_single_ue_lab_v1"
     assert get_in(bundle, ["ru_family", "name"]) == "single_ru_ecpri_ptp_lab_v1"
     assert get_in(bundle, ["core_family", "profile"]) == "open5gs_nsa_lab_v1"
@@ -88,6 +90,8 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-ping-failed-open5gs-n79.json" in rollback_evidence
 
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json" in rollback_evidence
+
+    assert Enum.any?(guardrails, &String.contains?(&1, "concurrent multi-session"))
   end
 
   test "lab-owner overlay example names operator-facing compatibility alignment" do
@@ -159,6 +163,54 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert topology_note =~ "`YON-60`"
     assert topology_note =~ "`YON-66`"
     assert topology_note =~ "profile-defined and testable"
+  end
+
+  test "user-plane docs keep stale tunnel cleanup and bounded session recovery explicit" do
+    matrix =
+      repo_path("subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md")
+      |> File.read!()
+
+    delta =
+      repo_path(
+        "subprojects/ran_replacement/notes/17-n79-single-ru-open5gs-support-matrix-delta.md"
+      )
+      |> File.read!()
+
+    templates =
+      repo_path(
+        "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
+      )
+      |> File.read!()
+
+    baseline =
+      repo_path(
+        "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+      )
+      |> File.read!()
+
+    contract =
+      repo_path("subprojects/ran_replacement/packages/user_plane_edge/CONTRACT.md")
+      |> File.read!()
+
+    package_readme =
+      repo_path("subprojects/ran_replacement/packages/user_plane_edge/README.md")
+      |> File.read!()
+
+    status_readme =
+      repo_path("subprojects/ran_replacement/examples/status/README.md")
+      |> File.read!()
+
+    assert matrix =~ "F1-U` stale-forwarding cleanup review"
+    assert matrix =~ "bounded multi-session recovery review"
+    assert delta =~ "stale-tunnel cleanup"
+    assert delta =~ "concurrent multi-session behavior"
+    assert templates =~ "stale forwarding cleanup state before another session attempt"
+    assert templates =~ "same-UE next-session attempt"
+    assert baseline =~ "stale tunnel cleanup"
+    assert contract =~ "did stale tunnel or half-open forwarding cleanup complete"
+    assert contract =~ "bounded multi-session recovery review"
+    assert package_readme =~ "stale-tunnel cleanup review"
+    assert status_readme =~ "bounded same-UE session-recovery metadata"
   end
 
   test "topology-scope examples define bounded future lanes" do

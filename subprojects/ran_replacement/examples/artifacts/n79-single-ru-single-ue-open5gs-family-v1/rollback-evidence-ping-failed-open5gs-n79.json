@@ -127,28 +127,34 @@
     "artifacts/replacement/capture/chg-ran-repl-capture-ping-001/ping.json"
   ],
   "rollback_id": "rbk-chg-ran-repl-capture-ping-001",
-  "rollback_reason": "The captured mismatch keeps rollback explicit until the lane is corrected.",
+  "rollback_reason": "The captured mismatch keeps rollback explicit until stale tunnel cleanup and same-UE retry safety are explained.",
   "triggering_gate": "degraded",
   "pre_rollback_state": {
     "gate_class": "degraded",
     "compare_report_ref": "artifacts/captures/inc-ran-repl-ping-001-compare-report.json",
     "cutover_state": "replacement_primary",
-    "observed_problem": "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
+    "observed_problem": "Capture preserved the user-plane evidence bundle after ping failed on the declared route, keeping stale tunnel cleanup and bounded same-UE session review explicit.",
+    "stale_tunnel_cleanup": "The declared lane still needs explicit TEID or forwarding cleanup evidence before another session attempt.",
+    "session_scope": "The recovery review is bounded to the primary session plus same-UE retry semantics."
   },
   "post_rollback_state": {
     "rollback_target": "oai_reference",
     "restored_from": "replacement_primary",
     "post_rollback_verify_ref": null,
     "cutover_state": "not_executed",
-    "repair_state": "rollback remains available and explicit for the next mutation"
+    "repair_state": "rollback remains available and explicit for the next mutation",
+    "stale_tunnel_cleanup": "Still pending explicit rollback or cleanup evidence before another session attempt.",
+    "session_scope": "Recovery remains bounded to the same UE lane and does not claim broader multi-session parity."
   },
   "recovery_check": {
     "status": "degraded",
     "checks": [
       "rollback_target_explicit",
+      "stale_tunnel_cleanup_reviewable",
+      "single_session_scope_explicit",
       "compare_report_preserved",
       "review_path_auditable"
     ]
   },
-  "operator_notes": "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
+  "operator_notes": "Rollback was not executed, but the captured evidence keeps stale tunnel cleanup and bounded same-UE retry review explicit."
 }

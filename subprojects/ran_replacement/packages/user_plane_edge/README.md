@@ -4,7 +4,8 @@ This package defines the F1-U and GTP-U boundary for the replacement track.
 
 Intended contract:
 - Express the user-plane edge that carries the declared UE traffic between CU-UP, DU, and the real core path.
-- Cover tunnel establishment, TEID association, forwarding state, and ping-relevant user-plane evidence.
+- Cover tunnel establishment, TEID association, forwarding state, stale-tunnel cleanup review, and ping-relevant user-plane evidence.
+- Keep any same-UE next-session recovery semantics explicit without widening into broader multi-session parity.
 - Stay aligned with the standards subset and procedure matrices before any implementation work starts.
 
 ## Ownership Freeze

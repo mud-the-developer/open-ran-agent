@@ -784,6 +784,7 @@ defmodule RanActionGateway.CLITest do
       assert observe.gate_class == "degraded"
       assert observe.failure_class == "user_plane_failure"
       assert observe.summary =~ "ping diverged on the declared route"
+      assert observe.summary =~ "stale tunnel cleanup remains under review"
       assert get_in(observe, [:plane_status, :u_plane, :status]) == "degraded"
       assert get_in(observe, [:pdu_session_status, :status]) == "ok"
 
@@ -796,9 +797,11 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
 
       assert get_in(observe, [:interface_status, "f1_u", :status]) == "degraded"
+      assert get_in(observe, [:interface_status, "f1_u", :reason]) =~ "stale forwarding"
       assert get_in(observe, [:interface_status, "gtpu", :status]) == "degraded"
+      assert get_in(observe, [:interface_status, "gtpu", :reason]) =~ "stale TEID cleanup"
       assert get_in(observe, [:rollback_status, :status]) == "pending"
-      assert get_in(observe, [:rollback_status, :reason]) =~ "user-plane route remains unresolved"
+      assert get_in(observe, [:rollback_status, :reason]) =~ "stale tunnel cleanup"
 
       capture_payload =
         Path.join(
@@ -813,12 +816,49 @@ defmodule RanActionGateway.CLITest do
       assert capture.gate_class == "degraded"
       assert capture.failure_class == "user_plane_failure"
       assert capture.summary =~ "user-plane evidence bundle after ping failed"
+      assert capture.summary =~ "stale tunnel cleanup"
       assert get_in(capture, [:plane_status, :u_plane, :status]) == "degraded"
       assert get_in(capture, [:pdu_session_status, :status]) == "ok"
       assert get_in(capture, [:ping_status, :status]) == "failed"
       assert get_in(capture, [:interface_status, "f1_u", :status]) == "degraded"
       assert get_in(capture, [:interface_status, "gtpu", :status]) == "degraded"
       assert get_in(capture, [:rollback_status, :status]) == "pending"
+      assert get_in(capture, [:rollback_status, :reason]) =~ "stale tunnel cleanup"
+
+      assert Enum.any?(capture.checks, fn check ->
+               check["name"] == "stale_tunnel_cleanup_reviewed" and check["status"] == "ok"
+             end)
+
+      assert Enum.any?(capture.checks, fn check ->
+               check["name"] == "bounded_multi_session_scope_reviewed" and
+                 check["status"] == "ok"
+             end)
+
+      compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert compare_report["summary"] =~ "stale tunnel cleanup"
+
+      assert get_in(compare_report, ["expected_state", "stale_tunnel_cleanup"]) =~
+               "explicitly drained before another session attempt"
+
+      assert get_in(compare_report, ["observed_state", "session_scope"]) =~
+               "same-UE next-session safety"
+
+      assert get_in(rollback_evidence, ["pre_rollback_state", "stale_tunnel_cleanup"]) =~
+               "cleanup evidence before another session attempt"
+
+      assert "stale_tunnel_cleanup_reviewable" in get_in(rollback_evidence, [
+               "recovery_check",
+               "checks"
+             ])
     end)
   end
 
@@ -920,10 +960,12 @@ defmodule RanActionGateway.CLITest do
       assert rollback.restored_from == "replacement_primary"
       assert rollback.summary =~ "from replacement_primary to the declared oai_reference target"
       assert rollback.summary =~ "declared oai_reference target"
+      assert rollback.summary =~ "Stale tunnel cleanup"
       assert rollback.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert rollback.conformance_claim.evidence_tier == "milestone_proof"
       assert "review the compare report that triggered rollback" in rollback.suggested_next
       assert get_in(rollback, [:rollback_status, :status]) == "ok"
+      assert get_in(rollback, [:rollback_status, :reason]) =~ "stale tunnel cleanup reviewed"
 
       assert get_in(rollback, [:rollback_status, :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
@@ -945,6 +987,10 @@ defmodule RanActionGateway.CLITest do
                check["name"] == "approval_evidence_present" and check["status"] == "ok"
              end)
 
+      assert Enum.any?(rollback.checks, fn check ->
+               check["name"] == "stale_tunnel_cleanup_confirmed" and check["status"] == "ok"
+             end)
+
       assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/post-rollback-verify.json"))
       assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/reset.json"))
       assert File.exists?(Store.change_state_path("chg-ran-repl-rollback-001"))
@@ -963,6 +1009,9 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~
                "reviewable without SSH archaeology"
+
+      assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~ "stale tunnel cleanup"
+      assert "stale_tunnel_cleanup_confirmed" in post_rollback_verify["verification_checks"]
 
       assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
     end)
