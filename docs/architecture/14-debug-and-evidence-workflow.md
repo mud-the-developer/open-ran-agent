@@ -147,12 +147,23 @@ The `Inspect next` section is intentionally short so operators do not have to sc
 - `Recent Debug Failures`
 - `DU/CU Protocol State`, with distinct repo-local simulation and bounded-standards proof sections
 
+The mission inspector now also exposes a structured operator proof surface:
+
+- `Proof Surface` for per-mission counts of lane state, protocol state, documented counters, claim surfaces, and replay drilldowns
+- `Protocol State` for attach-freeze, drain, repo-local runtime, device-session, handshake, host-probe, and contract-health fields with meanings and source refs
+- `Counter Provenance` for documented runtime and contract counters, including the exact source artifact and token or field each counter came from
+- `Claim Cross-check` for the bounded simulation lane versus the declared live standards lane, including explicit non-claims and repo-visible refs
+- `Replay Drilldowns` for the focused run, remote fetchback, install recovery, and matching runtime evidence paths
+
 This is the UI equivalent of `bin/ran-debug-latest`.
 
 Use the dashboard when:
 
 - you want the newest failure without opening the filesystem first
 - you want preview, readiness, handoff, and debug evidence in one place
+- you want structured DU/CU/runtime lane state without reading raw logs first
+- you want counter meanings, protocol-state meanings, and their source artifacts in one operator view
+- you want the current mission's simulation-versus-standards claim refs before repeating a rollout or rollback
 - you want to compare multiple recent failures quickly
 
 Use the CLI when:

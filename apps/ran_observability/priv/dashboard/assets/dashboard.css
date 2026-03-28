@@ -133,6 +133,11 @@ input {
   gap: 18px;
 }
 
+.context-rail {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
 .rail-header h1,
 .workspace-topbar h2,
 .brief-panel h3,
@@ -781,6 +786,47 @@ input {
   background: rgba(255, 255, 255, 0.08);
   color: #fff7ee;
   border-color: rgba(255, 255, 255, 0.1);
+}
+
+.proof-metric-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.proof-metric,
+.proof-item,
+.counter-card,
+.claim-card,
+.replay-card,
+.ref-note {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 16px;
+  padding: 12px;
+}
+
+.proof-metric span,
+.ref-note span {
+  display: block;
+  color: rgba(246, 242, 234, 0.68);
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.proof-metric strong,
+.ref-note strong {
+  display: block;
+  margin-top: 8px;
+  color: #fff7ee;
+  word-break: break-word;
+}
+
+.counter-card .focus-tags,
+.claim-card .focus-tags {
+  margin-top: 10px;
 }
 
 .evidence-lines {

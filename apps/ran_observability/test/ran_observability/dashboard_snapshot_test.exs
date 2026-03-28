@@ -161,6 +161,7 @@ defmodule RanObservability.DashboardSnapshotTest do
     File.mkdir_p!(Path.join(artifacts, "plans"))
     File.mkdir_p!(Path.join(artifacts, "observations"))
     File.mkdir_p!(Path.join(artifacts, "verify"))
+    File.mkdir_p!(Path.join(artifacts, "control_state"))
     File.mkdir_p!(Path.join(artifacts, "runtime/demo"))
     File.mkdir_p!(Path.join(artifacts, "releases/bootstrap-ui-001"))
     File.mkdir_p!(Path.join(artifacts, "deploy_preview/quick_install/20260323T095333"))
@@ -415,6 +416,28 @@ defmodule RanObservability.DashboardSnapshotTest do
       })
     )
 
+    File.write!(
+      Path.join(artifacts, "control_state/cg-001.json"),
+      JSON.encode!(%{
+        "cell_group" => "cg-001",
+        "attach_freeze" => %{
+          "status" => "active",
+          "reason" => "maintenance-window",
+          "source_change_id" => "chg-control-001",
+          "source_command" => "apply",
+          "changed_at" => "2026-03-22T09:54:58Z"
+        },
+        "drain" => %{
+          "status" => "draining",
+          "reason" => "operator-maintenance",
+          "source_change_id" => "chg-control-001",
+          "source_command" => "apply",
+          "changed_at" => "2026-03-22T09:54:59Z"
+        },
+        "updated_at" => "2026-03-22T09:54:59Z"
+      })
+    )
+
     File.write!(Path.join(artifacts, "runtime/demo/runtime.log"), "line-1\nline-2\nline-3\n")
 
     File.write!(
@@ -607,6 +630,10 @@ defmodule RanObservability.DashboardSnapshotTest do
     assert snapshot.overview.debug_failure_count == 1
     assert snapshot.overview.prune_candidate_count == 0
     assert snapshot.overview.native_contract_count == 1
+    assert snapshot.overview.proof_surface_count == 1
+    assert snapshot.overview.documented_counter_count == 11
+    assert snapshot.overview.claim_surface_count == 2
+    assert snapshot.overview.replay_drilldown_count == 4
     assert [%{name: "ran-observe"}] = snapshot.agents.skills
 
     assert Enum.any?(
@@ -694,13 +721,56 @@ defmodule RanObservability.DashboardSnapshotTest do
     assert [%{name: "runtime.log"}] = snapshot.runtime.evidence
     assert [%{bundle_id: "bootstrap-ui-001"}] = snapshot.release.recent_bundles
     assert [%{cell_group: "cg-001", runtime_state: "running"}] = snapshot.ran.oai_repo_local_lanes
+    assert length(snapshot.ran.claim_surfaces) == 2
 
     assert Enum.any?(snapshot.ran.cell_groups, fn group ->
              group.id == "cg-001" and
                group.oai_observation.project_name == "ran-oai-du-local-rfsim" and
                group.oai_observation.runtime_state == "running" and
                group.oai_observation.token_metric_count == 5 and
-               length(group.oai_observation.containers) == 3
+               length(group.oai_observation.containers) == 3 and
+               group.control_state_ref =~ "control_state/cg-001.json" and
+               group.latest_native_contract.id == "chg-contract-001" and
+               group.proof_surface.summary.lane_count == 6 and
+               group.proof_surface.summary.protocol_count == 7 and
+               group.proof_surface.summary.counter_count == 11 and
+               group.proof_surface.summary.claim_count == 2 and
+               group.proof_surface.summary.replay_count == 4
+           end)
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             Enum.any?(group.proof_surface.protocol_state, fn field ->
+               field.id == "attach_freeze" and field.value == "active" and
+                 field.source_ref =~ "control_state/cg-001.json"
+             end)
+           end)
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             Enum.any?(group.proof_surface.counter_provenance, fn counter ->
+               counter.id == "cucp_f1_setup_response_count" and
+                 counter.source_ref =~ "observations/chg-oai-observe-001.json" and
+                 counter.source_pattern == "sending F1 Setup Response"
+             end)
+           end)
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             Enum.any?(group.proof_surface.claims, fn claim ->
+               claim.id == "repo_local_oai_rfsim_rehearsal_lane" and claim.status == "running" and
+                 Enum.any?(
+                   claim.current_refs,
+                   &String.contains?(&1.path, "chg-oai-observe-001.json")
+                 )
+             end)
+           end)
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             Enum.any?(group.proof_surface.replay_drilldowns, fn drilldown ->
+               drilldown.id == "remote_fetchback" and
+                 Enum.any?(
+                   drilldown.refs,
+                   &String.contains?(&1.path || "", "/remote_runs/ran-lab-01/")
+                 )
+             end)
            end)
 
     assert Enum.any?(snapshot.ran.cell_groups, fn group ->
