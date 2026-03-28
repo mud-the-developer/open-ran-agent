@@ -431,8 +431,8 @@ The repo includes an executable bridge from `ranctl` to a real OpenAirInterface 
 - `plan` also renders patched overlay confs under `artifacts/runtime/<change_id>/conf/*.conf`
 - `apply` brings up `CUCP + CUUP + DU` in RFsim F1 split mode, and also launches `OAI NR UE` when `metadata.oai_runtime.ue_conf_path` is present
 - `precheck` validates split markers and required patch points in the source confs, plus optional UE image/conf `/dev/net/tun` and simulation evidence prerequisites
-- `verify` inspects container state, captures log tails, accepts steady-state DU activity for long-running containers, records UE log/tunnel evidence when the UE lane is enabled, and can surface repo-local simulated UE attach, registration, session, and ping evidence
-- `capture-artifacts` bundles the rendered runtime assets, container logs, and any declared simulation evidence refs
+- `verify` inspects container state, captures log tails, accepts steady-state DU activity for long-running containers, records UE log/tunnel evidence when the UE lane is enabled, and surfaces repo-local simulated UE attach, registration, session, and ping evidence refs as simulation-only proof
+- `capture-artifacts` bundles the rendered runtime assets, container logs, declared simulation evidence refs, and a simulation compare-report / rollback note that explicitly stays separate from live-lab proof
 - `rollback` tears the stack down deterministically
 
 Example flow:
