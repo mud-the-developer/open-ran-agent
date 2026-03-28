@@ -24,7 +24,7 @@ This subset is judged against:
 - `3GPP TS 38.415` as the declared NG / PDU-session user-plane frame for the
   repo-owned supported subset
 - `subprojects/ran_replacement/notes/11-f1-u-and-gtpu-procedure-support-matrix.md`
-  for required procedures and explicit non-goals
+  for required, supported, and deferred procedures plus explicit non-goals
 - `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
   for the repo-wide conformance and evidence mapping
 
@@ -53,6 +53,14 @@ For milestone 1, the user-plane contract should be limited to the smallest usefu
 
 The replacement track does not need to claim broad GTP-U feature parity in milestone 1.
 It does need to be able to move traffic for the one declared lab profile in a standards-correct way.
+
+Milestone 1 also claims bounded support for:
+
+- `F1-U` tunnel update
+- `GTP-U` tunnel rebind
+
+These remain bounded-support maintenance or recovery claims, not attach-plus-ping
+pass gates, and must stay explicit in compare-report, status, and rollback evidence.
 
 ## Evidence Expectations
 

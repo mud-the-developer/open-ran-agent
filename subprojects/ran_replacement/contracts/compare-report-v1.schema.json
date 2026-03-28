@@ -142,7 +142,7 @@
         "standards_subset_ref",
         "procedure_matrix_ref",
         "required_procedures",
-        "optional_procedures",
+        "supported_procedures",
         "deferred_procedures"
       ],
       "properties": {
@@ -169,7 +169,7 @@
             ]
           }
         },
-        "optional_procedures": {
+        "supported_procedures": {
           "type": "array",
           "minItems": 2,
           "uniqueItems": true,
@@ -231,7 +231,7 @@
         "standards_subset_ref",
         "procedure_matrix_ref",
         "required_procedures",
-        "optional_procedures",
+        "supported_procedures",
         "deferred_procedures"
       ],
       "properties": {
@@ -251,7 +251,7 @@
             "minLength": 1
           }
         },
-        "optional_procedures": {
+        "supported_procedures": {
           "type": "array",
           "items": {
             "type": "string",

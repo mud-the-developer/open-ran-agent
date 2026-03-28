@@ -23,7 +23,7 @@ This subset is judged against:
 - `3GPP TS 38.473` for the declared `F1-C` behavior
 - `3GPP TS 37.483` for the declared `E1AP` behavior
 - `subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md`
-  for required procedures and explicit deferrals
+  for required, supported, and deferred procedures
 - `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
   for the repo-wide conformance and evidence mapping
 
@@ -45,6 +45,15 @@ The milestone 1 control-plane subset should cover the procedures needed to compl
   - clean release and re-establishment behavior during cutover or rollback
 
 The subset must be standards-correct for the supported procedure set. Unsupported procedures should be explicitly out of scope rather than partially faked.
+
+Milestone 1 also claims bounded support for:
+
+- `F1-C` UE context modification
+- `F1-C` reset-driven recovery
+- `E1AP` bearer context modification
+
+These are reviewable bounded-support claims, not happy-path attach requirements.
+Their evidence must stay attached to compare-report, status, or rollback surfaces.
 
 ## State Assumptions
 

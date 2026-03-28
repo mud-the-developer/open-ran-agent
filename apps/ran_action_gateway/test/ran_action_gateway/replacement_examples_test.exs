@@ -73,6 +73,11 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert registration_report["summary"] =~ "Downlink NAS Transport"
     assert registration_report["rollback_target"] == "oai_reference"
 
+    assert get_in(registration_report, ["ngap_subset", "supported_procedures"]) == [
+             "Error Indication",
+             "Reset"
+           ]
+
     assert get_in(registration_report, ["conformance_claim", "evidence_tier"]) ==
              "milestone_proof"
 
@@ -94,6 +99,23 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert cutover_report["failure_class"] == "cutover_or_rollback_failure"
     assert cutover_report["comparison_scope"] == "cutover"
+
+    assert get_in(cutover_report, ["protocol_claims", "f1_c", "supported_procedures"]) == [
+             "UE context modification",
+             "Reset-driven recovery"
+           ]
+
+    assert get_in(cutover_report, ["protocol_claims", "e1ap", "supported_procedures"]) == [
+             "Bearer context modification"
+           ]
+
+    assert get_in(cutover_report, ["protocol_claims", "f1_u", "supported_procedures"]) == [
+             "Tunnel update"
+           ]
+
+    assert get_in(cutover_report, ["protocol_claims", "gtpu", "supported_procedures"]) == [
+             "Tunnel rebind"
+           ]
   end
 
   test "published status fixtures cover each declared replay lane" do
@@ -118,6 +140,13 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       assert status["failure_class"] == failure_class
       assert status["rollback_target"] == "oai_reference"
 
+      assert get_in(status, ["ngap_subset", "supported_procedures"]) == [
+               "Error Indication",
+               "Reset"
+             ]
+
+      refute Map.has_key?(status["ngap_subset"], "optional_procedures")
+
       assert get_in(status, ["ngap_subset", "standards_subset_ref"]) =~
                "06-ngap-and-registration-standards-subset.md"
     end)
@@ -140,9 +169,36 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       assert evidence["failure_class"] == failure_class
       assert evidence["rollback_target"] == "oai_reference"
 
+      assert get_in(evidence, ["ngap_subset", "supported_procedures"]) == [
+               "Error Indication",
+               "Reset"
+             ]
+
       assert get_in(evidence, ["ngap_subset", "standards_subset_ref"]) =~
                "06-ngap-and-registration-standards-subset.md"
     end)
+
+    cutover_evidence =
+      family_artifact("rollback-evidence-failed-cutover-open5gs-n79.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_c", "supported_procedures"]) == [
+             "UE context modification",
+             "Reset-driven recovery"
+           ]
+
+    assert get_in(cutover_evidence, ["protocol_claims", "e1ap", "supported_procedures"]) == [
+             "Bearer context modification"
+           ]
+
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_u", "supported_procedures"]) == [
+             "Tunnel update"
+           ]
+
+    assert get_in(cutover_evidence, ["protocol_claims", "gtpu", "supported_procedures"]) == [
+             "Tunnel rebind"
+           ]
 
     post_rollback_verify =
       family_artifact("post-rollback-verify-gnb-cutover-open5gs-n79.json")

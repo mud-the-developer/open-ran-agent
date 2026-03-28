@@ -81,7 +81,7 @@
           "Downlink NAS Transport",
           "UE Context Release"
         ],
-        "optional_procedures": [
+        "supported_procedures": [
           "Error Indication",
           "Reset"
         ],

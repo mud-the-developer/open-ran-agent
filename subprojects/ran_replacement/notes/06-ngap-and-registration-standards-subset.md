@@ -19,7 +19,7 @@ This subset is judged against:
 
 - `3GPP TS 38.413` for the declared `NGAP` behavior
 - `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md` for
-  required, optional, and deferred procedure classes
+  required, supported, and deferred procedure classes
 - `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
   for the repo-wide conformance and evidence mapping
 
@@ -52,6 +52,14 @@ The supported subset must be sufficient for:
 - registration
 - session establishment handoff into the core
 - release handling after failure or rollback
+
+Milestone 1 also claims bounded support for:
+
+- `Error Indication`
+- `Reset`
+
+These are reviewable recovery or diagnosis claims, not happy-path pass gates.
+They must remain explicit in compare-report, status, and rollback evidence.
 
 ## Procedure Ordering Assumptions
 

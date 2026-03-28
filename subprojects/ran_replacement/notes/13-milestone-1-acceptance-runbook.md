@@ -76,7 +76,7 @@ What to inspect:
 
 - affected resource
 - expected interfaces
-- `ngap_subset` references plus required, optional, and deferred procedure lists when `ngap` is declared
+- `ngap_subset` references plus required, supported, and deferred procedure lists when `ngap` is declared
 - expected artifacts
 - approval requirement
 - rollback path

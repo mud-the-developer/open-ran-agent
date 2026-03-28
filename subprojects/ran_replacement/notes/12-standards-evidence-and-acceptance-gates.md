@@ -44,7 +44,7 @@ Operator rule:
 Use `degraded` when:
 
 - the control-plane or user-plane is shadowing only
-- one or more optional helpers are missing
+- one or more bounded supported procedures are unavailable or cannot be reviewed honestly
 - the lane can explain state and capture evidence, but attach-plus-ping is not yet proven end to end
 
 Operator rule:
@@ -244,7 +244,7 @@ If any one of those is missing, the result is not `pass`.
 `ranctl` should treat the gates as the control contract, not as incidental logs.
 
 - `ranctl precheck` computes the gate class and refuses unsafe cutover planning.
-- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must not imply support outside `ngap_subset.optional_procedures` and `ngap_subset.deferred_procedures`.
+- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must keep the declared `required_procedures`, `supported_procedures`, and `deferred_procedures` split explicit rather than implying broader parity.
 - `ranctl apply` requires the explicit approval gate already defined by the repo rules.
 - `ranctl verify` confirms whether the current state is still standards-correct or whether rollback is now the safer operator action.
 - `ranctl capture-artifacts` freezes the evidence that justified the decision.
