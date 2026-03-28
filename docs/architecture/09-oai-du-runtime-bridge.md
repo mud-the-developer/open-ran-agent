@@ -220,13 +220,25 @@ Docker logs.
 ## Repo-local observability surface
 
 `bin/ran-dashboard` is the operator-facing surface for the repo-local split
-RFsim lane. The `Repo-local OAI Observe` inspector card is populated from the
-latest `observe` artifact and shows:
+RFsim lane. The `DU/CU Protocol State` inspector card keeps simulation proof and
+bounded-standards proof visually distinct:
 
-- current runtime state for the repo-local `CU-CP`, `CU-UP`, and `DU`
-- per-service running and health status
-- documented token/count metrics derived from the current Docker log tail
-- the artifact path that produced the dashboard view
+- `Repo-local simulation lane`: one panel each for `DU`, `CU-CP`, and `CU-UP`
+  from the latest repo-local `observe` artifact
+- `Bounded standards lane`: focused `observe`/`verify` protocol evidence for
+  `NGAP`, `F1-C`, `E1AP`, `F1-U`, and attach/session outcomes from the selected
+  bounded-standards run artifact
+
+The repo-local simulation panels expose documented field provenance directly in
+the UI. The current field set is:
+
+| Field | Source | Meaning |
+| --- | --- | --- |
+| `Service` | `runtime.containers[].service_name` from the observe artifact | Docker Compose service name for the protocol role |
+| `Container state` | `runtime.containers[].status` from the observe artifact | Runtime state reported by the observe-time container inspection |
+| `Health` | `runtime.containers[].health` from the observe artifact | Container health reported by the observe-time runtime inspection |
+| `Log probe` | `runtime.containers[].log_probe_status` from the observe artifact | Whether `observe` successfully captured the current Docker log tail for that service |
+| `Log tail lines` | `runtime.containers[].log_tail_line_count` from the observe artifact | How many tail lines were scanned when counters were recorded |
 
 The current token/count metrics are intentionally narrow and operator-facing:
 
@@ -243,6 +255,12 @@ Operators should read these counters as bounded, current-tail indicators. They
 are not lifetime totals; they are counts of known bring-up or steady-state
 tokens in the current `docker logs --tail 2000 <container>` window that
 `observe` captured.
+
+The bounded-standards section intentionally does not reuse these counters. It
+surfaces declared `interface_status`, `plane_status`, `ngap_procedure_trace`,
+and attach/session outcome refs from the focused run artifact so reviewers can
+inspect protocol state without confusing rehearsal counters with standards-lane
+evidence.
 
 Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 
