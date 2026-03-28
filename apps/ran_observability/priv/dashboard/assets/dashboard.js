@@ -270,6 +270,10 @@ function currentOaiObservation(cellGroup) {
   return cellGroup?.oai_observation || null;
 }
 
+function proofSurface(cellGroup) {
+  return cellGroup?.proof_surface || null;
+}
+
 function roleLabel(role) {
   switch (role) {
     case "du":
@@ -302,6 +306,7 @@ function renderMissionList(data, cellGroup) {
           <div class="mission-meta">freeze ${escapeHtml(group.control_state?.attach_freeze?.status || "inactive")} / drain ${escapeHtml(group.control_state?.drain?.status || "idle")}</div>
           <div class="mission-meta">${missionRuntimeCount(data, group)} linked runtime surfaces</div>
           <div class="mission-meta">repo-local OAI observe ${escapeHtml(currentOaiObservation(group)?.runtime_state || "not captured")}</div>
+          <div class="mission-meta">${escapeHtml(proofSurface(group)?.summary?.protocol_count || 0)} protocol states / ${escapeHtml(proofSurface(group)?.summary?.counter_count || 0)} counters</div>
         </button>
       `
     )
@@ -359,6 +364,7 @@ function renderTopbar(data, cellGroup) {
 
 function renderBrief(data, cellGroup) {
   const observe = currentOaiObservation(cellGroup);
+  const proof = proofSurface(cellGroup);
 
   byId("brief-title").textContent = cellGroup
     ? `${cellGroup.id} mission orchestration`
@@ -373,6 +379,7 @@ function renderBrief(data, cellGroup) {
     `Install debugging has ${data.overview.install_run_count || 0} recent staged runs.`,
     `Debug desk sees ${data.overview.debug_failure_count || 0} recent failures.`,
     `Retention planner sees ${data.retention?.summary?.prune_count || 0} prune candidates.`,
+    `Proof surfaces cover ${data.overview.proof_surface_count || 0} missions, ${data.overview.documented_counter_count || 0} documented counters, and ${data.overview.replay_drilldown_count || 0} replay drilldowns.`,
     data.ran.topology_source
       ? `Topology source is ${data.ran.topology_source}.`
       : "Topology source is the repo default config.",
@@ -403,6 +410,14 @@ function renderBrief(data, cellGroup) {
       ["OAI Services", observe.service_count],
       ["OAI Healthy", observe.healthy_service_count],
       ["OAI Tokens", observe.token_metric_count]
+    );
+  }
+
+  if (proof) {
+    metrics.unshift(
+      ["Protocol State", proof.summary?.protocol_count || 0],
+      ["Counters", proof.summary?.counter_count || 0],
+      ["Replay", proof.summary?.replay_count || 0]
     );
   }
 
@@ -873,6 +888,200 @@ function renderEvidencePanel(evidence) {
     <ul class="evidence-lines">
       ${(evidence.excerpt || []).map((line) => `<li>${escapeHtml(line)}</li>`).join("")}
     </ul>
+  `;
+}
+
+function renderRefNotes(refs, emptyMessage) {
+  if (!refs?.length) {
+    return `<div class="lane-note">${escapeHtml(emptyMessage)}</div>`;
+  }
+
+  return refs
+    .map(
+      (ref) => `
+        <div class="ref-note">
+          <span>${escapeHtml(ref.label || "ref")}</span>
+          <strong>${escapeHtml(ref.path || "n/a")}</strong>
+        </div>
+      `
+    )
+    .join("");
+}
+
+function renderProofPanel(cellGroup) {
+  const target = byId("proof-panel");
+  const proof = proofSurface(cellGroup);
+
+  if (!proof) {
+    target.innerHTML = `<div class="empty">No proof surface indexed for the focused mission.</div>`;
+    return;
+  }
+
+  const summary = proof.summary || {};
+
+  target.innerHTML = `
+    <div class="section-kicker">Proof Surface</div>
+    <h4>${escapeHtml(cellGroup?.id || "focused mission")}</h4>
+    <div class="inspector-meta">Structured operator view for lane state, protocol state, counters, claims, and replay refs.</div>
+    <div class="proof-metric-grid">
+      ${[
+        ["Lane state", summary.lane_count || 0],
+        ["Protocol", summary.protocol_count || 0],
+        ["Counters", summary.counter_count || 0],
+        ["Claims", summary.claim_count || 0],
+        ["Replay", summary.replay_count || 0]
+      ]
+        .map(
+          ([label, value]) => `
+            <div class="proof-metric">
+              <span>${escapeHtml(label)}</span>
+              <strong>${escapeHtml(value)}</strong>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+    <div class="lane-list">
+      ${(proof.lane_state || [])
+        .slice(0, 3)
+        .map(
+          (lane) => `
+            <div class="proof-item">
+              <div class="inspector-row"><span>${escapeHtml(lane.label)}</span><strong>${escapeHtml(lane.status)}</strong></div>
+              <div class="lane-note">${escapeHtml(lane.summary || lane.meaning || "No detail recorded.")}</div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderProtocolPanel(cellGroup) {
+  const target = byId("protocol-panel");
+  const rows = proofSurface(cellGroup)?.protocol_state || [];
+
+  if (!rows.length) {
+    target.innerHTML = `<div class="empty">No documented protocol state recorded for the focused mission.</div>`;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="section-kicker">Protocol State</div>
+    <h4>${escapeHtml(rows.length)} documented fields</h4>
+    <div class="lane-list">
+      ${rows
+        .map(
+          (row) => `
+            <div class="proof-item">
+              <div class="inspector-row"><span>${escapeHtml(row.label)}</span><strong>${escapeHtml(row.value)}</strong></div>
+              <div class="lane-note">${escapeHtml(row.meaning || "No meaning recorded.")}</div>
+              ${row.detail ? `<div class="lane-note">detail :: ${escapeHtml(row.detail)}</div>` : ""}
+              ${row.source_ref ? `<div class="lane-note">source :: ${escapeHtml(row.source_label || "artifact")} :: ${escapeHtml(row.source_ref)}</div>` : ""}
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderCounterPanel(cellGroup) {
+  const target = byId("counter-panel");
+  const counters = proofSurface(cellGroup)?.counter_provenance || [];
+
+  if (!counters.length) {
+    target.innerHTML = `<div class="empty">No documented counter provenance recorded for the focused mission.</div>`;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="section-kicker">Counter Provenance</div>
+    <h4>${escapeHtml(counters.length)} documented counters</h4>
+    <div class="lane-list">
+      ${counters
+        .map(
+          (counter) => `
+            <div class="counter-card">
+              <div class="inspector-row"><span>${escapeHtml(counter.label)}</span><strong>${escapeHtml(counter.value)}</strong></div>
+              <div class="lane-note">${escapeHtml(counter.meaning || "No meaning recorded.")}</div>
+              <div class="focus-tags">
+                <span class="runtime-tag">${escapeHtml(roleLabel(counter.lane))}</span>
+                <span class="runtime-tag">${escapeHtml(counter.source_kind || "source")}</span>
+                ${counter.source_pattern ? `<span class="runtime-tag">${escapeHtml(counter.source_pattern)}</span>` : ""}
+              </div>
+              ${counter.source_ref ? `<div class="lane-note">source :: ${escapeHtml(counter.source_ref)}</div>` : ""}
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderClaimPanel(cellGroup) {
+  const target = byId("claim-panel");
+  const claims = proofSurface(cellGroup)?.claims || [];
+
+  if (!claims.length) {
+    target.innerHTML = `<div class="empty">No claim cross-check surfaces recorded for the focused mission.</div>`;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="section-kicker">Claim Cross-check</div>
+    <h4>${escapeHtml(claims.length)} claim surfaces</h4>
+    <div class="lane-list">
+      ${claims
+        .map(
+          (claim) => `
+            <div class="claim-card">
+              <div class="inspector-row"><span>${escapeHtml(claim.label)}</span><strong>${escapeHtml(claim.status || claim.posture || "unknown")}</strong></div>
+              <div class="focus-tags">
+                <span class="runtime-tag">${escapeHtml(claim.proof_level || "proof")}</span>
+                <span class="runtime-tag">${escapeHtml(claim.scope || "scope")}</span>
+              </div>
+              <div class="lane-note">${escapeHtml(claim.summary || "No summary recorded.")}</div>
+              <div class="lane-note">current :: ${escapeHtml(claim.current_signal || "No current signal recorded.")}</div>
+              <div class="section-kicker">Limits</div>
+              <div class="lane-list">${renderLaneNotes(claim.limits || [], "No explicit non-claims recorded.")}</div>
+              <div class="section-kicker">Current refs</div>
+              <div class="lane-list">${renderRefNotes(claim.current_refs || [], "No current refs recorded.")}</div>
+              <div class="section-kicker">Docs and verify refs</div>
+              <div class="lane-list">${renderRefNotes([...(claim.doc_refs || []), ...(claim.verify_refs || []), ...(claim.rollback_refs || [])], "No claim refs recorded.")}</div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+function renderReplayPanel(cellGroup) {
+  const target = byId("replay-panel");
+  const drilldowns = proofSurface(cellGroup)?.replay_drilldowns || [];
+
+  if (!drilldowns.length) {
+    target.innerHTML = `<div class="empty">No replay drilldowns recorded for the focused mission.</div>`;
+    return;
+  }
+
+  target.innerHTML = `
+    <div class="section-kicker">Replay Drilldowns</div>
+    <h4>${escapeHtml(drilldowns.length)} operator paths</h4>
+    <div class="lane-list">
+      ${drilldowns
+        .map(
+          (entry) => `
+            <div class="replay-card">
+              <div class="inspector-row"><span>${escapeHtml(entry.label)}</span><strong>${escapeHtml(entry.status || "available")}</strong></div>
+              <div class="lane-note">${escapeHtml(entry.summary || "No replay summary recorded.")}</div>
+              <div class="lane-list">${renderRefNotes(entry.refs || [], "No replay refs recorded.")}</div>
+            </div>
+          `
+        )
+        .join("")}
+    </div>
   `;
 }
 
@@ -1485,10 +1694,15 @@ function render(snapshot) {
   renderRuntimeBoard(snapshot, focusedContainer);
   renderDeployStudio(snapshot);
   renderFocusSummary(snapshot, cellGroup, focusedRun, focusedContainer);
+  renderProofPanel(cellGroup);
+  renderProtocolPanel(cellGroup);
+  renderCounterPanel(cellGroup);
+  renderClaimPanel(cellGroup);
   renderPolicyPanel(snapshot);
   renderNativeContractPanel(focusedRun);
   renderOaiObservationPanel(cellGroup);
   renderRunPanel(focusedRun);
+  renderReplayPanel(cellGroup);
   renderEvidencePanel(evidence);
   renderLanePanel(snapshot, focusedRun);
   renderComposer(snapshot);

@@ -31,14 +31,48 @@ defmodule RanObservability.Dashboard.Snapshot do
     recent_changes = recent_activity(artifact_root, 12)
     oai_observations = latest_oai_observations_by_cell_group(artifact_root)
     native_contract_runs = recent_native_contract_runs(recent_changes, 8)
+    native_contracts_by_cell_group = latest_native_contract_runs_by_cell_group(recent_changes)
     remote_runs = recent_remote_runs(artifact_root, 6)
     install_runs = recent_install_runs(artifact_root, 8)
     retention = retention_snapshot(artifact_root)
     debug = debug_snapshot(recent_changes, remote_runs, install_runs)
+    runtime_evidence = recent_logs(artifact_root, 6)
 
     containers = list_containers(command_runner)
     ran_containers = Enum.filter(containers, &(&1.domain == "ran"))
     agent_containers = Enum.filter(containers, &(&1.domain == "agent"))
+    claim_surfaces = claim_surfaces()
+
+    ran_cell_groups =
+      Enum.map(
+        RanConfig.cell_groups(),
+        &format_cell_group(
+          &1,
+          artifact_root,
+          oai_observations,
+          native_contracts_by_cell_group,
+          remote_runs,
+          install_runs,
+          recent_changes,
+          runtime_evidence,
+          claim_surfaces
+        )
+      )
+
+    proof_surface_count =
+      Enum.count(ran_cell_groups, fn group ->
+        get_in(group, [:proof_surface, :summary, :total_items]) not in [nil, 0]
+      end)
+
+    documented_counter_count =
+      Enum.reduce(ran_cell_groups, 0, fn group, acc ->
+        acc + (get_in(group, [:proof_surface, :summary, :counter_count]) || 0)
+      end)
+
+    replay_drilldown_count =
+      Enum.reduce(ran_cell_groups, 0, fn group, acc ->
+        acc + (get_in(group, [:proof_surface, :summary, :replay_count]) || 0)
+      end)
 
     %{
       generated_at: now_iso8601(),
@@ -59,19 +93,20 @@ defmodule RanObservability.Dashboard.Snapshot do
         remote_run_count: length(remote_runs),
         install_run_count: length(install_runs),
         debug_failure_count: debug.recent_failure_count,
-        prune_candidate_count: retention.summary.prune_count
+        prune_candidate_count: retention.summary.prune_count,
+        proof_surface_count: proof_surface_count,
+        documented_counter_count: documented_counter_count,
+        claim_surface_count: length(claim_surfaces),
+        replay_drilldown_count: replay_drilldown_count
       },
       ran: %{
         profile: RanConfig.current_profile() |> to_string(),
         topology_source: RanConfig.topology_source(),
         validation: sanitize_validation(RanConfig.validation_report()),
         supported_backends: Enum.map(RanCore.supported_backends(), &Atom.to_string/1),
-        cell_groups:
-          Enum.map(
-            RanConfig.cell_groups(),
-            &format_cell_group(&1, artifact_root, oai_observations)
-          ),
-        oai_repo_local_lanes: Map.values(oai_observations)
+        cell_groups: ran_cell_groups,
+        oai_repo_local_lanes: Map.values(oai_observations),
+        claim_surfaces: claim_surfaces
       },
       release: %{
         readiness: sanitize_release_readiness(RanConfig.release_readiness()),
@@ -96,7 +131,7 @@ defmodule RanObservability.Dashboard.Snapshot do
         ran_containers: ran_containers,
         agent_containers: agent_containers,
         native_contracts: native_contract_runs,
-        evidence: recent_logs(artifact_root, 6)
+        evidence: runtime_evidence
       },
       agents: %{
         skills: list_skills(skills_root),
@@ -117,8 +152,22 @@ defmodule RanObservability.Dashboard.Snapshot do
     }
   end
 
-  defp format_cell_group(cell_group, artifact_root, oai_observations) do
+  defp format_cell_group(
+         cell_group,
+         artifact_root,
+         oai_observations,
+         native_contracts_by_cell_group,
+         remote_runs,
+         install_runs,
+         recent_changes,
+         runtime_evidence,
+         claim_surfaces
+       ) do
     id = fetch_value(cell_group, :id)
+    control_state = load_control_state(artifact_root, id)
+    control_state_ref = control_state_ref(artifact_root, id)
+    oai_observation = Map.get(oai_observations, id)
+    native_contract_run = Map.get(native_contracts_by_cell_group, id)
 
     %{
       id: id,
@@ -134,9 +183,693 @@ defmodule RanObservability.Dashboard.Snapshot do
         |> fetch_value(:oai_runtime, %{})
         |> fetch_value(:mode)
         |> to_string_value(),
-      control_state: load_control_state(artifact_root, id),
-      oai_observation: Map.get(oai_observations, id)
+      control_state: control_state,
+      control_state_ref: control_state_ref,
+      oai_observation: oai_observation,
+      latest_native_contract: native_contract_run,
+      proof_surface:
+        build_proof_surface(
+          id,
+          control_state,
+          control_state_ref,
+          oai_observation,
+          native_contract_run,
+          remote_runs,
+          install_runs,
+          recent_changes,
+          runtime_evidence,
+          claim_surfaces
+        )
     }
+  end
+
+  defp build_proof_surface(
+         cell_group_id,
+         control_state,
+         control_state_ref,
+         observe,
+         native_contract_run,
+         remote_runs,
+         install_runs,
+         recent_changes,
+         runtime_evidence,
+         claim_surfaces
+       ) do
+    matching_remote_runs = Enum.filter(remote_runs, &(&1.cell_group == cell_group_id))
+
+    matching_evidence =
+      Enum.filter(runtime_evidence, fn evidence ->
+        String.contains?(evidence.path, cell_group_id) or
+          (observe && String.contains?(evidence.path, observe.id))
+      end)
+
+    lane_state = build_lane_state(control_state, control_state_ref, observe, native_contract_run)
+
+    protocol_state =
+      build_protocol_state(control_state, control_state_ref, observe, native_contract_run)
+
+    counter_provenance = build_counter_provenance(observe, native_contract_run)
+
+    claims =
+      build_claim_cross_checks(
+        claim_surfaces,
+        observe,
+        control_state_ref,
+        native_contract_run,
+        matching_remote_runs
+      )
+
+    replay_drilldowns =
+      build_replay_drilldowns(
+        cell_group_id,
+        recent_changes,
+        matching_remote_runs,
+        install_runs,
+        matching_evidence,
+        runtime_evidence
+      )
+
+    %{
+      summary: %{
+        lane_count: length(lane_state),
+        protocol_count: length(protocol_state),
+        counter_count: length(counter_provenance),
+        claim_count: length(claims),
+        replay_count: length(replay_drilldowns),
+        total_items:
+          length(lane_state) + length(protocol_state) + length(counter_provenance) +
+            length(claims) + length(replay_drilldowns)
+      },
+      lane_state: lane_state,
+      protocol_state: protocol_state,
+      counter_provenance: counter_provenance,
+      claims: claims,
+      replay_drilldowns: replay_drilldowns
+    }
+  end
+
+  defp build_lane_state(control_state, control_state_ref, observe, native_contract_run) do
+    runtime_lane =
+      if observe do
+        [
+          %{
+            id: "repo_local_runtime",
+            label: "Repo-local runtime",
+            lane: "runtime",
+            status: observe.runtime_state || "unknown",
+            summary:
+              "#{observe.running_service_count}/#{observe.service_count} services running, #{observe.healthy_service_count} healthy",
+            meaning:
+              "Aggregate DU/CU runtime health from the latest repo-local OAI observe artifact for this mission.",
+            source_label: "Observe artifact",
+            source_ref: observe.path
+          }
+        ]
+      else
+        []
+      end
+
+    container_lanes =
+      Enum.map((observe && observe.containers) || [], fn container ->
+        %{
+          id: "#{container.role || container.name}-lane",
+          label: role_label(container.role),
+          lane: container.role || "service",
+          status: container.status || "unknown",
+          summary:
+            [
+              container.health,
+              container.service_name || container.name,
+              container.log_probe_status && "logs #{container.log_probe_status}"
+            ]
+            |> Enum.reject(&is_nil/1)
+            |> Enum.join(" / "),
+          meaning:
+            "Latest #{role_label(container.role)} runtime service state from the repo-local observe artifact.",
+          source_label: "Observe artifact",
+          source_ref: observe && observe.path
+        }
+      end)
+
+    control_lane =
+      if control_state do
+        [
+          %{
+            id: "control_gate",
+            label: "Control gate",
+            lane: "control",
+            status:
+              "freeze #{get_in(control_state, ["attach_freeze", "status"]) || "inactive"} / drain #{get_in(control_state, ["drain", "status"]) || "idle"}",
+            summary:
+              [
+                get_in(control_state, ["attach_freeze", "reason"]),
+                get_in(control_state, ["drain", "reason"])
+              ]
+              |> Enum.reject(&is_nil/1)
+              |> Enum.join(" / "),
+            meaning:
+              "Persisted operational gate state for attach freeze and drain workflows on the cell group.",
+            source_label: "Control state snapshot",
+            source_ref: control_state_ref
+          }
+        ]
+      else
+        []
+      end
+
+    contract_lane =
+      if native_contract_run do
+        [
+          %{
+            id: "native_contract_lane",
+            label: "Native contract lane",
+            lane:
+              native_contract_run.execution_lane || native_contract_run.transport_worker ||
+                "contract",
+            status:
+              native_contract_run.health_status || native_contract_run.device_session_state ||
+                native_contract_run.handshake_state || "present",
+            summary:
+              [
+                native_contract_run.backend_family,
+                native_contract_run.worker_kind,
+                native_contract_run.transport_worker || native_contract_run.execution_lane
+              ]
+              |> Enum.reject(&is_nil/1)
+              |> Enum.join(" / "),
+            meaning:
+              "Latest contract-bearing runtime lane state captured in a plan, verify, or runtime artifact for this mission.",
+            source_label: "Contract artifact",
+            source_ref: native_contract_run.path
+          }
+        ]
+      else
+        []
+      end
+
+    runtime_lane ++ container_lanes ++ control_lane ++ contract_lane
+  end
+
+  defp build_protocol_state(control_state, control_state_ref, observe, native_contract_run) do
+    [
+      documented_state(
+        "attach_freeze",
+        "Attach freeze",
+        get_in(control_state || %{}, ["attach_freeze", "status"]),
+        "Operator gate for admitting new attach attempts on the focused cell group.",
+        control_state_ref,
+        "Control state snapshot",
+        get_in(control_state || %{}, ["attach_freeze", "reason"])
+      ),
+      documented_state(
+        "drain",
+        "Drain",
+        get_in(control_state || %{}, ["drain", "status"]),
+        "Drain progression for maintenance, rollback, or controlled shutdown on the focused cell group.",
+        control_state_ref,
+        "Control state snapshot",
+        get_in(control_state || %{}, ["drain", "reason"])
+      ),
+      documented_state(
+        "repo_local_runtime_state",
+        "Repo-local runtime",
+        observe && observe.runtime_state,
+        "Latest runtime outcome for the repo-local OAI proof lane.",
+        observe && observe.path,
+        "Observe artifact",
+        observe &&
+          "#{observe.running_service_count}/#{observe.service_count} running, #{observe.healthy_service_count} healthy"
+      ),
+      documented_state(
+        "device_session_state",
+        "Device session",
+        native_contract_run && native_contract_run.device_session_state,
+        "Device-session state exported by the latest contract-bearing artifact.",
+        native_contract_run && native_contract_run.path,
+        "Contract artifact",
+        native_contract_run && native_contract_run.device_session_ref
+      ),
+      documented_state(
+        "handshake_state",
+        "Handshake",
+        native_contract_run && native_contract_run.handshake_state,
+        "Transport or fronthaul handshake state exported by the latest contract-bearing artifact.",
+        native_contract_run && native_contract_run.path,
+        "Contract artifact",
+        native_contract_run && native_contract_run.handshake_ref
+      ),
+      documented_state(
+        "host_probe_status",
+        "Host probe",
+        native_contract_run && native_contract_run.host_probe_status,
+        "Host-readiness gate state for the mission's target resources.",
+        native_contract_run && native_contract_run.path,
+        "Contract artifact",
+        native_contract_run && native_contract_run.host_probe_ref
+      ),
+      documented_state(
+        "health_status",
+        "Contract health",
+        native_contract_run && native_contract_run.health_status,
+        "Health verdict emitted by the latest contract-bearing runtime artifact.",
+        native_contract_run && native_contract_run.path,
+        "Contract artifact",
+        native_contract_run &&
+          format_health_checks(native_contract_run.health_checks || [])
+      )
+    ]
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp build_counter_provenance(observe, native_contract_run) do
+    observe_counters =
+      [
+        documented_counter(
+          "running_service_count",
+          "Running services",
+          observe && observe.running_service_count,
+          "Counts currently running repo-local OAI services in the latest observe artifact.",
+          observe && observe.path,
+          "observe_runtime_aggregate",
+          "running_service_count",
+          "runtime"
+        ),
+        documented_counter(
+          "healthy_service_count",
+          "Healthy services",
+          observe && observe.healthy_service_count,
+          "Counts healthy repo-local OAI services in the latest observe artifact.",
+          observe && observe.path,
+          "observe_runtime_aggregate",
+          "healthy_service_count",
+          "runtime"
+        )
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    token_counters =
+      Enum.map((observe && observe.token_metrics) || [], fn metric ->
+        documented_counter(
+          metric.id,
+          metric.label,
+          metric.count,
+          metric.meaning,
+          observe && observe.path,
+          metric.source_kind,
+          metric.source_pattern,
+          metric.role
+        )
+      end)
+
+    contract_counters =
+      [
+        documented_counter(
+          "handshake_attempts",
+          "Handshake attempts",
+          native_contract_run && native_contract_run.handshake_attempts,
+          "Counts handshake attempts recorded before the current contract state.",
+          native_contract_run && native_contract_run.path,
+          "native_contract",
+          "handshake_attempts",
+          "contract"
+        ),
+        documented_counter(
+          "queue_depth",
+          "Queue depth",
+          native_contract_run && native_contract_run.queue_depth,
+          "Counts queued work units in the current contract-bearing runtime lane.",
+          native_contract_run && native_contract_run.path,
+          "native_contract",
+          "queue_depth",
+          "contract"
+        ),
+        documented_counter(
+          "deadline_miss_count",
+          "Deadline misses",
+          native_contract_run && native_contract_run.deadline_miss_count,
+          "Counts timing-window misses reported by the current contract-bearing runtime lane.",
+          native_contract_run && native_contract_run.path,
+          "native_contract",
+          "deadline_miss_count",
+          "contract"
+        ),
+        documented_counter(
+          "timing_budget_us",
+          "Timing budget us",
+          native_contract_run && native_contract_run.timing_budget_us,
+          "Configured timing budget in microseconds for the current contract-bearing runtime lane.",
+          native_contract_run && native_contract_run.path,
+          "native_contract",
+          "timing_budget_us",
+          "contract"
+        )
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    observe_counters ++ token_counters ++ contract_counters
+  end
+
+  defp build_claim_cross_checks(
+         claim_surfaces,
+         observe,
+         control_state_ref,
+         native_contract_run,
+         matching_remote_runs
+       ) do
+    latest_remote_run = List.first(matching_remote_runs)
+
+    Enum.map(claim_surfaces, fn claim ->
+      case claim.id do
+        "repo_local_oai_rfsim_rehearsal_lane" ->
+          Map.merge(claim, %{
+            status: (observe && observe.runtime_state) || "not_captured",
+            current_signal:
+              if observe do
+                "#{observe.running_service_count}/#{observe.service_count} services running with #{observe.token_metric_count} documented counters."
+              else
+                "No repo-local observe artifact has been captured for this mission yet."
+              end,
+            current_refs:
+              compact_refs([
+                observe && ref("Current observe artifact", observe.path),
+                control_state_ref && ref("Current control state", control_state_ref)
+              ])
+          })
+
+        "declared_live_protocol_lane" ->
+          Map.merge(claim, %{
+            status: (latest_remote_run && latest_remote_run.status) || "reference_only",
+            current_signal:
+              if latest_remote_run do
+                "Latest matching remote run is #{latest_remote_run.status} on #{latest_remote_run.host}."
+              else
+                "No matching remote run was captured for this mission; cross-check through the declared example bundle and posture docs."
+              end,
+            current_refs:
+              compact_refs([
+                latest_remote_run &&
+                  ref(
+                    "Latest matching remote run",
+                    latest_remote_run.fetch_archive_path || latest_remote_run.result_path ||
+                      latest_remote_run.plan_path || latest_remote_run.path
+                  ),
+                native_contract_run &&
+                  ref("Latest contract-bearing artifact", native_contract_run.path)
+              ])
+          })
+
+        _ ->
+          claim
+      end
+    end)
+  end
+
+  defp build_replay_drilldowns(
+         cell_group_id,
+         recent_changes,
+         matching_remote_runs,
+         install_runs,
+         matching_evidence,
+         runtime_evidence
+       ) do
+    latest_change = find_latest_change_for_cell_group(recent_changes, cell_group_id)
+    latest_remote_run = List.first(matching_remote_runs)
+    latest_install_run = List.first(install_runs)
+    evidence = List.first(matching_evidence) || List.first(runtime_evidence)
+
+    [
+      latest_change &&
+        %{
+          id: "focused_run_replay",
+          label: "Focused run replay",
+          status: latest_change.status || "unknown",
+          summary:
+            "Re-open the selected change artifact, its source plan, and any rollback or approval refs before mutating the mission.",
+          refs:
+            compact_refs([
+              ref("Change artifact", latest_change.path),
+              ref("Source plan", latest_change.source_plan),
+              ref("Rollback plan", latest_change.rollback_plan_ref),
+              ref("Approval", latest_change.approval_ref)
+            ])
+        },
+      latest_remote_run &&
+        %{
+          id: "remote_fetchback",
+          label: "Remote fetchback replay",
+          status: latest_remote_run.status || "unknown",
+          summary:
+            "Review host-side execution, fetched evidence, and the extracted bundle before trusting a remote standards claim.",
+          refs:
+            compact_refs([
+              ref("Remote plan", latest_remote_run.plan_path),
+              ref("Remote result", latest_remote_run.result_path),
+              ref("Fetch archive", latest_remote_run.fetch_archive_path),
+              ref("Fetch extract", latest_remote_run.fetch_extract_path)
+            ])
+        },
+      latest_install_run &&
+        %{
+          id: "install_recovery",
+          label: "Install recovery drilldown",
+          status: latest_install_run.status || latest_install_run.readiness_status || "unknown",
+          summary:
+            "Review install or ship-bundle transcripts, debug packs, and runbooks before replaying a recovery or rollback step.",
+          refs:
+            compact_refs([
+              ref("Install summary", latest_install_run.summary_path),
+              ref("Install guide", latest_install_run.guide_path),
+              ref("Transcript", latest_install_run.transcript_path),
+              ref("Debug pack", latest_install_run.debug_pack_path)
+            ])
+        },
+      evidence &&
+        %{
+          id: "runtime_evidence",
+          label: "Runtime evidence excerpt",
+          status: "available",
+          summary:
+            "Open the latest matching runtime log excerpt to confirm that the structured dashboard surface still matches raw evidence.",
+          refs: compact_refs([ref("Runtime evidence", evidence.path)])
+        }
+    ]
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp latest_native_contract_runs_by_cell_group(recent_changes) do
+    Enum.reduce(recent_changes, %{}, fn change, acc ->
+      summary = native_contract_run_summary(change)
+
+      cond do
+        not is_binary(summary.cell_group) ->
+          acc
+
+        is_nil(change.native_contract) or map_size(change.native_contract) == 0 ->
+          acc
+
+        Map.has_key?(acc, summary.cell_group) ->
+          acc
+
+        true ->
+          Map.put(acc, summary.cell_group, summary)
+      end
+    end)
+  end
+
+  defp find_latest_change_for_cell_group(recent_changes, cell_group_id) do
+    Enum.find(recent_changes, &(&1.cell_group == cell_group_id))
+  end
+
+  defp claim_surfaces do
+    [
+      %{
+        id: "repo_local_oai_rfsim_rehearsal_lane",
+        label: "Repo-local OAI RFsim rehearsal lane",
+        posture: "simulation_only",
+        proof_level: "bounded simulation-only runtime proof",
+        scope: "oai_split_rfsim_repo_local_v1",
+        summary:
+          "Cross-check the repo-local split CU-CP, CU-UP, and DU lane against the latest observe artifact before implying live-lab proof.",
+        limits: [
+          "No live-lab claim",
+          "No real core claim",
+          "No RU timing claim"
+        ],
+        doc_refs: [
+          ref(
+            "Support posture",
+            "docs/architecture/15-production-control-evidence-and-interoperability-lanes.md"
+          ),
+          ref("Debug workflow", "docs/architecture/14-debug-and-evidence-workflow.md")
+        ],
+        verify_refs: [
+          ref("Repo-local verify request", "examples/ranctl/verify-oai-du-docker.json"),
+          ref("CLI proof test", "apps/ran_action_gateway/test/ran_action_gateway/cli_test.exs")
+        ],
+        rollback_refs: [
+          ref("Repo-local rollback request", "examples/ranctl/rollback-oai-du-docker.json"),
+          ref("Capture example", "artifacts/captures/chg-oai-du-001.json")
+        ]
+      },
+      %{
+        id: "declared_live_protocol_lane",
+        label: "Declared live protocol lane",
+        posture: "standards_subset",
+        proof_level: "live-lab validated declared lane",
+        scope: "n79_single_ru_single_ue_lab_v1",
+        summary:
+          "Cross-check the declared live standards lane against the documented replacement examples before claiming broader interoperability support.",
+        limits: [
+          "No multi-cell parity claim",
+          "No multi-DU parity claim",
+          "No broad RU or core profile claim"
+        ],
+        doc_refs: [
+          ref(
+            "Support posture",
+            "docs/architecture/15-production-control-evidence-and-interoperability-lanes.md"
+          ),
+          ref("Replacement track note", "subprojects/ran_replacement/task.md")
+        ],
+        verify_refs: [
+          ref(
+            "Verify attach and ping example",
+            "subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json"
+          ),
+          ref(
+            "Replacement example coverage",
+            "apps/ran_action_gateway/test/ran_action_gateway/replacement_examples_test.exs"
+          )
+        ],
+        rollback_refs: [
+          ref(
+            "Rollback status example",
+            "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json"
+          ),
+          ref(
+            "Rollback evidence example",
+            "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json"
+          )
+        ]
+      }
+    ]
+  end
+
+  defp documented_state(id, label, value, meaning, source_ref, source_label, detail)
+       when value not in [nil, ""] do
+    %{
+      id: id,
+      label: label,
+      value: value,
+      meaning: meaning,
+      source_ref: source_ref,
+      source_label: source_label,
+      detail: detail
+    }
+  end
+
+  defp documented_state(_id, _label, _value, _meaning, _source_ref, _source_label, _detail),
+    do: nil
+
+  defp documented_counter(
+         id,
+         label,
+         value,
+         meaning,
+         source_ref,
+         source_kind,
+         source_pattern,
+         lane
+       )
+       when value not in [nil, ""] do
+    %{
+      id: id,
+      label: label,
+      value: value,
+      meaning: meaning,
+      source_ref: source_ref,
+      source_kind: source_kind,
+      source_pattern: source_pattern,
+      lane: lane
+    }
+  end
+
+  defp documented_counter(
+         _id,
+         _label,
+         _value,
+         _meaning,
+         _source_ref,
+         _source_kind,
+         _source_pattern,
+         _lane
+       ),
+       do: nil
+
+  defp format_health_checks(checks) do
+    checks
+    |> Enum.map(fn check ->
+      case check do
+        %{} ->
+          [check["name"], check["status"] || check["state"]]
+          |> Enum.reject(&is_nil/1)
+          |> Enum.join(":")
+
+        value ->
+          to_string(value)
+      end
+    end)
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join(", ")
+  end
+
+  defp compact_refs(refs) do
+    Enum.reject(refs, &is_nil/1)
+  end
+
+  defp ref(_label, nil), do: nil
+
+  defp ref(label, path) do
+    %{label: label, path: path}
+  end
+
+  defp role_label("du"), do: "DU"
+  defp role_label("cucp"), do: "CU-CP"
+  defp role_label("cuup"), do: "CU-UP"
+  defp role_label("ue"), do: "UE"
+  defp role_label(nil), do: "Service"
+  defp role_label(role), do: role |> to_string() |> String.upcase()
+
+  defp control_state_ref(artifact_root, cell_group_id) do
+    path = Path.join([artifact_root, "control_state", "#{cell_group_id}.json"])
+    if File.exists?(path), do: Path.expand(path), else: nil
+  end
+
+  defp native_contract_cell_group(change, contract) do
+    change.cell_group ||
+      fetch_value(contract, :cell_group) ||
+      first_path_segment(fetch_value(contract, :fronthaul_session)) ||
+      cell_group_from_ref(fetch_value(contract, :device_session_ref)) ||
+      cell_group_from_ref(fetch_value(contract, :policy_surface_ref)) ||
+      cell_group_from_ref(fetch_value(contract, :handshake_ref))
+  end
+
+  defp first_path_segment(nil), do: nil
+
+  defp first_path_segment(value) when is_binary(value) do
+    value
+    |> String.split("/", parts: 2)
+    |> List.first()
+    |> blank_to_nil()
+  end
+
+  defp cell_group_from_ref(nil), do: nil
+
+  defp cell_group_from_ref(value) when is_binary(value) do
+    case Regex.run(~r/(cg-[A-Za-z0-9_-]+)/, value, capture: :all_but_first) do
+      [cell_group] -> cell_group
+      _ -> nil
+    end
   end
 
   defp sanitize_validation(report) do
@@ -427,6 +1160,7 @@ defmodule RanObservability.Dashboard.Snapshot do
 
     %{
       id: change.id,
+      cell_group: native_contract_cell_group(change, contract),
       command: change.command,
       status: change.status,
       phase: change.phase,
