@@ -145,6 +145,7 @@ The `Inspect next` section is intentionally short so operators do not have to sc
 - `Remote Run Index`
 - `Latest Debug Incident`
 - `Recent Debug Failures`
+- `DU/CU Protocol State`, with distinct repo-local simulation and bounded-standards proof sections
 
 The mission inspector now also exposes a structured operator proof surface:
 

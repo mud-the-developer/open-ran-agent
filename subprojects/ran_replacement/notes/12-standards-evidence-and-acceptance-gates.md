@@ -44,7 +44,7 @@ Operator rule:
 Use `degraded` when:
 
 - the control-plane or user-plane is shadowing only
-- one or more optional helpers are missing
+- one or more bounded recovery claims are not yet evidenced on their declared review lanes
 - the lane can explain state and capture evidence, but attach-plus-ping is not yet proven end to end
 
 Operator rule:
@@ -80,6 +80,11 @@ Required evidence for milestone 1:
 - `Uplink NAS Transport`
 - `Downlink NAS Transport`
 - `UE Context Release`
+
+Bounded recovery claims for the declared lane:
+
+- `Error Indication` on registration-rejection review lanes
+- `Reset` on cutover rollback review lanes
 
 Gate expectations:
 
@@ -244,7 +249,7 @@ If any one of those is missing, the result is not `pass`.
 `ranctl` should treat the gates as the control contract, not as incidental logs.
 
 - `ranctl precheck` computes the gate class and refuses unsafe cutover planning.
-- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must not imply support outside `ngap_subset.optional_procedures` and `ngap_subset.deferred_procedures`.
+- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must not imply support outside the required attach-path procedures plus the explicitly bounded `ngap_subset.bounded_claimed_procedures`.
 - `ranctl apply` requires the explicit approval gate already defined by the repo rules.
 - `ranctl verify` confirms whether the current state is still standards-correct or whether rollback is now the safer operator action.
 - `ranctl capture-artifacts` freezes the evidence that justified the decision.

@@ -1044,6 +1044,7 @@ defmodule RanObservability.Dashboard.Snapshot do
       updated_at = stat.mtime |> NaiveDateTime.from_erl!() |> DateTime.from_naive!("Etc/UTC")
       native_contract = decode_native_contract(payload)
       oai_observation = decode_oai_observation(payload, path, updated_at)
+      protocol_state = decode_protocol_state(payload, path)
 
       %{
         id: payload["change_id"] || payload["incident_id"] || Path.basename(path, ".json"),
@@ -1064,7 +1065,8 @@ defmodule RanObservability.Dashboard.Snapshot do
         source_plan: payload["source_plan"],
         restored_from: payload["restored_from"],
         native_contract: native_contract,
-        oai_observation: oai_observation
+        oai_observation: oai_observation,
+        protocol_state: protocol_state
       }
     else
       _ -> nil
@@ -1092,6 +1094,8 @@ defmodule RanObservability.Dashboard.Snapshot do
     runtime_mode = runtime["runtime_mode"]
     containers = runtime["containers"] || []
     token_metrics = runtime["token_metrics"] || []
+    summarized_containers = Enum.map(containers, &summarize_oai_container/1)
+    summarized_metrics = Enum.map(token_metrics, &summarize_oai_metric(&1, path))
 
     if lane_id == "oai_split_rfsim_repo_local_v1" or runtime_mode == "docker_compose_rfsim_f1" do
       %{
@@ -1109,9 +1113,14 @@ defmodule RanObservability.Dashboard.Snapshot do
           runtime["healthy_service_count"] ||
             Enum.count(containers, &(&1["health"] == "healthy")),
         updated_at: updated_at |> DateTime.truncate(:second) |> DateTime.to_iso8601(),
-        containers: Enum.map(containers, &summarize_oai_container/1),
-        token_metrics: Enum.map(token_metrics, &summarize_oai_metric/1),
-        token_metric_count: length(token_metrics)
+        proof_kind: "repo_local_simulation",
+        proof_note:
+          "Repo-local simulation proof only. Counters are bounded to the current docker logs tail captured by observe, not lifetime totals.",
+        containers: summarized_containers,
+        token_metrics: summarized_metrics,
+        token_metric_count: length(summarized_metrics),
+        protocol_panels:
+          build_oai_protocol_panels(summarized_containers, summarized_metrics, path)
       }
     else
       nil
@@ -1132,7 +1141,7 @@ defmodule RanObservability.Dashboard.Snapshot do
     }
   end
 
-  defp summarize_oai_metric(metric) do
+  defp summarize_oai_metric(metric, source_ref) do
     %{
       id: metric["id"],
       label: metric["label"],
@@ -1140,11 +1149,244 @@ defmodule RanObservability.Dashboard.Snapshot do
       role: metric["role"],
       container_name: metric["container_name"],
       source_kind: metric["source_kind"],
+      source_field: "runtime.token_metrics[]",
+      source_ref: Path.expand(source_ref),
       source_pattern: metric["source_pattern"],
       source_tail_lines: metric["source_tail_lines"],
       meaning: metric["meaning"]
     }
   end
+
+  defp build_oai_protocol_panels(containers, metrics, source_ref) do
+    containers
+    |> Enum.sort_by(&(protocol_role_order(&1.role) || 99))
+    |> Enum.map(fn container ->
+      counters = Enum.filter(metrics, &(&1.role == container.role))
+
+      %{
+        id: container.role || container.name,
+        label: protocol_role_label(container.role),
+        role: container.role,
+        container_name: container.name,
+        service_name: container.service_name,
+        status: oai_protocol_panel_status(container),
+        fields: oai_protocol_fields(container, source_ref),
+        counters: counters
+      }
+    end)
+  end
+
+  defp oai_protocol_fields(container, source_ref) do
+    source_ref = Path.expand(source_ref)
+
+    [
+      %{
+        id: "service_name",
+        label: "Service",
+        value: container.service_name,
+        meaning:
+          "Docker Compose service name captured in the observe artifact for this protocol role.",
+        source_kind: "observe_artifact",
+        source_field: "runtime.containers[].service_name",
+        source_ref: source_ref
+      },
+      %{
+        id: "container_state",
+        label: "Container state",
+        value: container.status,
+        meaning: "Container runtime state reported by the observe-time runtime inspection.",
+        source_kind: "observe_artifact",
+        source_field: "runtime.containers[].status",
+        source_ref: source_ref
+      },
+      %{
+        id: "health",
+        label: "Health",
+        value: container.health,
+        meaning: "Container health reported by the observe-time runtime inspection.",
+        source_kind: "observe_artifact",
+        source_field: "runtime.containers[].health",
+        source_ref: source_ref
+      },
+      %{
+        id: "log_probe_status",
+        label: "Log probe",
+        value: container.log_probe_status,
+        meaning:
+          "Whether the observe step successfully captured the current Docker log tail for this service.",
+        source_kind: "docker_logs_tail",
+        source_field: "runtime.containers[].log_probe_status",
+        source_ref: source_ref
+      },
+      %{
+        id: "log_tail_line_count",
+        label: "Log tail lines",
+        value: container.log_tail_line_count,
+        meaning:
+          "How many lines from the current log tail were scanned when counters were recorded.",
+        source_kind: "docker_logs_tail",
+        source_field: "runtime.containers[].log_tail_line_count",
+        source_ref: source_ref
+      }
+    ]
+    |> Enum.reject(&(is_nil(&1.value) or &1.value == ""))
+  end
+
+  defp oai_protocol_panel_status(container) do
+    cond do
+      container.log_probe_status == "error" -> "degraded"
+      container.health == "healthy" -> "healthy"
+      truthy?(container.running) -> to_string_value(container.status) || "running"
+      true -> to_string_value(container.status) || "unknown"
+    end
+  end
+
+  defp decode_protocol_state(payload, path) do
+    protocol_claims = fetch_value(payload, :protocol_claims, %{})
+
+    interface_rows =
+      payload
+      |> fetch_value(:interface_status, %{})
+      |> protocol_state_rows(
+        &protocol_interface_label/1,
+        &protocol_interface_order/1,
+        protocol_claims
+      )
+
+    plane_rows =
+      payload
+      |> fetch_value(:plane_status, %{})
+      |> protocol_state_rows(&protocol_plane_label/1, &protocol_plane_order/1, %{})
+
+    procedure_rows =
+      payload
+      |> fetch_value(:ngap_procedure_trace, %{})
+      |> fetch_value(:procedures, [])
+      |> Enum.map(&protocol_procedure_row/1)
+      |> Enum.reject(&is_nil/1)
+
+    outcome_rows =
+      [
+        protocol_named_status_row("attach", "Attach", fetch_value(payload, :attach_status)),
+        protocol_named_status_row(
+          "pdu_session",
+          "PDU session",
+          fetch_value(payload, :pdu_session_status)
+        ),
+        protocol_named_status_row("ping", "Ping", fetch_value(payload, :ping_status)),
+        protocol_named_status_row("release", "Release", fetch_value(payload, :release_status))
+      ]
+      |> Enum.reject(&is_nil/1)
+
+    conformance_claim = fetch_value(payload, :conformance_claim, %{})
+
+    if interface_rows != [] or plane_rows != [] or procedure_rows != [] or outcome_rows != [] do
+      %{
+        proof_kind: "bounded_standards",
+        proof_note:
+          "Bounded-standards proof stays separate from repo-local simulation counters. Status comes from declared evidence refs and standards-subset notes on the focused run artifact.",
+        gate_class: fetch_value(payload, :gate_class) |> to_string_value(),
+        summary: fetch_value(payload, :summary),
+        core_profile: fetch_value(payload, :core_profile),
+        target_profile: fetch_value(payload, :target_profile),
+        evidence_tier: conformance_claim |> fetch_value(:evidence_tier) |> to_string_value(),
+        conformance_profile: conformance_claim |> fetch_value(:profile),
+        baseline_ref: conformance_claim |> fetch_value(:baseline_ref),
+        ngap_last_observed:
+          payload |> fetch_value(:ngap_procedure_trace, %{}) |> fetch_value(:last_observed),
+        source_ref: Path.expand(path),
+        interface_rows: interface_rows,
+        plane_rows: plane_rows,
+        procedure_rows: procedure_rows,
+        outcome_rows: outcome_rows
+      }
+    else
+      nil
+    end
+  end
+
+  defp protocol_state_rows(entries, labeler, orderer, claims) when is_map(entries) do
+    entries
+    |> Enum.map(fn {name, value} ->
+      id = to_string(name)
+      claim = Map.get(claims, id, Map.get(claims, name, %{}))
+
+      %{
+        id: id,
+        label: labeler.(id),
+        status: value |> fetch_value(:status) |> to_string_value(),
+        reason: value |> fetch_value(:reason),
+        evidence_ref: value |> fetch_value(:evidence_ref),
+        standards_subset_ref: claim |> fetch_value(:standards_subset_ref),
+        procedure_matrix_ref: claim |> fetch_value(:procedure_matrix_ref)
+      }
+    end)
+    |> Enum.sort_by(&orderer.(&1.id))
+  end
+
+  defp protocol_state_rows(_entries, _labeler, _orderer, _claims), do: []
+
+  defp protocol_named_status_row(id, label, entry) when is_map(entry) do
+    %{
+      id: id,
+      label: label,
+      status: entry |> fetch_value(:status) |> to_string_value(),
+      reason: entry |> fetch_value(:reason),
+      evidence_ref: entry |> fetch_value(:evidence_ref)
+    }
+  end
+
+  defp protocol_named_status_row(_id, _label, _entry), do: nil
+
+  defp protocol_procedure_row(procedure) when is_map(procedure) do
+    %{
+      id: procedure |> fetch_value(:name) |> to_string_value(),
+      label: procedure |> fetch_value(:name) |> to_string_value(),
+      status: procedure |> fetch_value(:status) |> to_string_value(),
+      detail: procedure |> fetch_value(:detail),
+      evidence_ref: procedure |> fetch_value(:evidence_ref)
+    }
+  end
+
+  defp protocol_procedure_row(_procedure), do: nil
+
+  defp protocol_interface_label("ngap"), do: "NGAP"
+  defp protocol_interface_label("f1_c"), do: "F1-C"
+  defp protocol_interface_label("e1ap"), do: "E1AP"
+  defp protocol_interface_label("f1_u"), do: "F1-U"
+  defp protocol_interface_label("gtpu"), do: "GTP-U"
+  defp protocol_interface_label(name), do: name
+
+  defp protocol_interface_order("ngap"), do: 0
+  defp protocol_interface_order("f1_c"), do: 1
+  defp protocol_interface_order("e1ap"), do: 2
+  defp protocol_interface_order("f1_u"), do: 3
+  defp protocol_interface_order("gtpu"), do: 4
+  defp protocol_interface_order(_name), do: 99
+
+  defp protocol_plane_label("c_plane"), do: "Control plane"
+  defp protocol_plane_label("u_plane"), do: "User plane"
+  defp protocol_plane_label("m_plane"), do: "Management plane"
+  defp protocol_plane_label("s_plane"), do: "Signaling plane"
+  defp protocol_plane_label(name), do: name
+
+  defp protocol_plane_order("c_plane"), do: 0
+  defp protocol_plane_order("u_plane"), do: 1
+  defp protocol_plane_order("m_plane"), do: 2
+  defp protocol_plane_order("s_plane"), do: 3
+  defp protocol_plane_order(_name), do: 99
+
+  defp protocol_role_label("du"), do: "DU"
+  defp protocol_role_label("cucp"), do: "CU-CP"
+  defp protocol_role_label("cuup"), do: "CU-UP"
+  defp protocol_role_label("ue"), do: "UE"
+  defp protocol_role_label(role), do: role |> to_string_value() || "service"
+
+  defp protocol_role_order("du"), do: 0
+  defp protocol_role_order("cucp"), do: 1
+  defp protocol_role_order("cuup"), do: 2
+  defp protocol_role_order("ue"), do: 3
+  defp protocol_role_order(_role), do: 99
 
   defp truthy?(value), do: value in [true, "true", "running", "healthy"]
 

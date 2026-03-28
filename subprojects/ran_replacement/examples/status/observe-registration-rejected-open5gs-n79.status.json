@@ -40,7 +40,8 @@
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/attach.json",
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json"
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json"
   ],
   "suggested_next": [
     "capture artifacts for the registration rejection",
@@ -146,6 +147,12 @@
         "detail": "downlink NAS transport returned a registration rejection from the declared core profile"
       },
       {
+        "name": "Error Indication",
+        "status": "ok",
+        "evidence_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json",
+        "detail": "bounded recovery claim preserves an explicit NGAP error indication after the declared core rejection and before cleanup completes"
+      },
+      {
         "name": "UE Context Release",
         "status": "ok",
         "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
@@ -184,7 +191,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "optional_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -205,7 +212,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],
