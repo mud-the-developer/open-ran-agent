@@ -155,7 +155,7 @@ defmodule RanActionGateway.Runner do
         next: if(failed?, do: ["observe"], else: ["plan"])
       }
       |> maybe_add_precheck_artifact(change)
-      |> put_oai_simulation_result(simulation_precheck)
+      |> put_oai_simulation_result(simulation_precheck, change)
       |> maybe_put_replacement_status(:precheck, change, checks)
       |> materialize_replacement_artifacts(:precheck, change)
       |> persist_precheck(change)
@@ -291,8 +291,9 @@ defmodule RanActionGateway.Runner do
         }
         |> put_runtime_contract(runtime_contract)
         |> put_runtime_result(runtime_verify)
-        |> put_oai_simulation_result({:ok, simulation_verify})
+        |> put_oai_simulation_result({:ok, simulation_verify}, change)
         |> maybe_put_replacement_status(:verify, change, checks)
+        |> maybe_put_oai_simulation_semantics(:verify, change)
         |> materialize_replacement_artifacts(:verify, change)
 
       Store.write_json(Store.verify_path(change.change_id), result)
@@ -416,8 +417,9 @@ defmodule RanActionGateway.Runner do
           bundle: bundle
         }
         |> put_runtime_result(runtime_capture)
-        |> put_oai_simulation_result({:ok, simulation_capture})
+        |> put_oai_simulation_result({:ok, simulation_capture}, change)
         |> maybe_put_replacement_status(:capture_artifacts, change, [])
+        |> maybe_put_oai_simulation_semantics(:capture_artifacts, change)
         |> materialize_replacement_artifacts(:capture_artifacts, change)
 
       path = Store.write_json(Store.capture_path(ref), bundle)
@@ -2733,26 +2735,302 @@ defmodule RanActionGateway.Runner do
   defp simulation_payload({:error, payload}), do: payload
   defp simulation_payload(_), do: nil
 
-  defp put_oai_simulation_result(payload, simulation_result) do
+  defp put_oai_simulation_result(payload, simulation_result, %Change{} = change) do
     case simulation_payload(simulation_result) do
       nil ->
         payload
 
       simulation ->
         lane = simulation[:lane] || simulation["lane"]
+        statuses = simulation_statuses(simulation)
 
         payload
         |> put_optional(:simulation_lane, lane)
-        |> maybe_put_simulation_status(:attach_status, simulation)
-        |> maybe_put_simulation_status(:registration_status, simulation)
-        |> maybe_put_simulation_status(:session_status, simulation)
-        |> maybe_put_simulation_status(:ping_status, simulation)
+        |> maybe_put_nested_simulation_status(statuses, change)
     end
   end
 
-  defp maybe_put_simulation_status(payload, key, simulation) do
-    value = simulation[key] || simulation[Atom.to_string(key)]
-    if value, do: Map.put(payload, key, value), else: payload
+  defp maybe_put_nested_simulation_status(payload, statuses, %Change{} = change) do
+    if replacement_scope?(change.scope) do
+      put_optional(payload, :simulation_status, statuses)
+    else
+      Enum.reduce(statuses, payload, fn {key, value}, acc ->
+        Map.put(acc, key, value)
+      end)
+    end
+  end
+
+  defp simulation_statuses(simulation) do
+    [:attach_status, :registration_status, :session_status, :ping_status]
+    |> Enum.reduce(%{}, fn key, acc ->
+      case simulation[key] || simulation[Atom.to_string(key)] do
+        nil -> acc
+        value -> Map.put(acc, key, value)
+      end
+    end)
+  end
+
+  defp maybe_put_oai_simulation_semantics(payload, phase, %Change{} = change) do
+    if OaiSimulation.simulation_requested?(change.metadata) do
+      payload
+      |> maybe_put_oai_simulation_verify_summary(phase)
+      |> maybe_put_oai_simulation_capture_review(phase, change)
+      |> merge_artifacts(simulation_artifact_refs(payload))
+    else
+      payload
+    end
+  end
+
+  defp maybe_put_oai_simulation_verify_summary(payload, :verify) do
+    case payload[:summary] || payload["summary"] do
+      summary when is_binary(summary) and summary != "" ->
+        payload
+
+      _ ->
+        Map.put(payload, :summary, simulation_verify_summary(payload))
+    end
+  end
+
+  defp maybe_put_oai_simulation_verify_summary(payload, _phase), do: payload
+
+  defp maybe_put_oai_simulation_capture_review(payload, :capture_artifacts, %Change{} = change) do
+    ref = change.incident_id || change.change_id || "capture"
+    review_paths = simulation_review_paths(ref)
+    compare_report = simulation_compare_report(payload, change)
+
+    Store.write_json(review_paths.request_snapshot, simulation_request_snapshot(change, payload))
+    Store.write_json(review_paths.compare_report, compare_report)
+
+    Store.write_json(
+      review_paths.rollback_evidence,
+      simulation_rollback_evidence(payload, change, review_paths.compare_report)
+    )
+
+    payload
+    |> put_in([:bundle, :review], review_paths)
+    |> Map.put(:summary, simulation_capture_summary(payload))
+    |> Map.put(:failure_class, simulation_failure_class(payload))
+    |> Map.put(:comparison_scope, simulation_comparison_scope(payload))
+    |> Map.put(:rollback_available, true)
+    |> Map.put(:suggested_next, simulation_suggested_next(payload))
+    |> Map.put(:checks, simulation_review_checks())
+    |> Map.put(
+      :rollback_status,
+      review_status(
+        "ok",
+        review_paths.rollback_evidence,
+        "repo-local rollback remains reviewable for the simulation lane; no live-lab target was changed"
+      )
+    )
+    |> merge_artifacts(Map.values(review_paths))
+  end
+
+  defp maybe_put_oai_simulation_capture_review(payload, _phase, _change), do: payload
+
+  defp simulation_artifact_refs(payload) do
+    payload
+    |> simulation_status_payload()
+    |> Enum.map(fn {_key, value} -> value[:evidence_ref] || value["evidence_ref"] end)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq()
+  end
+
+  defp simulation_status_payload(payload) do
+    payload[:simulation_status] || payload["simulation_status"] ||
+      [:attach_status, :registration_status, :session_status, :ping_status]
+      |> Enum.reduce(%{}, fn key, acc ->
+        case payload[key] || payload[Atom.to_string(key)] do
+          nil -> acc
+          value -> Map.put(acc, key, value)
+        end
+      end)
+  end
+
+  defp simulation_status_value(payload, key) do
+    status_payload = simulation_status_payload(payload)
+    value = status_payload[key] || status_payload[Atom.to_string(key)] || %{}
+    value[:status] || value["status"]
+  end
+
+  defp simulation_status_ok?(payload, key) do
+    simulation_status_value(payload, key) in ["ok", "established"]
+  end
+
+  defp simulation_failure_class(payload) do
+    cond do
+      not simulation_status_ok?(payload, :attach_status) -> "attach_failure"
+      not simulation_status_ok?(payload, :registration_status) -> "registration_failure"
+      not simulation_status_ok?(payload, :session_status) -> "session_failure"
+      not simulation_status_ok?(payload, :ping_status) -> "ping_failure"
+      true -> nil
+    end
+  end
+
+  defp simulation_comparison_scope(payload) do
+    case simulation_failure_class(payload) do
+      "attach_failure" -> "attach"
+      "registration_failure" -> "registration"
+      "session_failure" -> "session"
+      "ping_failure" -> "ping"
+      nil -> "ping"
+    end
+  end
+
+  defp simulation_verify_summary(payload) do
+    case simulation_failure_class(payload) do
+      nil ->
+        "Verify surfaced repo-local simulation proof for attach, registration, session, and ping. These refs are rehearsal evidence only and do not claim live-lab proof."
+
+      failure_class ->
+        "Verify surfaced repo-local simulation evidence, but #{String.replace_suffix(failure_class, "_failure", "")} proof is incomplete. Treat this as simulation-only evidence, not live-lab proof."
+    end
+  end
+
+  defp simulation_capture_summary(payload) do
+    case simulation_failure_class(payload) do
+      nil ->
+        "Capture preserved the repo-local simulation evidence bundle and review notes for attach, registration, session, and ping. This remains simulation proof only, not live-lab proof."
+
+      failure_class ->
+        "Capture preserved the repo-local simulation evidence bundle after #{String.replace_suffix(failure_class, "_failure", "")} review diverged. The rollback story remains explicit for the simulation lane and does not imply live-lab proof."
+    end
+  end
+
+  defp simulation_suggested_next(payload) do
+    case simulation_failure_class(payload) do
+      nil ->
+        [
+          "review the simulation compare report before another repo-local mutation",
+          "keep the paired rollback request explicit for the next RFsim rehearsal",
+          "do not promote simulation proof to live-lab evidence without a real-core run"
+        ]
+
+      _ ->
+        [
+          "inspect the simulation compare report before rerunning the RFsim rehearsal",
+          "replay the paired repo-local rollback before the next runtime mutation",
+          "treat the captured mismatch as simulation-only until live-lab evidence exists"
+        ]
+    end
+  end
+
+  defp simulation_review_checks do
+    [
+      review_check("compare_report_ready", "ok", "the simulation compare report is preserved"),
+      review_check(
+        "simulation_evidence_fetchable",
+        "ok",
+        "simulation attach/session/ping refs remain readable from repo-visible paths"
+      ),
+      review_check(
+        "rollback_story_explicit",
+        "ok",
+        "the capture bundle keeps repo-local rollback separate from any live-lab rollback claim"
+      )
+    ]
+  end
+
+  defp simulation_review_paths(ref) do
+    %{
+      request_snapshot: Store.capture_request_snapshot_path(ref),
+      compare_report: Store.capture_compare_report_path(ref),
+      rollback_evidence: Store.capture_rollback_evidence_path(ref)
+    }
+  end
+
+  defp simulation_request_snapshot(%Change{} = change, payload) do
+    %{
+      captured_at: now_iso8601(),
+      scope: change.scope,
+      change_id: change.change_id,
+      incident_id: change.incident_id,
+      reason: change.reason,
+      verify_window: change.verify_window,
+      target_backend: maybe_to_string(change.target_backend),
+      metadata: %{
+        oai_runtime: change.metadata[:oai_runtime] || change.metadata["oai_runtime"],
+        oai_simulation: change.metadata[:oai_simulation] || change.metadata["oai_simulation"]
+      },
+      simulation_lane: payload[:simulation_lane] || payload["simulation_lane"],
+      simulation_evidence_refs: simulation_artifact_refs(payload)
+    }
+  end
+
+  defp simulation_compare_report(payload, %Change{} = change) do
+    lane = payload[:simulation_lane] || payload["simulation_lane"] || %{}
+
+    %{
+      report_id: "sim-cmp-#{change.change_id || "capture"}",
+      change_id: change.change_id,
+      incident_id: change.incident_id || "#{change.change_id}-capture",
+      lane_id: lane[:lane_id] || lane["lane_id"],
+      claim_scope: lane[:claim_scope] || lane["claim_scope"],
+      evidence_tier: lane[:evidence_tier] || lane["evidence_tier"],
+      live_lab_claim: lane[:live_lab_claim] || lane["live_lab_claim"] || false,
+      comparison_scope: simulation_comparison_scope(payload),
+      failure_class: simulation_failure_class(payload),
+      expected_state: %{
+        attach: "repo-local attach evidence stays reviewer-visible from the checkout",
+        registration: "repo-local registration evidence stays reviewer-visible from the checkout",
+        session: "repo-local session evidence stays reviewer-visible from the checkout",
+        ping: "repo-local ping evidence stays reviewer-visible from the checkout"
+      },
+      observed_state: %{
+        attach: simulation_status_value(payload, :attach_status),
+        registration: simulation_status_value(payload, :registration_status),
+        session: simulation_status_value(payload, :session_status),
+        ping: simulation_status_value(payload, :ping_status)
+      },
+      diff_summary:
+        case simulation_failure_class(payload) do
+          nil ->
+            [
+              "Attach, registration, session, and ping refs are all reviewable from repo-visible simulation paths.",
+              "The capture stays explicitly bounded to repo-local RFsim evidence and does not imply live-lab proof."
+            ]
+
+          failure_class ->
+            [
+              "The #{String.replace_suffix(failure_class, "_failure", "")} step is the first simulation proof gap in the rehearsal lane.",
+              "The capture remains explicitly simulation-only so reviewers do not confuse it with live-lab evidence."
+            ]
+        end,
+      evidence_refs: simulation_artifact_refs(payload),
+      operator_next_step: List.first(simulation_suggested_next(payload)),
+      summary: simulation_capture_summary(payload)
+    }
+  end
+
+  defp simulation_rollback_evidence(payload, %Change{} = change, compare_report_path) do
+    lane = payload[:simulation_lane] || payload["simulation_lane"] || %{}
+
+    %{
+      rollback_id: "sim-rbk-#{change.change_id || "capture"}",
+      change_id: change.change_id,
+      incident_id: change.incident_id || "#{change.change_id}-capture",
+      lane_id: lane[:lane_id] || lane["lane_id"],
+      claim_scope: lane[:claim_scope] || lane["claim_scope"],
+      evidence_tier: lane[:evidence_tier] || lane["evidence_tier"],
+      live_lab_claim: lane[:live_lab_claim] || lane["live_lab_claim"] || false,
+      rollback_scope: "repo_local_runtime_teardown",
+      compare_report_ref: compare_report_path,
+      failure_class: simulation_failure_class(payload),
+      evidence_refs: Enum.uniq([compare_report_path | simulation_artifact_refs(payload)]),
+      operator_notes:
+        "Rollback remains a repo-local teardown story for the RFsim rehearsal lane. It does not imply rollback of any live-lab target."
+    }
+  end
+
+  defp merge_artifacts(payload, refs) do
+    refs = Enum.reject(refs, &is_nil/1)
+
+    if refs == [] do
+      payload
+    else
+      Map.update(payload, :artifacts, refs, fn artifacts ->
+        Enum.uniq(artifacts ++ refs)
+      end)
+    end
   end
 
   defp runtime_precheck_contract(%Change{} = change, runtime_precheck) do

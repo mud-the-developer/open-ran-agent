@@ -1310,6 +1310,8 @@ defmodule RanActionGateway.CLITest do
 
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
       assert verify.status == "verified"
+      assert verify.summary =~ "simulation proof"
+      assert verify.summary =~ "do not claim live-lab proof"
       assert verify.simulation_lane.claim_scope == "repo_local_simulation"
       assert get_in(verify, [:attach_status, :status]) == "ok"
       assert get_in(verify, [:registration_status, :status]) == "ok"
@@ -1319,9 +1321,15 @@ defmodule RanActionGateway.CLITest do
       assert File.exists?(get_in(verify, [:registration_status, :evidence_ref]))
       assert File.exists?(get_in(verify, [:session_status, :evidence_ref]))
       assert File.exists?(get_in(verify, [:ping_status, :evidence_ref]))
+      assert get_in(verify, [:attach_status, :evidence_ref]) in verify.artifacts
+      assert get_in(verify, [:registration_status, :evidence_ref]) in verify.artifacts
+      assert get_in(verify, [:session_status, :evidence_ref]) in verify.artifacts
+      assert get_in(verify, [:ping_status, :evidence_ref]) in verify.artifacts
 
       assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
       assert capture.status == "captured"
+      assert capture.summary =~ "simulation proof only"
+      assert capture.summary =~ "not live-lab proof"
 
       assert get_in(capture, [:bundle, :runtime, :simulation, :claim_scope]) ==
                "repo_local_simulation"
@@ -1333,8 +1341,114 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(capture, [:bundle, :runtime, :simulation, :session]) =~ "session.json"
       assert get_in(capture, [:bundle, :runtime, :simulation, :ping]) =~ "ping.json"
+      assert get_in(capture, [:attach_status, :evidence_ref]) in capture.artifacts
+      assert get_in(capture, [:registration_status, :evidence_ref]) in capture.artifacts
+      assert get_in(capture, [:session_status, :evidence_ref]) in capture.artifacts
+      assert get_in(capture, [:ping_status, :evidence_ref]) in capture.artifacts
+      assert get_in(capture, [:bundle, :review, :compare_report]) =~ "-compare-report.json"
+      assert get_in(capture, [:bundle, :review, :request_snapshot]) =~ "-request.json"
+      assert get_in(capture, [:bundle, :review, :rollback_evidence]) =~ "-rollback-evidence.json"
+      assert File.exists?(get_in(capture, [:bundle, :review, :compare_report]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :request_snapshot]))
+      assert File.exists?(get_in(capture, [:bundle, :review, :rollback_evidence]))
+
+      compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert compare_report["claim_scope"] == "repo_local_simulation"
+      assert compare_report["live_lab_claim"] == false
+      assert compare_report["summary"] =~ "live-lab proof"
+
+      rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert rollback_evidence["live_lab_claim"] == false
+
+      assert rollback_evidence["operator_notes"] =~
+               "does not imply rollback of any live-lab target"
 
       assert {:ok, %{status: "rolled_back"}} = CLI.run(["rollback", "--json", rollback_payload])
+    end)
+  end
+
+  @tag :runtime_contract
+  test "simulation capture keeps failure class and rollback review explicit without claiming live-lab proof",
+       %{tmp_dir: tmp_dir} do
+    start_supervised!(RanActionGateway.MockDockerRunner)
+
+    original_runner = Application.get_env(:ran_action_gateway, :command_runner)
+
+    Application.put_env(
+      :ran_action_gateway,
+      :command_runner,
+      RanActionGateway.MockDockerRunner,
+      persistent: true
+    )
+
+    on_exit(fn ->
+      Application.put_env(
+        :ran_action_gateway,
+        :command_runner,
+        original_runner,
+        persistent: true
+      )
+    end)
+
+    repo_root = Path.expand("../../../..", __DIR__)
+
+    load = fn name ->
+      Path.join(repo_root, "examples/ranctl/#{name}")
+      |> File.read!()
+      |> JSON.decode!()
+      |> absolutize_public_oai_paths(repo_root)
+    end
+
+    File.cd!(tmp_dir, fn ->
+      apply_payload = load.("apply-oai-du-docker.json") |> JSON.encode!()
+
+      verify_payload =
+        load.("verify-oai-du-docker.json")
+        |> put_in(
+          ["metadata", "oai_simulation", "ping_evidence_path"],
+          Path.join(tmp_dir, "missing-ping.json")
+        )
+        |> JSON.encode!()
+
+      {:ok, _} = CLI.run(["plan", "--json", apply_payload])
+      {:ok, _} = CLI.run(["apply", "--json", apply_payload])
+
+      assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
+      assert verify.status == "failed"
+      assert verify.summary =~ "simulation-only evidence"
+      assert get_in(verify, [:ping_status, :status]) == "failed"
+
+      assert {:ok, capture} = CLI.run(["capture-artifacts", "--json", verify_payload])
+      assert capture.status == "captured"
+      assert capture.failure_class == "ping_failure"
+      assert capture.summary =~ "simulation lane"
+      assert capture.summary =~ "does not imply live-lab proof"
+
+      compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert compare_report["failure_class"] == "ping_failure"
+      assert compare_report["summary"] =~ "live-lab proof"
+
+      rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert rollback_evidence["failure_class"] == "ping_failure"
+
+      assert rollback_evidence["operator_notes"] =~
+               "does not imply rollback of any live-lab target"
     end)
   end
 

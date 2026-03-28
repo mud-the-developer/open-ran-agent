@@ -105,7 +105,23 @@ When `metadata.oai_simulation` is present, `verify` and `capture-artifacts` also
 
 - `simulation_lane` metadata on the command result
 - top-level `attach_status`, `registration_status`, `session_status`, and `ping_status`
+- those same simulation evidence refs in the command `artifacts` list
 - `bundle.runtime.simulation.*` refs inside the capture bundle
+- `bundle.review.{request_snapshot,compare_report,rollback_evidence}` for the simulation lane
+
+The generated compare report and rollback note must say that these refs are
+simulation-only rehearsal proof and not live-lab evidence.
+
+The repo also keeps a checked-in mirror of those reviewer surfaces under
+`examples/oai/simulation/review/`:
+
+- `examples/oai/simulation/review/request.json`
+- `examples/oai/simulation/review/compare-report.json`
+- `examples/oai/simulation/review/rollback-evidence.json`
+
+These files pair with `examples/oai/simulation/{attach,registration,session,ping}.json`
+so reviewers can inspect the RFsim + UE-sim proof boundary directly from the
+checkout without generating a fresh capture bundle first.
 
 The generated Compose asset uses absolute host paths for these overlay confs so the same plan artifact can be re-applied deterministically.
 
@@ -258,7 +274,7 @@ When `metadata.oai_simulation` is present, `verify` also exposes:
 - session evidence ref
 - ping evidence ref
 
-These simulation refs are intentionally tagged as `repo_local_simulation` and `live_lab_claim=false`. They are rehearsal proof only, not a replacement for real-core or live-lab evidence.
+These simulation refs are intentionally tagged as `repo_local_simulation` and `live_lab_claim=false`. They are rehearsal proof only, not a replacement for real-core or live-lab evidence, and their capture review bundle must keep that boundary explicit.
 
 ## Deferred Work
 

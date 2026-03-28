@@ -1,0 +1,20 @@
+{
+  "rollback_id": "sim-rbk-chg-oai-du-001",
+  "change_id": "chg-oai-du-001",
+  "incident_id": "chg-oai-du-001-capture",
+  "lane_id": "oai_split_rfsim_repo_local_v1",
+  "claim_scope": "repo_local_simulation",
+  "evidence_tier": "simulation",
+  "live_lab_claim": false,
+  "failure_class": null,
+  "rollback_scope": "repo_local_runtime_teardown",
+  "compare_report_ref": "examples/oai/simulation/review/compare-report.json",
+  "evidence_refs": [
+    "examples/oai/simulation/review/compare-report.json",
+    "examples/oai/simulation/attach.json",
+    "examples/oai/simulation/registration.json",
+    "examples/oai/simulation/session.json",
+    "examples/oai/simulation/ping.json"
+  ],
+  "operator_notes": "Rollback remains a repo-local teardown story for the RFsim rehearsal lane. It does not imply rollback of any live-lab target."
+}

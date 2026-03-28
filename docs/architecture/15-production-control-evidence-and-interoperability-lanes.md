@@ -85,7 +85,7 @@ profile parity.
 | --- | --- | --- |
 | Production-facing control | Hardened now | `ranctl` lifecycle, approval rules, rollback intent, control-state checks |
 | Deploy and recovery operations | Hardened now | target-host preview, remote execution, fetchback, debug summaries, debug packs |
-| Repo-local OAI RFsim rehearsal lane | Bounded simulation-only runtime proof | repo-local split `CUCP + CUUP + DU` Docker lifecycle, simulation-tagged attach/session/ping evidence refs, and deterministic capture bundles |
+| Repo-local OAI RFsim rehearsal lane | Bounded simulation-only runtime proof | repo-local split `CUCP + CUUP + DU` Docker lifecycle, simulation-tagged attach/session/ping evidence refs, and deterministic capture bundles with explicit simulation compare-report / rollback wording |
 | Replacement-track evidence contracts | Hardened now | schema-backed status, compare-report, rollback-evidence, target-profile fixtures |
 | Live replacement runtime cutover | Live-lab validated declared lane | real target-host lifecycle, attach-plus-ping proof, compare reports, and rollback evidence for `n79_single_ru_single_ue_lab_v1` |
 | Aerial backend runtime | Bounded clean-room runtime support | shared Port gateway lifecycle, host/device probes, and restart/drain proof for `aerial_clean_room_runtime_v1` |

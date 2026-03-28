@@ -131,7 +131,7 @@ In the current bootstrap implementation, `precheck` also returns:
 
 `ranctl` can now orchestrate an external OpenAirInterface DU stack without moving runtime hot paths into the BEAM. This path is enabled through `metadata.oai_runtime`.
 
-The same request may also carry `metadata.oai_simulation` to declare repo-local UE/core/session rehearsal evidence. That simulation metadata is intentionally reviewer-facing only: it augments `precheck`, `verify`, and `capture-artifacts`, but it does not change the live-lab support claim.
+The same request may also carry `metadata.oai_simulation` to declare repo-local UE/core/session rehearsal evidence. That simulation metadata is intentionally reviewer-facing only: it augments `precheck`, `verify`, and `capture-artifacts`, surfaces repo-visible simulation refs and capture review artifacts, and does not change the live-lab support claim.
 
 Separately, `metadata.oai_runtime.ue_conf_path` asks the runtime bridge to launch a bounded `OAI NR UE` alongside the split `CUCP/CUUP/DU` stack so attach failures can be isolated to a concrete runtime or protocol step.
 

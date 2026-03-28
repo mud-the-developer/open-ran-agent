@@ -1,22 +1,17 @@
 {
+  "captured_at": "2026-03-28T14:07:16Z",
   "scope": "cell_group",
-  "cell_group": "cg-001",
-  "target_backend": "local_fapi_profile",
   "change_id": "chg-oai-du-001",
+  "incident_id": null,
   "reason": "verify OAI DU docker runtime",
-  "idempotency_key": "chg-oai-du-001",
   "verify_window": {
     "duration": "30s",
-    "checks": ["gateway_healthy"]
+    "checks": [
+      "gateway_healthy"
+    ]
   },
+  "target_backend": "local_fapi_profile",
   "metadata": {
-    "runtime_contract": {
-      "version": "ranctl.runtime.v1",
-      "release_unit": "bootstrap_source_bundle",
-      "release_ref": "source-checkout@cg-001",
-      "entrypoint": "bin/ranctl",
-      "runtime_mode": "docker_compose_rfsim_f1"
-    },
     "oai_runtime": {
       "repo_root": "examples/oai",
       "du_conf_path": "examples/oai/gnb-du.sa.band78.106prb.rfsim.conf.example",
@@ -37,5 +32,19 @@
       "session_evidence_path": "examples/oai/simulation/session.json",
       "ping_evidence_path": "examples/oai/simulation/ping.json"
     }
-  }
+  },
+  "simulation_lane": {
+    "lane_id": "oai_split_rfsim_repo_local_v1",
+    "claim_scope": "repo_local_simulation",
+    "evidence_tier": "simulation",
+    "live_lab_claim": false,
+    "core_mode": "simulated",
+    "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example"
+  },
+  "simulation_evidence_refs": [
+    "examples/oai/simulation/attach.json",
+    "examples/oai/simulation/registration.json",
+    "examples/oai/simulation/session.json",
+    "examples/oai/simulation/ping.json"
+  ]
 }
