@@ -19,7 +19,7 @@ defmodule RanActionGateway.ReplacementReview do
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "optional_procedures" => ["Error Indication", "Reset"],
+    "bounded_claimed_procedures" => ["Error Indication", "Reset"],
     "deferred_procedures" => ["Paging", "Handover Preparation", "Path Switch Request"]
   }
 

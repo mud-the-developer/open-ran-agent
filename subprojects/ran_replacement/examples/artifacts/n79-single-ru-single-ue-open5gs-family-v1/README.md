@@ -15,6 +15,8 @@ Bundle contents:
 - [compare-report-registration-rejected-open5gs-n79.json](compare-report-registration-rejected-open5gs-n79.json)
 - [compare-report-ping-failed-open5gs-n79.json](compare-report-ping-failed-open5gs-n79.json)
 - [compare-report-failed-cutover-open5gs-n79.json](compare-report-failed-cutover-open5gs-n79.json)
+- [ngap-error-indication-registration-rejected-open5gs-n79.json](ngap-error-indication-registration-rejected-open5gs-n79.json)
+- [ngap-reset-failed-cutover-open5gs-n79.json](ngap-reset-failed-cutover-open5gs-n79.json)
 - [rollback-evidence-failed-ru-sync-open5gs-n79.json](rollback-evidence-failed-ru-sync-open5gs-n79.json)
 - [rollback-evidence-registration-rejected-open5gs-n79.json](rollback-evidence-registration-rejected-open5gs-n79.json)
 - [rollback-evidence-ping-failed-open5gs-n79.json](rollback-evidence-ping-failed-open5gs-n79.json)

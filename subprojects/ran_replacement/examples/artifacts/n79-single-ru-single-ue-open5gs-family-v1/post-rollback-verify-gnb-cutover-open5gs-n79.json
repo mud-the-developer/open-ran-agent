@@ -13,7 +13,8 @@
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-u.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gtpu.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json"
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/ngap.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json"
   ],
   "verification_checks": [
     "rollback_target_restored",
@@ -37,7 +38,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],

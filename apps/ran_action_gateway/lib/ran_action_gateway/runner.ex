@@ -1408,9 +1408,11 @@ defmodule RanActionGateway.Runner do
 
   defp maybe_put_ngap_procedure_trace(payload, phase, %Change{} = change, replacement, status) do
     if ngap_scope?(replacement) do
+      procedures = replacement_ngap_procedures(phase, change, status)
+
       Map.put(payload, :ngap_procedure_trace, %{
-        last_observed: "UE Context Release",
-        procedures: replacement_ngap_procedures(phase, change, status)
+        last_observed: replacement_ngap_last_observed(phase, procedures),
+        procedures: procedures
       })
     else
       payload
@@ -1498,9 +1500,52 @@ defmodule RanActionGateway.Runner do
        replacement_declared_evidence_ref(change, :registration, phase, "ue-context-release"),
        replacement_ngap_detail(:ue_context_release, status)}
     ]
+    |> Kernel.++(replacement_ngap_bounded_claims(phase, change))
     |> Enum.map(fn {name, proc_status, evidence_ref, detail} ->
       %{name: name, status: proc_status, evidence_ref: evidence_ref, detail: detail}
     end)
+  end
+
+  defp replacement_ngap_last_observed(:rollback, procedures) do
+    if Enum.any?(procedures, &(&1.name == "Reset" and &1.status == "ok")) do
+      "Reset"
+    else
+      "UE Context Release"
+    end
+  end
+
+  defp replacement_ngap_last_observed(_phase, _procedures), do: "UE Context Release"
+
+  defp replacement_ngap_bounded_claims(phase, %Change{} = change) do
+    error_indication =
+      if phase in [:observe, :capture_artifacts] and ngap_registration_failure?(change) do
+        [
+          {"Error Indication", "ok", replacement_evidence_ref(phase, change, "error-indication"),
+           "bounded recovery claim preserved a peer-visible NGAP error indication after the declared core rejection"}
+        ]
+      else
+        []
+      end
+
+    reset =
+      cond do
+        change.scope == "replacement_cutover" and phase == :rollback ->
+          [
+            {"Reset", "ok", replacement_evidence_ref(:rollback, change, "reset"),
+             "bounded recovery claim preserved an operator-approved NG reset before the rollback target was declared restored"}
+          ]
+
+        change.scope == "replacement_cutover" and phase in [:observe, :capture_artifacts] ->
+          [
+            {"Reset", "pending", replacement_evidence_ref(phase, change, "reset"),
+             "bounded recovery claim stays explicit for the cutover rollback lane, but reset has not been executed yet"}
+          ]
+
+        true ->
+          []
+      end
+
+    error_indication ++ reset
   end
 
   defp replacement_ngap_status(:downlink_nas_transport, _status, true), do: "failed"
@@ -3670,8 +3715,11 @@ defmodule RanActionGateway.Runner do
   defp replacement_report_evidence_refs(payload, %Change{} = change, phase) do
     refs =
       payload
-      |> payload_artifacts()
-      |> Enum.take(8)
+      |> collect_evidence_refs()
+      |> Kernel.++(payload_artifacts(payload))
+      |> Enum.reject(&is_nil/1)
+      |> Enum.uniq()
+      |> Enum.take(16)
 
     if refs == [] do
       fallback_ref =

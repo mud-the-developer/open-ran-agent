@@ -42,7 +42,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "optional_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -63,7 +63,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],
@@ -162,7 +162,8 @@
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/rollback-evidence.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/post-rollback-verify.json",
     "artifacts/replacement/rollback/chg-ran-repl-rollback-001/f1-c.json",
-    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gnb-n79-lab-01.json"
+    "artifacts/replacement/rollback/chg-ran-repl-rollback-001/gnb-n79-lab-01.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json"
   ],
   "suggested_next": [
     "review the compare report that triggered rollback",
@@ -239,7 +240,7 @@
     "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
   },
   "ngap_procedure_trace": {
-    "last_observed": "UE Context Release",
+    "last_observed": "Reset",
     "procedures": [
       {
         "name": "NG Setup",
@@ -270,6 +271,12 @@
         "status": "ok",
         "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "UE context release completed and the cleanup state is auditable"
+      },
+      {
+        "name": "Reset",
+        "status": "ok",
+        "evidence_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json",
+        "detail": "bounded recovery claim preserves an operator-approved NG reset before the rollback target is declared restored"
       }
     ]
   },

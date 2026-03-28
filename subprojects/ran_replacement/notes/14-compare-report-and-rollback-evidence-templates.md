@@ -66,6 +66,7 @@ Minimum sections:
 - The report must name the declared core endpoint and profile, not just a generic core label.
 - The report must say which interface family is being compared.
 - The report must carry the declared protocol claim set for the same single-lane profile whenever it compares interface-facing evidence.
+- When a bounded NGAP recovery claim is promoted, the report must name the claimed procedure and include its proof reference in `evidence_refs`.
 - The report must distinguish `expected` from `observed`.
 - The report must call out whether a mismatch is functional, procedural, or
   evidence-related.
@@ -105,6 +106,7 @@ operator memory.
 - The rollback evidence must reference the compare report that triggered the
   decision.
 - The rollback evidence must preserve the same protocol claim set and failure class that justified the decision.
+- When rollback relies on a bounded NGAP recovery claim, the rollback evidence must name the claimed procedure and preserve the proof reference.
 - The rollback evidence must show whether the rollback target was restored
   cleanly.
 - The rollback evidence must not rely on implicit operator memory.
@@ -121,11 +123,13 @@ Compare:
 - setup state against the real `Open5GS` core
 - registration progression versus expected attach path
 - named NGAP procedure checkpoints from `NG Setup` through `UE Context Release`
+- explicit bounded-claim proof when `Error Indication` is part of the failure review
 - release state versus expected cleanup state
 
 Rollback:
 
 - report whether the NGAP path was restored to the declared rollback target
+- preserve the bounded `Reset` proof when the rollback lane claims it
 - note whether registration attempts are safe to retry
 
 ### `F1-C`

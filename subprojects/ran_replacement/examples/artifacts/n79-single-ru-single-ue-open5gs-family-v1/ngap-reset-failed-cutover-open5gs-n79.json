@@ -1,0 +1,21 @@
+{
+  "procedure": "Reset",
+  "claim_scope": "bounded_recovery_claim",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "incident_id": "inc-ran-repl-cutover-001",
+  "comparison_scope": "cutover",
+  "triggering_gate": "blocked",
+  "rollback_target": "oai_reference",
+  "restored_from": "replacement_primary",
+  "summary": "The bounded cutover rollback lane preserves an explicit NGAP Reset as an operator-approved recovery action before the declared rollback target is marked restored.",
+  "evidence_refs": [
+    "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-failed-cutover-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/post-rollback-verify-gnb-cutover-open5gs-n79.json"
+  ],
+  "non_claims": [
+    "This does not claim unrestricted NGAP reset parity outside the bounded cutover rollback lane.",
+    "This does not imply mobility or broader multi-node recovery support."
+  ]
+}
