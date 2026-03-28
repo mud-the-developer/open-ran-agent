@@ -836,6 +836,103 @@ function renderProtocolRowSection(title, rows, noteBuilder) {
   `;
 }
 
+function protocolStateTitle(protocolState) {
+  return protocolState?.proof_scope === "real_lab_milestone_proof"
+    ? "Real-lab standards claim state"
+    : "Bounded standards claim state";
+}
+
+function renderClaimSummaryMetric(label, value, note) {
+  return `
+    <div class="protocol-detail claim-summary-card">
+      <div class="inspector-row">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(value ?? 0)}</strong>
+      </div>
+      <div class="lane-note">${escapeHtml(note)}</div>
+    </div>
+  `;
+}
+
+function renderProtocolClaimSummary(protocolState) {
+  const summary = protocolState?.claim_summary;
+
+  if (!summary) {
+    return "";
+  }
+
+  return `
+    <div class="section-kicker">Claim State Summary</div>
+    <div class="protocol-grid claim-summary-grid">
+      ${renderClaimSummaryMetric("Claimed interfaces", summary.interface_count, "Interfaces with explicit standards-subset and support-matrix claim metadata on the focused run.")}
+      ${renderClaimSummaryMetric("Evidenced interfaces", summary.evidenced_interface_count, "Claimed interfaces that also name a concrete evidence ref in the focused run artifact.")}
+      ${renderClaimSummaryMetric("Required procedures", summary.required_total, "Procedures that must hold for the declared lane without broadening the proof boundary.")}
+      ${renderClaimSummaryMetric("Bounded claims", summary.bounded_claim_total, "Extra procedures claimed only for this bounded lane when the artifact names them explicitly.")}
+      ${renderClaimSummaryMetric("Optional procedures", summary.optional_total, "Documented but non-required procedures that stay within the declared lane.")}
+      ${renderClaimSummaryMetric("Deferred procedures", summary.deferred_total, "Procedures kept visibly out of scope for the current proof lane.")}
+    </div>
+  `;
+}
+
+function renderProtocolClaimCategory(category) {
+  return `
+    <div class="protocol-detail claim-category-card">
+      <div class="inspector-row">
+        <span>${escapeHtml(category.label || category.id)}</span>
+        <strong>${escapeHtml(category.count ?? 0)}</strong>
+      </div>
+      <div class="lane-note">${escapeHtml(category.note || "No claim note documented.")}</div>
+      <ul class="claim-procedure-list">
+        ${(category.procedures || []).map((procedure) => `<li>${escapeHtml(procedure)}</li>`).join("")}
+      </ul>
+    </div>
+  `;
+}
+
+function renderProtocolClaimCard(row) {
+  const tags = [
+    `${row.total_procedures || 0} listed`,
+    ...(row.categories || []).map((category) => `${category.count} ${category.id.replaceAll("_", " ")}`)
+  ];
+
+  return `
+    <details class="protocol-card claim-card">
+      <summary class="claim-card-summary">
+        <div>
+          <div class="inspector-title">${escapeHtml(row.label || row.id)}</div>
+          <div class="inspector-meta">${escapeHtml(row.standards_subset_ref || "No standards subset ref.")}</div>
+        </div>
+        <div class="claim-card-side">
+          ${protocolStatusPill(row.status)}
+          <span class="claim-drilldown-label">Drill down</span>
+        </div>
+      </summary>
+      <div class="focus-tags">
+        ${tags.map((tag) => `<span class="runtime-tag">${escapeHtml(tag)}</span>`).join("")}
+      </div>
+      ${row.reason ? `<div class="lane-note">Observed state: ${escapeHtml(row.reason)}</div>` : ""}
+      ${row.evidence_ref ? `<div class="lane-note">Evidence: ${escapeHtml(row.evidence_ref)}</div>` : ""}
+      ${row.procedure_matrix_ref ? `<div class="lane-note">Support matrix: ${escapeHtml(row.procedure_matrix_ref)}</div>` : ""}
+      <div class="claim-category-grid">
+        ${(row.categories || []).map(renderProtocolClaimCategory).join("")}
+      </div>
+    </details>
+  `;
+}
+
+function renderProtocolClaimSection(protocolState) {
+  if (!protocolState?.claim_rows?.length) {
+    return "";
+  }
+
+  return `
+    <div class="section-kicker">Claim State Drilldowns</div>
+    <div class="protocol-cards">
+      ${protocolState.claim_rows.map(renderProtocolClaimCard).join("")}
+    </div>
+  `;
+}
+
 function renderSimulationProtocolCard(panel) {
   return `
     <div class="protocol-card simulation">
@@ -867,17 +964,17 @@ function renderSimulationProtocolCard(panel) {
 function renderSimulationProtocolSection(observe) {
   if (!observe?.protocol_panels?.length) {
     return `
-      <div class="protocol-section">
-        <div class="inspector-row"><span>Repo-local simulation lane</span><strong>not captured</strong></div>
+      <div class="protocol-section simulation-proof">
+        <div class="inspector-row"><span>Repo-local simulation proof</span><strong>not captured</strong></div>
         <div class="lane-note">No repo-local OAI observe artifact is available for the focused mission.</div>
       </div>
     `;
   }
 
   return `
-    <div class="protocol-section">
+    <div class="protocol-section simulation-proof">
       <div class="inspector-row">
-        <span>Repo-local simulation lane</span>
+        <span>Repo-local simulation proof</span>
         ${protocolStatusPill(observe.runtime_state)}
       </div>
       <div class="lane-note">${escapeHtml(observe.proof_note || "Repo-local simulation proof is available.")}</div>
@@ -896,19 +993,23 @@ function renderSimulationProtocolSection(observe) {
 }
 
 function renderBoundedProtocolSection(protocolState) {
+  const sectionClass = protocolState?.proof_scope === "real_lab_milestone_proof"
+    ? "protocol-section real-lab-proof"
+    : "protocol-section bounded-proof";
+
   if (!protocolState) {
     return `
-      <div class="protocol-section">
-        <div class="inspector-row"><span>Bounded standards lane</span><strong>select a protocol run</strong></div>
+      <div class="${sectionClass}">
+        <div class="inspector-row"><span>Bounded standards claim state</span><strong>select a protocol run</strong></div>
         <div class="lane-note">Select an observe or verify run with declared protocol evidence to inspect NGAP, F1, E1AP, and attach/session outcomes.</div>
       </div>
     `;
   }
 
   return `
-    <div class="protocol-section">
+    <div class="${sectionClass}">
       <div class="inspector-row">
-        <span>Bounded standards lane</span>
+        <span>${escapeHtml(protocolStateTitle(protocolState))}</span>
         ${protocolStatusPill(protocolState.gate_class || protocolState.evidence_tier || "evidence")}
       </div>
       <div class="lane-note">${escapeHtml(protocolState.proof_note || "Bounded standards proof is attached to the focused run.")}</div>
@@ -922,6 +1023,8 @@ function renderBoundedProtocolSection(protocolState) {
       </div>
       <div class="lane-note">Source: ${escapeHtml(protocolState.source_ref || "n/a")}</div>
       ${protocolState.baseline_ref ? `<div class="lane-note">Baseline: ${escapeHtml(protocolState.baseline_ref)}</div>` : ""}
+      ${renderProtocolClaimSummary(protocolState)}
+      ${renderProtocolClaimSection(protocolState)}
       ${renderProtocolRowSection("Interface State", protocolState.interface_rows, (row) => row.reason)}
       ${renderProtocolRowSection("Plane State", protocolState.plane_rows, (row) => row.reason)}
       ${renderProtocolRowSection("NGAP Procedure Trace", protocolState.procedure_rows, (row) => row.detail)}
@@ -943,7 +1046,7 @@ function renderProtocolStatePanel(cellGroup, focusedRun) {
   target.innerHTML = `
     <div class="section-kicker">DU/CU Protocol State</div>
     <h4>${escapeHtml(cellGroup?.id || observe?.project_name || focusedRun?.id || "protocol state")}</h4>
-    <div class="inspector-meta">Simulation proof and bounded-standards proof stay visually distinct in the focused context.</div>
+    <div class="inspector-meta">Repo-local simulation proof and bounded or real-lab standards claim state stay visibly distinct in the focused context.</div>
     ${renderSimulationProtocolSection(observe)}
     ${renderBoundedProtocolSection(protocolState)}
   `;

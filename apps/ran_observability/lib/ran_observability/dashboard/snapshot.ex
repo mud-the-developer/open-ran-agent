@@ -21,6 +21,16 @@ defmodule RanObservability.Dashboard.Snapshot do
     runtime_keep: 8,
     release_keep: 5
   }
+  @protocol_claim_category_specs [
+    {"required", "Required procedures", :required_procedures,
+     "Procedures required for the declared lane."},
+    {"bounded_claim", "Bounded claim procedures", :bounded_claimed_procedures,
+     "Extra procedures explicitly claimed only for the focused lane."},
+    {"optional", "Optional procedures", :optional_procedures,
+     "Optional procedures documented for this lane without being required."},
+    {"deferred", "Deferred procedures", :deferred_procedures,
+     "Procedures explicitly outside the current proof lane."}
+  ]
 
   @spec build(keyword()) :: map()
   def build(opts \\ []) do
@@ -380,6 +390,7 @@ defmodule RanObservability.Dashboard.Snapshot do
           runtime["healthy_service_count"] ||
             Enum.count(containers, &(&1["health"] == "healthy")),
         updated_at: updated_at |> DateTime.truncate(:second) |> DateTime.to_iso8601(),
+        proof_scope: "repo_local_simulation_only",
         proof_kind: "repo_local_simulation",
         proof_note:
           "Repo-local simulation proof only. Counters are bounded to the current docker logs tail captured by observe, not lifetime totals.",
@@ -532,6 +543,8 @@ defmodule RanObservability.Dashboard.Snapshot do
       |> Enum.map(&protocol_procedure_row/1)
       |> Enum.reject(&is_nil/1)
 
+    claim_rows = protocol_claim_rows(protocol_claims, interface_rows)
+
     outcome_rows =
       [
         protocol_named_status_row("attach", "Attach", fetch_value(payload, :attach_status)),
@@ -546,9 +559,12 @@ defmodule RanObservability.Dashboard.Snapshot do
       |> Enum.reject(&is_nil/1)
 
     conformance_claim = fetch_value(payload, :conformance_claim, %{})
+    evidence_tier = conformance_claim |> fetch_value(:evidence_tier) |> to_string_value()
 
-    if interface_rows != [] or plane_rows != [] or procedure_rows != [] or outcome_rows != [] do
+    if interface_rows != [] or plane_rows != [] or procedure_rows != [] or outcome_rows != [] or
+         claim_rows != [] do
       %{
+        proof_scope: protocol_proof_scope(evidence_tier),
         proof_kind: "bounded_standards",
         proof_note:
           "Bounded-standards proof stays separate from repo-local simulation counters. Status comes from declared evidence refs and standards-subset notes on the focused run artifact.",
@@ -556,12 +572,14 @@ defmodule RanObservability.Dashboard.Snapshot do
         summary: fetch_value(payload, :summary),
         core_profile: fetch_value(payload, :core_profile),
         target_profile: fetch_value(payload, :target_profile),
-        evidence_tier: conformance_claim |> fetch_value(:evidence_tier) |> to_string_value(),
+        evidence_tier: evidence_tier,
         conformance_profile: conformance_claim |> fetch_value(:profile),
         baseline_ref: conformance_claim |> fetch_value(:baseline_ref),
         ngap_last_observed:
           payload |> fetch_value(:ngap_procedure_trace, %{}) |> fetch_value(:last_observed),
         source_ref: Path.expand(path),
+        claim_summary: protocol_claim_summary(claim_rows),
+        claim_rows: claim_rows,
         interface_rows: interface_rows,
         plane_rows: plane_rows,
         procedure_rows: procedure_rows,
@@ -593,6 +611,91 @@ defmodule RanObservability.Dashboard.Snapshot do
 
   defp protocol_state_rows(_entries, _labeler, _orderer, _claims), do: []
 
+  defp protocol_claim_rows(claims, interface_rows) when is_map(claims) do
+    interface_index = Map.new(interface_rows, &{&1.id, &1})
+
+    claims
+    |> Enum.map(fn {name, claim} ->
+      id = to_string(name)
+      protocol_claim_row(id, claim, Map.get(interface_index, id))
+    end)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.sort_by(&protocol_interface_order(&1.id))
+  end
+
+  defp protocol_claim_rows(_claims, _interface_rows), do: []
+
+  defp protocol_claim_row(_id, claim, _interface_row) when not is_map(claim), do: nil
+
+  defp protocol_claim_row(id, claim, interface_row) do
+    categories = protocol_claim_categories(claim)
+
+    if categories == [] do
+      nil
+    else
+      %{
+        id: id,
+        label: protocol_interface_label(id),
+        status:
+          interface_row |> fetch_value(:status) |> to_string_value() |> Kernel.||("documented"),
+        reason: interface_row |> fetch_value(:reason),
+        evidence_ref: interface_row |> fetch_value(:evidence_ref),
+        standards_subset_ref: claim |> fetch_value(:standards_subset_ref),
+        procedure_matrix_ref: claim |> fetch_value(:procedure_matrix_ref),
+        total_procedures: Enum.reduce(categories, 0, &(&1.count + &2)),
+        categories: categories
+      }
+    end
+  end
+
+  defp protocol_claim_categories(claim) when is_map(claim) do
+    @protocol_claim_category_specs
+    |> Enum.map(fn {id, label, key, note} ->
+      procedures =
+        case fetch_value(claim, key, []) do
+          items when is_list(items) -> items
+          _ -> []
+        end
+
+      %{
+        id: id,
+        label: label,
+        note: note,
+        count: length(procedures),
+        procedures: procedures
+      }
+    end)
+    |> Enum.reject(&(&1.count == 0))
+  end
+
+  defp protocol_claim_categories(_claim), do: []
+
+  defp protocol_claim_summary([]), do: nil
+
+  defp protocol_claim_summary(claim_rows) do
+    %{
+      interface_count: length(claim_rows),
+      evidenced_interface_count: Enum.count(claim_rows, &(not is_nil(&1.evidence_ref))),
+      required_total: protocol_claim_total(claim_rows, "required"),
+      bounded_claim_total: protocol_claim_total(claim_rows, "bounded_claim"),
+      optional_total: protocol_claim_total(claim_rows, "optional"),
+      deferred_total: protocol_claim_total(claim_rows, "deferred")
+    }
+  end
+
+  defp protocol_claim_total(claim_rows, category_id) do
+    Enum.reduce(claim_rows, 0, fn row, total ->
+      total +
+        Enum.reduce(row.categories, 0, fn category, category_total ->
+          if category.id == category_id do
+            category_total + category.count
+          else
+            category_total
+          end
+        end)
+    end)
+  end
+
   defp protocol_named_status_row(id, label, entry) when is_map(entry) do
     %{
       id: id,
@@ -616,6 +719,9 @@ defmodule RanObservability.Dashboard.Snapshot do
   end
 
   defp protocol_procedure_row(_procedure), do: nil
+
+  defp protocol_proof_scope("milestone_proof"), do: "real_lab_milestone_proof"
+  defp protocol_proof_scope(_evidence_tier), do: "bounded_standards_proof"
 
   defp protocol_interface_label("ngap"), do: "NGAP"
   defp protocol_interface_label("f1_c"), do: "F1-C"
