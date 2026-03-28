@@ -23,6 +23,10 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert get_in(status, ["ngap_procedure_trace", "last_observed"]) == "UE Context Release"
 
+    assert Map.new(status["ngap_procedure_trace"]["procedures"], &{&1["name"], &1["status"]})[
+             "Reset"
+           ] == "pending"
+
     assert get_in(status, ["interface_status", "ngap", "evidence_ref"]) ==
              "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
@@ -39,6 +43,10 @@ defmodule RanActionGateway.ReplacementExamplesTest do
            ]
 
     assert "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json" in status["artifacts"]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in status[
+             "artifacts"
+           ]
 
     assert Enum.any?(status["checks"], fn check ->
              check["name"] == "rollback_target_known" and check["status"] == "ok"
@@ -73,7 +81,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert registration_report["summary"] =~ "Downlink NAS Transport"
     assert registration_report["rollback_target"] == "oai_reference"
 
-    assert get_in(registration_report, ["ngap_subset", "supported_procedures"]) == [
+    assert get_in(registration_report, ["ngap_subset", "bounded_claimed_procedures"]) == [
              "Error Indication",
              "Reset"
            ]
@@ -97,23 +105,30 @@ defmodule RanActionGateway.ReplacementExamplesTest do
              "evidence_refs"
            ]
 
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json" in registration_report[
+             "evidence_refs"
+           ]
+
     assert cutover_report["failure_class"] == "cutover_or_rollback_failure"
     assert cutover_report["comparison_scope"] == "cutover"
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in cutover_report[
+             "evidence_refs"
+           ]
 
-    assert get_in(cutover_report, ["protocol_claims", "f1_c", "supported_procedures"]) == [
+    assert get_in(cutover_report, ["protocol_claims", "f1_c", "bounded_claimed_procedures"]) == [
              "UE context modification",
              "Reset-driven recovery"
            ]
 
-    assert get_in(cutover_report, ["protocol_claims", "e1ap", "supported_procedures"]) == [
+    assert get_in(cutover_report, ["protocol_claims", "e1ap", "bounded_claimed_procedures"]) == [
              "Bearer context modification"
            ]
 
-    assert get_in(cutover_report, ["protocol_claims", "f1_u", "supported_procedures"]) == [
+    assert get_in(cutover_report, ["protocol_claims", "f1_u", "bounded_claimed_procedures"]) == [
              "Tunnel update"
            ]
 
-    assert get_in(cutover_report, ["protocol_claims", "gtpu", "supported_procedures"]) == [
+    assert get_in(cutover_report, ["protocol_claims", "gtpu", "bounded_claimed_procedures"]) == [
              "Tunnel rebind"
            ]
   end
@@ -140,7 +155,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       assert status["failure_class"] == failure_class
       assert status["rollback_target"] == "oai_reference"
 
-      assert get_in(status, ["ngap_subset", "supported_procedures"]) == [
+      assert get_in(status, ["ngap_subset", "bounded_claimed_procedures"]) == [
                "Error Indication",
                "Reset"
              ]
@@ -169,7 +184,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       assert evidence["failure_class"] == failure_class
       assert evidence["rollback_target"] == "oai_reference"
 
-      assert get_in(evidence, ["ngap_subset", "supported_procedures"]) == [
+      assert get_in(evidence, ["ngap_subset", "bounded_claimed_procedures"]) == [
                "Error Indication",
                "Reset"
              ]
@@ -183,20 +198,20 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       |> File.read!()
       |> JSON.decode!()
 
-    assert get_in(cutover_evidence, ["protocol_claims", "f1_c", "supported_procedures"]) == [
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_c", "bounded_claimed_procedures"]) == [
              "UE context modification",
              "Reset-driven recovery"
            ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "e1ap", "supported_procedures"]) == [
+    assert get_in(cutover_evidence, ["protocol_claims", "e1ap", "bounded_claimed_procedures"]) == [
              "Bearer context modification"
            ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "f1_u", "supported_procedures"]) == [
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_u", "bounded_claimed_procedures"]) == [
              "Tunnel update"
            ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "gtpu", "supported_procedures"]) == [
+    assert get_in(cutover_evidence, ["protocol_claims", "gtpu", "bounded_claimed_procedures"]) == [
              "Tunnel rebind"
            ]
 
@@ -208,6 +223,10 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert post_rollback_verify["restored_from"] == "replacement_primary"
     assert post_rollback_verify["rollback_target"] == "oai_reference"
     assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in post_rollback_verify[
+             "evidence_refs"
+           ]
   end
 
   test "failed-cutover capture example preserves the bounded family bundle paths" do
@@ -229,6 +248,31 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json" in status[
              "artifacts"
            ]
+
+    assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in status[
+             "artifacts"
+           ]
+  end
+
+  test "bounded NGAP proof artifacts stay explicit and non-broad" do
+    error_indication =
+      family_artifact("ngap-error-indication-registration-rejected-open5gs-n79.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    reset =
+      family_artifact("ngap-reset-failed-cutover-open5gs-n79.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert error_indication["procedure"] == "Error Indication"
+    assert error_indication["claim_scope"] == "bounded_recovery_claim"
+    assert Enum.join(error_indication["non_claims"], " ") =~ "broad NGAP failure-handling parity"
+
+    assert reset["procedure"] == "Reset"
+    assert reset["claim_scope"] == "bounded_recovery_claim"
+    assert reset["rollback_target"] == "oai_reference"
+    assert Enum.join(reset["non_claims"], " ") =~ "outside the bounded cutover rollback lane"
   end
 
   defp repo_path(path), do: Path.expand(Path.join(["../../../..", path]), __DIR__)

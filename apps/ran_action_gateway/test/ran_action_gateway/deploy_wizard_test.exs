@@ -73,7 +73,7 @@ defmodule RanActionGateway.DeployWizardTest do
              "metadata",
              "replacement",
              "ngap_subset",
-             "supported_procedures"
+             "bounded_claimed_procedures"
            ]) == ["Error Indication", "Reset"]
 
     refute Map.has_key?(

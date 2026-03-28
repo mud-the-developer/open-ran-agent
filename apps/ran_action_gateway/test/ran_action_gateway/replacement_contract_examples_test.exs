@@ -21,29 +21,29 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
     assert profile["evidence_bundle_root"] ==
              "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/"
 
-    assert "subprojects/ran_replacement/notes/17-n79-single-ru-open5gs-support-matrix-delta.md" in profile[
-             "support_matrix_delta_refs"
-           ]
-
-    assert get_in(profile, ["standards_subset", "ngap", "supported_procedures"]) == [
+    assert get_in(profile, ["standards_subset", "ngap", "bounded_claimed_procedures"]) == [
              "Error Indication",
              "Reset"
            ]
 
-    assert get_in(profile, ["standards_subset", "f1_c", "supported_procedures"]) == [
+    assert "subprojects/ran_replacement/notes/17-n79-single-ru-open5gs-support-matrix-delta.md" in profile[
+             "support_matrix_delta_refs"
+           ]
+
+    assert get_in(profile, ["standards_subset", "f1_c", "bounded_claimed_procedures"]) == [
              "UE context modification",
              "Reset-driven recovery"
            ]
 
-    assert get_in(profile, ["standards_subset", "e1ap", "supported_procedures"]) == [
+    assert get_in(profile, ["standards_subset", "e1ap", "bounded_claimed_procedures"]) == [
              "Bearer context modification"
            ]
 
-    assert get_in(profile, ["standards_subset", "f1_u", "supported_procedures"]) == [
+    assert get_in(profile, ["standards_subset", "f1_u", "bounded_claimed_procedures"]) == [
              "Tunnel update"
            ]
 
-    assert get_in(profile, ["standards_subset", "gtpu", "supported_procedures"]) == [
+    assert get_in(profile, ["standards_subset", "gtpu", "bounded_claimed_procedures"]) == [
              "Tunnel rebind"
            ]
 

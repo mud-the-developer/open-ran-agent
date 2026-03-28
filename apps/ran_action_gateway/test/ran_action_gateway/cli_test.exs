@@ -341,7 +341,13 @@ defmodule RanActionGateway.CLITest do
       assert Enum.all?(verify.ngap_procedure_trace.procedures, &(&1.status == "ok"))
 
       refute Enum.any?(verify.ngap_procedure_trace.procedures, fn procedure ->
-               procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
+               procedure.name in [
+                 "Paging",
+                 "Handover Preparation",
+                 "Path Switch",
+                 "Error Indication",
+                 "Reset"
+               ]
              end)
 
       assert get_in(verify, [:release_status, :evidence_ref]) ==
@@ -498,8 +504,14 @@ defmodule RanActionGateway.CLITest do
                "Initial UE Message" => "ok",
                "Uplink NAS Transport" => "ok",
                "Downlink NAS Transport" => "failed",
+               "Error Indication" => "ok",
                "UE Context Release" => "ok"
              }
+
+      error_indication =
+        Enum.find(observe.ngap_procedure_trace.procedures, &(&1.name == "Error Indication"))
+
+      assert File.exists?(error_indication.evidence_ref)
 
       refute Enum.any?(observe.ngap_procedure_trace.procedures, fn procedure ->
                procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
@@ -539,8 +551,14 @@ defmodule RanActionGateway.CLITest do
                "Initial UE Message" => "ok",
                "Uplink NAS Transport" => "ok",
                "Downlink NAS Transport" => "failed",
+               "Error Indication" => "ok",
                "UE Context Release" => "ok"
              }
+
+      error_indication =
+        Enum.find(capture.ngap_procedure_trace.procedures, &(&1.name == "Error Indication"))
+
+      assert File.exists?(error_indication.evidence_ref)
 
       refute Enum.any?(capture.ngap_procedure_trace.procedures, fn procedure ->
                procedure.name in ["Paging", "Handover Preparation", "Path Switch"]
@@ -555,6 +573,26 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(capture, [:bundle, :declared_lane_evidence, :registration_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
+
+      compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert Enum.any?(
+               compare_report["evidence_refs"],
+               &String.ends_with?(&1, "/error-indication.json")
+             )
+
+      assert Enum.any?(
+               rollback_evidence["evidence_refs"],
+               &String.ends_with?(&1, "/error-indication.json")
+             )
     end)
   end
 
@@ -823,6 +861,14 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(capture, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
 
+      assert Map.new(capture.ngap_procedure_trace.procedures, &{&1.name, &1.status})["Reset"] ==
+               "pending"
+
+      reset_capture =
+        Enum.find(capture.ngap_procedure_trace.procedures, &(&1.name == "Reset"))
+
+      assert File.exists?(reset_capture.evidence_ref)
+
       assert Enum.any?(
                capture.checks,
                &(&1["name"] == "compare_report_ready" and &1["status"] == "ok")
@@ -830,10 +876,31 @@ defmodule RanActionGateway.CLITest do
 
       assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "-compare-report.json"))
       assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "-rollback-evidence.json"))
+      assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "/reset.json"))
       assert File.exists?(get_in(capture, [:bundle, :review, :compare_report]))
       assert File.exists?(get_in(capture, [:bundle, :review, :request_snapshot]))
       assert File.exists?(get_in(capture, [:bundle, :review, :rollback_evidence]))
       assert File.exists?(get_in(capture, [:rollback_status, :evidence_ref]))
+
+      cutover_compare_report =
+        get_in(capture, [:bundle, :review, :compare_report])
+        |> File.read!()
+        |> JSON.decode!()
+
+      cutover_rollback_evidence =
+        get_in(capture, [:bundle, :review, :rollback_evidence])
+        |> File.read!()
+        |> JSON.decode!()
+
+      assert Enum.any?(
+               cutover_compare_report["evidence_refs"],
+               &String.ends_with?(&1, "/reset.json")
+             )
+
+      assert Enum.any?(
+               cutover_rollback_evidence["evidence_refs"],
+               &String.ends_with?(&1, "/reset.json")
+             )
 
       rollback_payload =
         Path.join(
@@ -864,13 +931,22 @@ defmodule RanActionGateway.CLITest do
       assert get_in(rollback, [:interface_status, "ngap", :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
 
-      assert get_in(rollback, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
+      assert get_in(rollback, [:ngap_procedure_trace, :last_observed]) == "Reset"
+
+      assert Map.new(rollback.ngap_procedure_trace.procedures, &{&1.name, &1.status})["Reset"] ==
+               "ok"
+
+      reset_rollback =
+        Enum.find(rollback.ngap_procedure_trace.procedures, &(&1.name == "Reset"))
+
+      assert File.exists?(reset_rollback.evidence_ref)
 
       assert Enum.any?(rollback.checks, fn check ->
                check["name"] == "approval_evidence_present" and check["status"] == "ok"
              end)
 
       assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/post-rollback-verify.json"))
+      assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/reset.json"))
       assert File.exists?(Store.change_state_path("chg-ran-repl-rollback-001"))
       assert File.exists?(Store.approval_path("chg-ran-repl-rollback-001", "rollback"))
       assert File.exists?(Store.rollback_plan_path("chg-ran-repl-rollback-001"))

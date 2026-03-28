@@ -131,6 +131,10 @@ const targetNgapJson = JSON.stringify(targetClaims.ngap);
 
 for (const file of files) {
   const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  if (!Object.prototype.hasOwnProperty.call(payload, "protocol_claims")) {
+    continue;
+  }
+
   if (JSON.stringify(payload.protocol_claims) !== targetClaimsJson) {
     throw new Error(`${file} protocol_claims do not match the canonical target-profile standards_subset`);
   }

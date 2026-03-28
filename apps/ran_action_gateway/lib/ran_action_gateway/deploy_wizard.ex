@@ -411,7 +411,7 @@ defmodule RanActionGateway.DeployWizard do
           "Downlink NAS Transport",
           "UE Context Release"
         ],
-        "supported_procedures" => ["Error Indication", "Reset"],
+        "bounded_claimed_procedures" => ["Error Indication", "Reset"],
         "deferred_procedures" => ["Paging", "Handover Preparation", "Path Switch Request"]
       }
     }

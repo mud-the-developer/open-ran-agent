@@ -25,7 +25,8 @@
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/pdu-session.json",
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/ping.json",
-    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
+    "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json"
   ],
   "suggested_next": [
     "inspect the compare report before another replacement mutation",
@@ -107,6 +108,12 @@
         "status": "ok",
         "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
         "detail": "UE context release completed and the cleanup state is auditable"
+      },
+      {
+        "name": "Reset",
+        "status": "pending",
+        "evidence_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json",
+        "detail": "bounded recovery claim stays explicit for the cutover rollback lane, but reset has not been executed yet"
       }
     ]
   },
@@ -148,7 +155,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "supported_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -169,7 +176,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],
@@ -189,7 +196,7 @@
         "UE context creation",
         "UE context release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "UE context modification",
         "Reset-driven recovery"
       ],
@@ -207,7 +214,7 @@
         "Uplink forwarding path",
         "Failure detection and rollback visibility"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel update"
       ],
       "deferred_procedures": [
@@ -223,7 +230,7 @@
         "Bearer or activity-state coordination",
         "Release and re-establishment"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Bearer context modification"
       ],
       "deferred_procedures": [
@@ -241,7 +248,7 @@
         "Uplink route forwarding",
         "Tunnel release and cleanup"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel rebind"
       ],
       "deferred_procedures": [

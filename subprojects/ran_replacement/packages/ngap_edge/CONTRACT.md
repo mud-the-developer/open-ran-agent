@@ -12,6 +12,7 @@ This package owns the declared `NGAP` edge of the milestone-1 replacement lane:
 - UE attach entry into the NG control plane
 - NAS transport exchange needed for registration
 - cleanup visibility through `UE Context Release`
+- bounded recovery visibility for `Error Indication` and `Reset` on the declared review lanes
 
 It does not own RU timing, scheduler decisions, or user-plane forwarding.
 
@@ -92,6 +93,7 @@ Expected evidence fields:
 - `ngap_procedure_trace`
 - `attach_status`
 - `release_status`
+- bounded recovery proof for `Error Indication` or `Reset` when the declared lane claims them
 - `checks[]` for the last known NGAP checkpoint
 - artifact references for NGAP trace, attach trace, and cleanup trace
 
@@ -100,7 +102,7 @@ Expected evidence fields:
 - Keep all mutating actions routed through `bin/ranctl`.
 - Keep package fixtures schema-backed by the existing replacement request/status schemas.
 - Treat `registration rejected`, `NG setup failed`, and `release cleanup incomplete` as first-class package incidents.
-- Keep deferred procedures explicit via the documented NGAP subset instead of implying broad support from a healthy status summary.
+- Keep bounded recovery claims and deferred procedures explicit via the documented NGAP subset instead of implying broad support from a healthy status summary.
 - Keep the rollback target explicit whenever NGAP-facing attach progress is not trusted.
 
 ## Non-Goals

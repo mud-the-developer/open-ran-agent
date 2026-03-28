@@ -54,7 +54,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "supported_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -75,7 +75,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],
@@ -95,7 +95,7 @@
         "UE context creation",
         "UE context release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "UE context modification",
         "Reset-driven recovery"
       ],
@@ -113,7 +113,7 @@
         "Uplink forwarding path",
         "Failure detection and rollback visibility"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel update"
       ],
       "deferred_procedures": [
@@ -129,7 +129,7 @@
         "Bearer or activity-state coordination",
         "Release and re-establishment"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Bearer context modification"
       ],
       "deferred_procedures": [
@@ -147,7 +147,7 @@
         "Uplink route forwarding",
         "Tunnel release and cleanup"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel rebind"
       ],
       "deferred_procedures": [
@@ -158,7 +158,8 @@
   },
   "diff_summary": [
     "The captured evidence bundle preserves the mismatch that blocked or degraded the declared lane.",
-    "The rollback target remains explicit for replay and recovery."
+    "The rollback target remains explicit for replay and recovery.",
+    "The bounded Reset claim is explicit for the cutover rollback lane and does not imply broad NGAP recovery parity."
   ],
   "evidence_refs": [
     "artifacts/captures/inc-ran-repl-cutover-001.json",
@@ -168,7 +169,8 @@
     "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/attach.json",
     "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/registration.json",
     "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/pdu-session.json",
-    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ping.json"
+    "artifacts/replacement/capture/chg-ran-repl-capture-cutover-001/ping.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json"
   ],
   "operator_next_step": "inspect the compare report before another replacement mutation"
 }

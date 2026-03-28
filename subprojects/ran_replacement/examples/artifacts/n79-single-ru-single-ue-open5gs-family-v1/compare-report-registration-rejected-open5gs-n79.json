@@ -62,7 +62,8 @@
   "diff_summary": [
     "NGAP transport is reachable and the named Open5GS endpoint is explicit.",
     "Registration does not progress past downlink NAS transport and the core acceptance step.",
-    "The failure is procedural or profile-related rather than a total transport outage."
+    "The failure is procedural or profile-related rather than a total transport outage.",
+    "The bounded Error Indication claim is explicit and reviewable on the registration-rejection lane without implying broader NGAP parity."
   ],
   "evidence_refs": [
     "subprojects/ran_replacement/examples/status/observe-registration-rejected-open5gs-n79.status.json",
@@ -71,7 +72,8 @@
     "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json",
     "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
     "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
-    "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md"
+    "subprojects/ran_replacement/notes/12-standards-evidence-and-acceptance-gates.md",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json"
   ],
   "rollback_target": "oai_reference",
   "operator_next_step": "Inspect the subscriber profile, PLMN/TAC/DNN assumptions, then decide whether to correct the request or roll back the lane.",
@@ -87,7 +89,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "supported_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -108,7 +110,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],
@@ -128,7 +130,7 @@
         "UE context creation",
         "UE context release"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "UE context modification",
         "Reset-driven recovery"
       ],
@@ -146,7 +148,7 @@
         "Uplink forwarding path",
         "Failure detection and rollback visibility"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel update"
       ],
       "deferred_procedures": [
@@ -162,7 +164,7 @@
         "Bearer or activity-state coordination",
         "Release and re-establishment"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Bearer context modification"
       ],
       "deferred_procedures": [
@@ -180,7 +182,7 @@
         "Uplink route forwarding",
         "Tunnel release and cleanup"
       ],
-      "supported_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel rebind"
       ],
       "deferred_procedures": [

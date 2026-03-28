@@ -19,7 +19,7 @@ This subset is judged against:
 
 - `3GPP TS 38.413` for the declared `NGAP` behavior
 - `subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md` for
-  required, supported, and deferred procedure classes
+  required, bounded-claim, and deferred procedure classes
 - `subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md`
   for the repo-wide conformance and evidence mapping
 
@@ -31,6 +31,7 @@ Trying to describe full NGAP parity up front would hide scope and delay implemen
 This subset exists to make three things explicit:
 
 - which procedures must work for milestone 1
+- which additional recovery procedures are explicitly claimed on the bounded lane
 - which ordering assumptions must hold
 - which deviations are temporary and visible
 
