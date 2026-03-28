@@ -642,7 +642,9 @@ input {
 }
 
 .status-pill.healthy,
-.status-pill.running {
+.status-pill.running,
+.status-pill.ok,
+.status-pill.active {
   background: rgba(47, 125, 69, 0.12);
   color: var(--good);
 }
@@ -660,15 +662,27 @@ input {
 
 .status-pill.pending,
 .status-pill.preview_ready,
-.status-pill.ready_for_preflight {
+.status-pill.ready_for_preflight,
+.status-pill.degraded,
+.status-pill.warming,
+.status-pill.draining {
   background: rgba(148, 97, 25, 0.12);
   color: var(--warn);
 }
 
 .status-pill.failed,
-.status-pill.blocked {
+.status-pill.blocked,
+.status-pill.error {
   background: rgba(155, 48, 37, 0.12);
   color: var(--bad);
+}
+
+.status-pill.inactive,
+.status-pill.idle,
+.status-pill.unavailable,
+.status-pill.unknown {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(246, 242, 234, 0.72);
 }
 
 .context-header {
@@ -721,6 +735,45 @@ input {
 .focus-tags {
   flex-direction: row;
   flex-wrap: wrap;
+}
+
+.protocol-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.protocol-section:first-of-type {
+  margin-top: 12px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.protocol-cards,
+.protocol-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.protocol-card,
+.protocol-detail {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.protocol-card.simulation {
+  background: linear-gradient(180deg, rgba(10, 123, 120, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.protocol-card .section-kicker,
+.protocol-section .section-kicker {
+  color: rgba(246, 242, 234, 0.62);
 }
 
 .runtime-tag,

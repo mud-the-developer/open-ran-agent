@@ -760,57 +760,192 @@ function renderNativeContractPanel(focusedRun) {
   `;
 }
 
-function renderOaiObservationPanel(cellGroup) {
-  const target = byId("oai-panel");
-  const observe = currentOaiObservation(cellGroup);
+function protocolStatusPill(status) {
+  return `<span class="status-pill ${escapeHtml(status || "unknown")}">${escapeHtml(status || "unknown")}</span>`;
+}
 
-  if (!observe) {
-    target.innerHTML = `<div class="empty">No repo-local OAI observe artifact has been captured for the focused mission.</div>`;
+function formatSourceParts(parts) {
+  return parts.filter((part) => part !== null && part !== undefined && part !== "").join(" :: ");
+}
+
+function renderProtocolField(field) {
+  return `
+    <div class="protocol-detail">
+      <div class="inspector-row">
+        <span>${escapeHtml(field.label || field.id)}</span>
+        <strong>${escapeHtml(field.value ?? "n/a")}</strong>
+      </div>
+      <div class="lane-note">${escapeHtml(field.meaning || "No meaning documented.")}</div>
+      <div class="lane-note">Source: ${escapeHtml(formatSourceParts([field.source_kind, field.source_field, field.source_ref]) || "n/a")}</div>
+    </div>
+  `;
+}
+
+function renderProtocolCounter(counter) {
+  const source = formatSourceParts([
+    counter.source_kind,
+    counter.source_pattern ? `token ${counter.source_pattern}` : counter.source_field,
+    counter.source_tail_lines ? `${counter.source_tail_lines} tail lines` : null,
+    counter.source_ref
+  ]);
+
+  return `
+    <div class="protocol-detail">
+      <div class="inspector-row">
+        <span>${escapeHtml(counter.label || counter.id)}</span>
+        <strong>${escapeHtml(counter.count ?? 0)}</strong>
+      </div>
+      <div class="lane-note">${escapeHtml(counter.meaning || "No meaning documented.")}</div>
+      <div class="lane-note">Source: ${escapeHtml(source || "n/a")}</div>
+    </div>
+  `;
+}
+
+function renderProtocolEvidenceRow(row, note) {
+  const notes = [
+    note,
+    row.evidence_ref ? `Evidence: ${row.evidence_ref}` : null,
+    row.standards_subset_ref ? `Subset: ${row.standards_subset_ref}` : null,
+    row.procedure_matrix_ref ? `Matrix: ${row.procedure_matrix_ref}` : null
+  ]
+    .filter(Boolean)
+    .map((text) => `<div class="lane-note">${escapeHtml(text)}</div>`)
+    .join("");
+
+  return `
+    <div class="protocol-detail">
+      <div class="runtime-top">
+        <div class="inspector-title">${escapeHtml(row.label || row.id)}</div>
+        ${protocolStatusPill(row.status)}
+      </div>
+      ${notes}
+    </div>
+  `;
+}
+
+function renderProtocolRowSection(title, rows, noteBuilder) {
+  if (!rows?.length) {
+    return "";
+  }
+
+  return `
+    <div class="section-kicker">${escapeHtml(title)}</div>
+    <div class="protocol-grid">
+      ${rows.map((row) => renderProtocolEvidenceRow(row, noteBuilder(row))).join("")}
+    </div>
+  `;
+}
+
+function renderSimulationProtocolCard(panel) {
+  return `
+    <div class="protocol-card simulation">
+      <div class="runtime-top">
+        <div>
+          <div class="inspector-title">${escapeHtml(panel.label || panel.role || "service")}</div>
+          <div class="inspector-meta">${escapeHtml(formatSourceParts([panel.service_name, panel.container_name]) || "observe artifact")}</div>
+        </div>
+        ${protocolStatusPill(panel.status)}
+      </div>
+      <div class="focus-tags">
+        <span class="runtime-tag">${escapeHtml(panel.role || "service")}</span>
+        <span class="runtime-tag">${escapeHtml(`${panel.counters?.length || 0} documented counters`)}</span>
+      </div>
+      <div class="section-kicker">Documented Fields</div>
+      <div class="protocol-grid">
+        ${(panel.fields || []).map(renderProtocolField).join("")}
+      </div>
+      <div class="section-kicker">Documented Counters</div>
+      <div class="protocol-grid">
+        ${(panel.counters || []).length
+          ? panel.counters.map(renderProtocolCounter).join("")
+          : '<div class="lane-note">No documented counters were captured for this role in the current observe artifact.</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function renderSimulationProtocolSection(observe) {
+  if (!observe?.protocol_panels?.length) {
+    return `
+      <div class="protocol-section">
+        <div class="inspector-row"><span>Repo-local simulation lane</span><strong>not captured</strong></div>
+        <div class="lane-note">No repo-local OAI observe artifact is available for the focused mission.</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="protocol-section">
+      <div class="inspector-row">
+        <span>Repo-local simulation lane</span>
+        ${protocolStatusPill(observe.runtime_state)}
+      </div>
+      <div class="lane-note">${escapeHtml(observe.proof_note || "Repo-local simulation proof is available.")}</div>
+      <div class="focus-tags">
+        <span class="runtime-tag">${escapeHtml(observe.lane_id || "oai_split_rfsim_repo_local_v1")}</span>
+        <span class="runtime-tag">${escapeHtml(`${observe.running_service_count}/${observe.service_count} running`)}</span>
+        <span class="runtime-tag">${escapeHtml(`${observe.healthy_service_count} healthy`)}</span>
+        <span class="runtime-tag">${escapeHtml(observe.updated_at || "n/a")}</span>
+      </div>
+      <div class="lane-note">Source: ${escapeHtml(observe.path || "n/a")}</div>
+      <div class="protocol-cards">
+        ${observe.protocol_panels.map(renderSimulationProtocolCard).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderBoundedProtocolSection(protocolState) {
+  if (!protocolState) {
+    return `
+      <div class="protocol-section">
+        <div class="inspector-row"><span>Bounded standards lane</span><strong>select a protocol run</strong></div>
+        <div class="lane-note">Select an observe or verify run with declared protocol evidence to inspect NGAP, F1, E1AP, and attach/session outcomes.</div>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="protocol-section">
+      <div class="inspector-row">
+        <span>Bounded standards lane</span>
+        ${protocolStatusPill(protocolState.gate_class || protocolState.evidence_tier || "evidence")}
+      </div>
+      <div class="lane-note">${escapeHtml(protocolState.proof_note || "Bounded standards proof is attached to the focused run.")}</div>
+      <div class="lane-note">${escapeHtml(protocolState.summary || "No summary attached.")}</div>
+      <div class="focus-tags">
+        ${[protocolState.evidence_tier, protocolState.core_profile, protocolState.target_profile, protocolState.conformance_profile]
+          .filter(Boolean)
+          .map((value) => `<span class="runtime-tag">${escapeHtml(value)}</span>`)
+          .join("")}
+        ${protocolState.ngap_last_observed ? `<span class="runtime-tag">${escapeHtml(`last NGAP ${protocolState.ngap_last_observed}`)}</span>` : ""}
+      </div>
+      <div class="lane-note">Source: ${escapeHtml(protocolState.source_ref || "n/a")}</div>
+      ${protocolState.baseline_ref ? `<div class="lane-note">Baseline: ${escapeHtml(protocolState.baseline_ref)}</div>` : ""}
+      ${renderProtocolRowSection("Interface State", protocolState.interface_rows, (row) => row.reason)}
+      ${renderProtocolRowSection("Plane State", protocolState.plane_rows, (row) => row.reason)}
+      ${renderProtocolRowSection("NGAP Procedure Trace", protocolState.procedure_rows, (row) => row.detail)}
+      ${renderProtocolRowSection("Outcome State", protocolState.outcome_rows, (row) => row.reason)}
+    </div>
+  `;
+}
+
+function renderProtocolStatePanel(cellGroup, focusedRun) {
+  const target = byId("protocol-panel");
+  const observe = currentOaiObservation(cellGroup);
+  const protocolState = focusedRun?.protocol_state || null;
+
+  if (!observe?.protocol_panels?.length && !protocolState) {
+    target.innerHTML = `<div class="empty">No DU/CU protocol-state evidence is available for the focused mission or run.</div>`;
     return;
   }
 
-  const containerRows = (observe.containers || [])
-    .map((container) => `
-      <div class="inspector-row">
-        <span>${escapeHtml(roleLabel(container.role))}</span>
-        <strong>${escapeHtml(`${container.status || "unknown"} / ${container.health || "n/a"} / logs ${container.log_probe_status || "n/a"}`)}</strong>
-      </div>
-    `)
-    .join("");
-
-  const metricNotes = (observe.token_metrics || [])
-    .map(
-      (metric) => `
-        <div class="lane-note">
-          ${escapeHtml(`${metric.label}: ${metric.count} :: ${metric.meaning} [${roleLabel(metric.role)} / ${metric.container_name} / token "${metric.source_pattern}"]`)}
-        </div>
-      `
-    )
-    .join("");
-
   target.innerHTML = `
-    <div class="section-kicker">Repo-local OAI Observe</div>
-    <h4>${escapeHtml(observe.project_name || observe.lane_id || "oai observe")}</h4>
-    <div class="inspector-meta">${escapeHtml(`${observe.runtime_state} / ${observe.runtime_mode || "n/a"} / ${observe.updated_at}`)}</div>
-    <div class="focus-tags">
-      <span class="runtime-tag">${escapeHtml(observe.lane_id || "oai_split_rfsim_repo_local_v1")}</span>
-      <span class="runtime-tag">${escapeHtml(`${observe.running_service_count}/${observe.service_count} running`)}</span>
-      <span class="runtime-tag">${escapeHtml(`${observe.healthy_service_count} healthy`)}</span>
-      <span class="runtime-tag">${escapeHtml(`${observe.token_metric_count} token metrics`)}</span>
-    </div>
-    <div class="inspector-rows">
-      <div class="inspector-row"><span>Artifact</span><strong>${escapeHtml(observe.path || "n/a")}</strong></div>
-      <div class="inspector-row"><span>Project</span><strong>${escapeHtml(observe.project_name || "n/a")}</strong></div>
-      <div class="inspector-row"><span>Lane</span><strong>${escapeHtml(observe.lane_id || "n/a")}</strong></div>
-      <div class="inspector-row"><span>Runtime state</span><strong>${escapeHtml(observe.runtime_state || "n/a")}</strong></div>
-      <div class="inspector-row"><span>Services running</span><strong>${escapeHtml(`${observe.running_service_count}/${observe.service_count}`)}</strong></div>
-      <div class="inspector-row"><span>Healthy services</span><strong>${escapeHtml(observe.healthy_service_count)}</strong></div>
-      ${containerRows}
-    </div>
-    <div class="section-kicker">Token Metrics</div>
-    <div class="lane-list">
-      ${metricNotes || '<div class="lane-note">No token counters were captured in the current observe artifact.</div>'}
-    </div>
+    <div class="section-kicker">DU/CU Protocol State</div>
+    <h4>${escapeHtml(cellGroup?.id || observe?.project_name || focusedRun?.id || "protocol state")}</h4>
+    <div class="inspector-meta">Simulation proof and bounded-standards proof stay visually distinct in the focused context.</div>
+    ${renderSimulationProtocolSection(observe)}
+    ${renderBoundedProtocolSection(protocolState)}
   `;
 }
 
@@ -1487,7 +1622,7 @@ function render(snapshot) {
   renderFocusSummary(snapshot, cellGroup, focusedRun, focusedContainer);
   renderPolicyPanel(snapshot);
   renderNativeContractPanel(focusedRun);
-  renderOaiObservationPanel(cellGroup);
+  renderProtocolStatePanel(cellGroup, focusedRun);
   renderRunPanel(focusedRun);
   renderEvidencePanel(evidence);
   renderLanePanel(snapshot, focusedRun);

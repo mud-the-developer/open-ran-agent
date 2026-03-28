@@ -242,6 +242,30 @@ defmodule RanObservability.DashboardSnapshotTest do
               "meaning" => "Counts DU MAC slot-loop tokens in the current Docker log tail."
             },
             %{
+              "id" => "du_f1_setup_response_count",
+              "label" => "DU F1 setup responses",
+              "count" => 0,
+              "role" => "du",
+              "container_name" => "ran-oai-du-local-rfsim-du",
+              "source_kind" => "docker_logs_tail",
+              "source_pattern" => "received F1 Setup Response",
+              "source_tail_lines" => 2000,
+              "meaning" =>
+                "Counts DU log tokens confirming the CU-CP F1 setup response reached the DU."
+            },
+            %{
+              "id" => "du_rfsim_wait_count",
+              "label" => "DU RFsim wait tokens",
+              "count" => 0,
+              "role" => "du",
+              "container_name" => "ran-oai-du-local-rfsim-du",
+              "source_kind" => "docker_logs_tail",
+              "source_pattern" => "Running as server waiting opposite rfsimulators to connect",
+              "source_tail_lines" => 2000,
+              "meaning" =>
+                "Counts DU log tokens showing the RFsim server loop is waiting for the peer side."
+            },
+            %{
               "id" => "cucp_f1_setup_response_count",
               "label" => "CU-CP F1 setup responses",
               "count" => 1,
@@ -252,8 +276,130 @@ defmodule RanObservability.DashboardSnapshotTest do
               "source_tail_lines" => 2000,
               "meaning" =>
                 "Counts CU-CP log tokens proving the split control plane answered the DU F1 setup."
+            },
+            %{
+              "id" => "cuup_e1_established_count",
+              "label" => "CU-UP E1 established tokens",
+              "count" => 1,
+              "role" => "cuup",
+              "container_name" => "ran-oai-du-local-rfsim-cuup",
+              "source_kind" => "docker_logs_tail",
+              "source_pattern" => "E1 connection established",
+              "source_tail_lines" => 2000,
+              "meaning" => "Counts CU-UP log tokens confirming E1 association with the CU-CP."
             }
           ]
+        }
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "observations/chg-bounded-standards-001.json"),
+      JSON.encode!(%{
+        "status" => "degraded",
+        "command" => "observe",
+        "scope" => "ue_session",
+        "change_id" => "chg-bounded-standards-001",
+        "summary" => "replacement observe captured bounded standards protocol state",
+        "target_backend" => "replacement_shadow",
+        "target_profile" => "n79_single_ru_single_ue_lab_v1",
+        "core_profile" => "open5gs_nsa_lab_v1",
+        "gate_class" => "blocked",
+        "conformance_claim" => %{
+          "profile" => "oai_visible_5g_standards_baseline_v1",
+          "evidence_tier" => "milestone_proof",
+          "baseline_ref" =>
+            "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+        },
+        "plane_status" => %{
+          "c_plane" => %{
+            "status" => "failed",
+            "evidence_ref" => "artifacts/replacement/n79/registration.json",
+            "reason" => "registration did not progress to acceptance on the NGAP-facing edge"
+          },
+          "u_plane" => %{
+            "status" => "blocked",
+            "evidence_ref" => "artifacts/replacement/n79/pdu-session.json",
+            "reason" => "user-plane was not reached after the control-plane rejection"
+          }
+        },
+        "interface_status" => %{
+          "ngap" => %{
+            "status" => "failed",
+            "evidence_ref" => "artifacts/replacement/n79/registration.json",
+            "reason" => "the last observed NGAP procedure ended in registration rejection"
+          },
+          "f1_c" => %{
+            "status" => "ok",
+            "evidence_ref" => "artifacts/replacement/observe/registration-rejected/f1-c.json"
+          },
+          "e1ap" => %{
+            "status" => "ok",
+            "evidence_ref" => "artifacts/replacement/observe/registration-rejected/e1ap.json"
+          },
+          "f1_u" => %{
+            "status" => "pending",
+            "evidence_ref" => "artifacts/replacement/n79/pdu-session.json",
+            "reason" => "user-plane was not exercised"
+          }
+        },
+        "ngap_procedure_trace" => %{
+          "last_observed" => "Downlink NAS Transport",
+          "procedures" => [
+            %{
+              "name" => "NG Setup",
+              "status" => "ok",
+              "evidence_ref" => "artifacts/replacement/n79/registration.json",
+              "detail" => "the declared AMF accepted NG setup before registration began"
+            },
+            %{
+              "name" => "Downlink NAS Transport",
+              "status" => "failed",
+              "evidence_ref" => "artifacts/replacement/n79/registration.json",
+              "detail" =>
+                "downlink NAS transport returned a registration rejection from the declared core profile"
+            }
+          ]
+        },
+        "attach_status" => %{
+          "status" => "failed",
+          "evidence_ref" => "artifacts/replacement/n79/attach.json",
+          "reason" => "attach did not progress beyond the NGAP registration stage"
+        },
+        "pdu_session_status" => %{
+          "status" => "pending",
+          "evidence_ref" => "artifacts/replacement/n79/pdu-session.json",
+          "reason" => "session setup not reached after the NGAP rejection"
+        },
+        "release_status" => %{
+          "status" => "ok",
+          "evidence_ref" => "artifacts/replacement/n79/registration.json"
+        },
+        "protocol_claims" => %{
+          "ngap" => %{
+            "standards_subset_ref" =>
+              "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
+            "procedure_matrix_ref" =>
+              "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+          },
+          "f1_c" => %{
+            "standards_subset_ref" =>
+              "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+            "procedure_matrix_ref" =>
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+          },
+          "e1ap" => %{
+            "standards_subset_ref" =>
+              "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+            "procedure_matrix_ref" =>
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+          },
+          "f1_u" => %{
+            "standards_subset_ref" =>
+              "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
+            "procedure_matrix_ref" =>
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+          }
         }
       })
     )
@@ -553,8 +699,52 @@ defmodule RanObservability.DashboardSnapshotTest do
              group.id == "cg-001" and
                group.oai_observation.project_name == "ran-oai-du-local-rfsim" and
                group.oai_observation.runtime_state == "running" and
-               group.oai_observation.token_metric_count == 2 and
+               group.oai_observation.token_metric_count == 5 and
                length(group.oai_observation.containers) == 3
+           end)
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             group.id == "cg-001" and
+               length(group.oai_observation.protocol_panels) == 3 and
+               Enum.any?(group.oai_observation.protocol_panels, fn panel ->
+                 panel.role == "du" and panel.status == "healthy" and
+                   Enum.any?(
+                     panel.fields,
+                     &(&1.id == "container_state" and
+                         &1.source_field == "runtime.containers[].status")
+                   ) and
+                   Enum.any?(
+                     panel.counters,
+                     &(&1.id == "du_frame_slot_count" and
+                         &1.source_kind == "docker_logs_tail" and
+                         &1.source_ref =~ "chg-oai-observe-001.json")
+                   )
+               end) and
+               Enum.any?(group.oai_observation.protocol_panels, fn panel ->
+                 panel.role == "cuup" and
+                   Enum.any?(
+                     panel.counters,
+                     &(&1.id == "cuup_e1_established_count" and
+                         &1.count == 1)
+                   )
+               end)
+           end)
+
+    assert Enum.any?(snapshot.activity.recent_changes, fn change ->
+             change.id == "chg-bounded-standards-001" and
+               change.protocol_state.gate_class == "blocked" and
+               change.protocol_state.evidence_tier == "milestone_proof" and
+               change.protocol_state.ngap_last_observed == "Downlink NAS Transport" and
+               Enum.any?(change.protocol_state.interface_rows, fn row ->
+                 row.id == "f1_c" and row.status == "ok" and
+                   row.standards_subset_ref =~ "07-f1-c-and-e1ap-standards-subset.md"
+               end) and
+               Enum.any?(change.protocol_state.plane_rows, fn row ->
+                 row.id == "c_plane" and row.status == "failed"
+               end) and
+               Enum.any?(change.protocol_state.outcome_rows, fn row ->
+                 row.id == "attach" and row.status == "failed"
+               end)
            end)
 
     assert [%{host: "ran-lab-01", command: "precheck", fetch_status: "fetched"}] =
