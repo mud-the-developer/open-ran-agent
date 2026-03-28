@@ -1,7 +1,7 @@
 const state = {
   data: null,
   focusedCellGroupId: null,
-  focusedRunId: null,
+  focusedRunKey: null,
   focusedContainerName: null,
   lastAction: null,
   deployForm: null,
@@ -169,6 +169,14 @@ function shellQuote(value) {
   return `'${String(value ?? "").replaceAll("'", `'\"'\"'`)}'`;
 }
 
+function runKey(item) {
+  if (!item) {
+    return "";
+  }
+
+  return item.path || [item.id || "run", item.phase || "artifact", item.updated_at || "unknown"].join("::");
+}
+
 function runItems(data) {
   const seen = new Set();
 
@@ -193,13 +201,13 @@ function findFocusedCellGroup(data) {
 }
 
 function findFocusedRun(data) {
-  const runs = runItems(data);
+  const runs = data.activity.recent_changes || [];
 
   if (!runs.length) {
     return null;
   }
 
-  return runs.find((item) => item.id === state.focusedRunId) || runs[0];
+  return runs.find((item) => runKey(item) === state.focusedRunKey) || runs[0];
 }
 
 function findFocusedNativeContract(data, focusedRun) {
@@ -320,7 +328,7 @@ function renderRunList(data, focusedRun) {
     .slice(0, 8)
     .map(
       (item) => `
-        <button class="run-item ${item.id === focusedRun?.id ? "active" : ""}" data-run-id="${escapeHtml(item.id)}" type="button">
+        <button class="run-item ${runKey(item) === runKey(focusedRun) ? "active" : ""}" data-run-key="${escapeHtml(runKey(item))}" type="button">
           <div class="run-title">${escapeHtml(item.id)}</div>
           <div class="run-meta">${escapeHtml(item.command || item.phase || "unknown")} / ${escapeHtml(item.status || "unknown")}</div>
           <div class="run-meta">${escapeHtml(item.updated_at)}</div>
@@ -432,7 +440,7 @@ function renderTimeline(data, focusedRun) {
       (item) => `
         <div class="timeline-item ${escapeHtml(item.phase || "")}">
           <div class="timeline-dot"></div>
-          <button class="timeline-card ${item.id === focusedRun?.id ? "active" : ""}" data-run-id="${escapeHtml(item.id)}" type="button">
+          <button class="timeline-card ${runKey(item) === runKey(focusedRun) ? "active" : ""}" data-run-key="${escapeHtml(runKey(item))}" type="button">
             <div class="timeline-top">
               <div>
                 <div class="timeline-title">${escapeHtml(item.command || item.phase || "artifact")}</div>
@@ -900,7 +908,7 @@ function renderBoundedProtocolSection(protocolState) {
     return `
       <div class="protocol-section">
         <div class="inspector-row"><span>Bounded standards lane</span><strong>select a protocol run</strong></div>
-        <div class="lane-note">Select an observe or verify run with declared protocol evidence to inspect NGAP, F1, E1AP, and attach/session outcomes.</div>
+        <div class="lane-note">Select an observe or verify run with declared protocol evidence to inspect NGAP, F1, E1AP, and attach/registration/session outcomes.</div>
       </div>
     `;
   }
@@ -1601,8 +1609,8 @@ function render(snapshot) {
     state.focusedCellGroupId = cellGroup.id;
   }
 
-  if (!state.focusedRunId && focusedRun) {
-    state.focusedRunId = focusedRun.id;
+  if (!state.focusedRunKey && focusedRun) {
+    state.focusedRunKey = runKey(focusedRun);
   }
 
   if (!state.focusedContainerName && focusedContainer) {
@@ -1648,10 +1656,10 @@ document.addEventListener("click", (event) => {
     return;
   }
 
-  const runButton = event.target.closest("[data-run-id]");
+  const runButton = event.target.closest("[data-run-key]");
 
   if (runButton) {
-    state.focusedRunId = runButton.dataset.runId;
+    state.focusedRunKey = runButton.dataset.runKey;
     render(state.data);
     return;
   }

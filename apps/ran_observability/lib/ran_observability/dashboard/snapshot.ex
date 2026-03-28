@@ -511,6 +511,9 @@ defmodule RanObservability.Dashboard.Snapshot do
   defp decode_protocol_state(payload, path) do
     protocol_claims = fetch_value(payload, :protocol_claims, %{})
 
+    session_status =
+      fetch_value(payload, :pdu_session_status) || fetch_value(payload, :session_status)
+
     interface_rows =
       payload
       |> fetch_value(:interface_status, %{})
@@ -536,9 +539,14 @@ defmodule RanObservability.Dashboard.Snapshot do
       [
         protocol_named_status_row("attach", "Attach", fetch_value(payload, :attach_status)),
         protocol_named_status_row(
+          "registration",
+          "Registration",
+          fetch_value(payload, :registration_status)
+        ),
+        protocol_named_status_row(
           "pdu_session",
           "PDU session",
-          fetch_value(payload, :pdu_session_status)
+          session_status
         ),
         protocol_named_status_row("ping", "Ping", fetch_value(payload, :ping_status)),
         protocol_named_status_row("release", "Release", fetch_value(payload, :release_status))

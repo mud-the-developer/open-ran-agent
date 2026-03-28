@@ -493,6 +493,46 @@ defmodule RanObservability.DashboardSnapshotTest do
     )
 
     File.write!(
+      Path.join(artifacts, "verify/chg-oai-sim-verify-001.json"),
+      JSON.encode!(%{
+        "command" => "verify",
+        "status" => "verified",
+        "change_id" => "chg-oai-sim-verify-001",
+        "scope" => "cell_group",
+        "cell_group" => "cg-001",
+        "summary" =>
+          "Verify surfaced repo-local simulation proof for attach, registration, session, and ping.",
+        "target_backend" => "local_fapi_profile",
+        "simulation_lane" => %{
+          "lane_id" => "oai_split_rfsim_repo_local_v1",
+          "claim_scope" => "repo_local_simulation",
+          "evidence_tier" => "simulation",
+          "live_lab_claim" => false
+        },
+        "attach_status" => %{
+          "status" => "ok",
+          "evidence_ref" => "examples/oai/simulation/attach.json",
+          "reason" => "repo-local attach evidence is reviewable"
+        },
+        "registration_status" => %{
+          "status" => "ok",
+          "evidence_ref" => "examples/oai/simulation/registration.json",
+          "reason" => "repo-local registration evidence is reviewable"
+        },
+        "session_status" => %{
+          "status" => "established",
+          "evidence_ref" => "examples/oai/simulation/session.json",
+          "reason" => "repo-local session evidence is reviewable"
+        },
+        "ping_status" => %{
+          "status" => "ok",
+          "evidence_ref" => "examples/oai/simulation/ping.json",
+          "reason" => "repo-local ping evidence is reviewable"
+        }
+      })
+    )
+
+    File.write!(
       Path.join(artifacts, "deploy_preview/quick_install/20260323T095333/debug-summary.txt"),
       "kind=quick_install\n" <>
         "run_stamp=20260323T095333\n" <>
@@ -744,6 +784,22 @@ defmodule RanObservability.DashboardSnapshotTest do
                end) and
                Enum.any?(change.protocol_state.outcome_rows, fn row ->
                  row.id == "attach" and row.status == "failed"
+               end)
+           end)
+
+    assert Enum.any?(snapshot.activity.recent_changes, fn change ->
+             change.id == "chg-oai-sim-verify-001" and
+               Enum.any?(change.protocol_state.outcome_rows, fn row ->
+                 row.id == "attach" and row.status == "ok"
+               end) and
+               Enum.any?(change.protocol_state.outcome_rows, fn row ->
+                 row.id == "registration" and row.status == "ok"
+               end) and
+               Enum.any?(change.protocol_state.outcome_rows, fn row ->
+                 row.id == "pdu_session" and row.status == "established"
+               end) and
+               Enum.any?(change.protocol_state.outcome_rows, fn row ->
+                 row.id == "ping" and row.status == "ok"
                end)
            end)
 

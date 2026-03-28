@@ -1,10 +1,11 @@
 {
   "scope": "cell_group",
   "cell_group": "cg-001",
-  "target_backend": "local_fapi_profile",
   "change_id": "chg-oai-du-ue-local-001",
-  "reason": "precheck OAI split DU/CU/UE docker runtime from repo-local conf set",
-  "idempotency_key": "chg-oai-du-ue-local-001",
+  "incident_id": "inc-oai-du-ue-local-001-observe",
+  "target_backend": "local_fapi_profile",
+  "reason": "observe repo-local OAI split rfsim plus UE runtime",
+  "idempotency_key": "chg-oai-du-ue-local-001-observe",
   "verify_window": {
     "duration": "30s",
     "checks": ["gateway_healthy"]
@@ -24,19 +25,7 @@
       "cuup_conf_path": "examples/oai/gnb-cuup.sa.f1.conf.example",
       "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
       "project_name": "ran-oai-du-ue-repo-local",
-      "pull_images": true
-    },
-    "oai_simulation": {
-      "lane_id": "oai_split_rfsim_repo_local_v1",
-      "claim_scope": "repo_local_simulation",
-      "evidence_tier": "simulation",
-      "live_lab_claim": false,
-      "core_mode": "simulated",
-      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
-      "attach_evidence_path": "examples/oai/simulation/attach.json",
-      "registration_evidence_path": "examples/oai/simulation/registration.json",
-      "session_evidence_path": "examples/oai/simulation/session.json",
-      "ping_evidence_path": "examples/oai/simulation/ping.json"
+      "pull_images": false
     }
   }
 }
