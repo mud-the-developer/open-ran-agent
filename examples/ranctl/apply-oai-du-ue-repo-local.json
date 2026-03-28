@@ -32,6 +32,18 @@
       "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
       "project_name": "ran-oai-du-ue-repo-local",
       "pull_images": true
+    },
+    "oai_simulation": {
+      "lane_id": "oai_split_rfsim_repo_local_v1",
+      "claim_scope": "repo_local_simulation",
+      "evidence_tier": "simulation",
+      "live_lab_claim": false,
+      "core_mode": "simulated",
+      "ue_conf_path": "examples/oai/nrue-rfsim-public.conf.example",
+      "attach_evidence_path": "examples/oai/simulation/attach.json",
+      "registration_evidence_path": "examples/oai/simulation/registration.json",
+      "session_evidence_path": "examples/oai/simulation/session.json",
+      "ping_evidence_path": "examples/oai/simulation/ping.json"
     }
   }
 }

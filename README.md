@@ -454,9 +454,17 @@ Repo-local split + UE flow from the repo root:
 bin/ranctl precheck --file examples/ranctl/precheck-oai-du-ue-repo-local.json
 bin/ranctl plan --file examples/ranctl/apply-oai-du-ue-repo-local.json
 bin/ranctl apply --file examples/ranctl/apply-oai-du-ue-repo-local.json
+bin/ranctl observe --file examples/ranctl/observe-oai-du-ue-repo-local.json
+bin/ran-dashboard
 bin/ranctl verify --file examples/ranctl/verify-oai-du-ue-repo-local.json
+bin/ranctl capture-artifacts --file examples/ranctl/verify-oai-du-ue-repo-local.json
 bin/ranctl rollback --file examples/ranctl/rollback-oai-du-ue-repo-local.json
 ```
+
+That request set launches the repo-local `OAI NR UE` alongside the split
+`CUCP + CUUP + DU` lane and carries repo-visible attach, registration, session,
+and ping refs as simulation-only proof. It remains explicitly separate from any
+real-lab claim.
 
 If you only need the split `CUCP + CUUP + DU` repo-local bringup lane, the
 lighter operator entrypoint is now:

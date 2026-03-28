@@ -191,6 +191,7 @@ Reference examples:
 - `examples/ranctl/rollback-oai-du-docker.json`
 - `examples/ranctl/precheck-oai-du-ue-repo-local.json`
 - `examples/ranctl/apply-oai-du-ue-repo-local.json`
+- `examples/ranctl/observe-oai-du-ue-repo-local.json`
 - `examples/ranctl/verify-oai-du-ue-repo-local.json`
 - `examples/ranctl/rollback-oai-du-ue-repo-local.json`
 

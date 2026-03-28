@@ -165,10 +165,14 @@ and the request set:
 
 - `examples/ranctl/precheck-oai-du-ue-repo-local.json`
 - `examples/ranctl/apply-oai-du-ue-repo-local.json`
+- `examples/ranctl/observe-oai-du-ue-repo-local.json`
 - `examples/ranctl/verify-oai-du-ue-repo-local.json`
 - `examples/ranctl/rollback-oai-du-ue-repo-local.json`
 
-The repo-local public examples already point at `examples/oai/*.example` so the documented RFsim split lane can be exercised from the checkout without `/opt/openairinterface5g`.
+The repo-local public examples already point at `examples/oai/*.example` and
+`examples/oai/simulation/*.json`, so the documented RFsim split lane can be
+exercised from the checkout without `/opt/openairinterface5g` while keeping the
+attach, registration, session, and ping proof explicitly simulation-only.
 
 For the lighter split-only operator lane used by YON-87, the committed repo-local
 flow uses:
@@ -226,8 +230,8 @@ bounded-standards proof visually distinct:
 - `Repo-local simulation lane`: one panel each for `DU`, `CU-CP`, and `CU-UP`
   from the latest repo-local `observe` artifact
 - `Bounded standards lane`: focused `observe`/`verify` protocol evidence for
-  `NGAP`, `F1-C`, `E1AP`, `F1-U`, and attach/session outcomes from the selected
-  bounded-standards run artifact
+  `NGAP`, `F1-C`, `E1AP`, `F1-U`, and attach/registration/session outcomes
+  from the selected bounded-standards run artifact
 
 The repo-local simulation panels expose documented field provenance directly in
 the UI. The current field set is:
@@ -258,9 +262,9 @@ tokens in the current `docker logs --tail 2000 <container>` window that
 
 The bounded-standards section intentionally does not reuse these counters. It
 surfaces declared `interface_status`, `plane_status`, `ngap_procedure_trace`,
-and attach/session outcome refs from the focused run artifact so reviewers can
-inspect protocol state without confusing rehearsal counters with standards-lane
-evidence.
+and attach/registration/session outcome refs from the focused run artifact so
+reviewers can inspect protocol state without confusing rehearsal counters with
+standards-lane evidence.
 
 Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 
