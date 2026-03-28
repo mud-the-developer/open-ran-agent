@@ -1,0 +1,35 @@
+{
+  "report_id": "sim-cmp-chg-oai-du-001",
+  "change_id": "chg-oai-du-001",
+  "incident_id": "chg-oai-du-001-capture",
+  "lane_id": "oai_split_rfsim_repo_local_v1",
+  "claim_scope": "repo_local_simulation",
+  "evidence_tier": "simulation",
+  "live_lab_claim": false,
+  "comparison_scope": "ping",
+  "failure_class": null,
+  "expected_state": {
+    "attach": "repo-local attach evidence stays reviewer-visible from the checkout",
+    "registration": "repo-local registration evidence stays reviewer-visible from the checkout",
+    "session": "repo-local session evidence stays reviewer-visible from the checkout",
+    "ping": "repo-local ping evidence stays reviewer-visible from the checkout"
+  },
+  "observed_state": {
+    "attach": "ok",
+    "registration": "ok",
+    "session": "established",
+    "ping": "ok"
+  },
+  "diff_summary": [
+    "Attach, registration, session, and ping refs are all reviewable from repo-visible simulation paths.",
+    "The capture stays explicitly bounded to repo-local RFsim evidence and does not imply live-lab proof."
+  ],
+  "evidence_refs": [
+    "examples/oai/simulation/attach.json",
+    "examples/oai/simulation/registration.json",
+    "examples/oai/simulation/session.json",
+    "examples/oai/simulation/ping.json"
+  ],
+  "summary": "Capture preserved the repo-local simulation evidence bundle and review notes for attach, registration, session, and ping. This remains simulation proof only, not live-lab proof.",
+  "operator_next_step": "review the simulation compare report before another repo-local mutation"
+}

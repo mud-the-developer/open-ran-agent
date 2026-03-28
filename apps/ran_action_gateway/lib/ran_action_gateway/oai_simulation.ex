@@ -84,7 +84,14 @@ defmodule RanActionGateway.OaiSimulation do
          attach_status: attach_status(spec, attach),
          registration_status: registration_status(spec, registration),
          session_status: session_status(spec, session),
-         ping_status: ping_status(spec, ping)
+         ping_status: ping_status(spec, ping),
+         evidence_refs:
+           evidence_refs_from_statuses(%{
+             attach_status: attach_status(spec, attach),
+             registration_status: registration_status(spec, registration),
+             session_status: session_status(spec, session),
+             ping_status: ping_status(spec, ping)
+           })
        }}
     end
   end
