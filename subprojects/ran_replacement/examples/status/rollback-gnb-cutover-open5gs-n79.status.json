@@ -144,7 +144,7 @@
       ]
     }
   },
-  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed.",
+  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed, with stale tunnel cleanup and same-UE retry safety kept explicit.",
   "target_backend": "oai_reference",
   "rollback_target": "oai_reference",
   "restored_from": "replacement_primary",
@@ -197,6 +197,16 @@
       "status": "ok"
     },
     {
+      "detail": "post-rollback evidence confirms stale tunnel and forwarding cleanup before another session attempt",
+      "name": "stale_tunnel_cleanup_confirmed",
+      "status": "ok"
+    },
+    {
+      "detail": "post-rollback review remains bounded to the declared UE lane and does not claim broader multi-session parity",
+      "name": "bounded_multi_session_scope_reviewed",
+      "status": "ok"
+    },
+    {
       "detail": "probe evidence remains attached to the review bundle",
       "name": "ping_reviewed",
       "status": "ok"
@@ -235,7 +245,7 @@
     "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json"
   },
   "rollback_status": {
-    "reason": "rollback target restored and verified",
+    "reason": "rollback target restored, stale tunnel cleanup reviewed, and next-session safety is explicit",
     "status": "ok",
     "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
   },

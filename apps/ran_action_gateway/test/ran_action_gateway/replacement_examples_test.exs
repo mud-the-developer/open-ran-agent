@@ -84,9 +84,15 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert get_in(registration_report, ["conformance_claim", "evidence_tier"]) ==
              "milestone_proof"
 
-    assert ping_report["summary"] =~ "user-plane failure"
+    assert ping_report["summary"] =~ "stale tunnel cleanup"
     assert ping_report["rollback_target"] == "oai_reference"
     assert get_in(ping_report, ["conformance_claim", "evidence_tier"]) == "milestone_proof"
+
+    assert get_in(ping_report, ["expected_state", "stale_tunnel_cleanup"]) =~
+             "explicitly cleaned before another session attempt"
+
+    assert get_in(ping_report, ["observed_state", "session_scope"]) =~
+             "same-UE next-session safety"
 
     assert "artifacts/replacement/n79_single_ru_single_ue_lab_v1/registration.json" in ping_report[
              "evidence_refs"
@@ -137,6 +143,31 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       assert get_in(status, ["ngap_subset", "standards_subset_ref"]) =~
                "06-ngap-and-registration-standards-subset.md"
     end)
+
+    ping_observe =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/observe-ping-failed-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert ping_observe["summary"] =~ "stale tunnel cleanup remains under review"
+    assert get_in(ping_observe, ["interface_status", "f1_u", "reason"]) =~ "stale forwarding"
+    assert get_in(ping_observe, ["interface_status", "gtpu", "reason"]) =~ "stale TEID cleanup"
+    assert get_in(ping_observe, ["rollback_status", "reason"]) =~ "stale tunnel cleanup"
+
+    rollback_status =
+      repo_path(
+        "subprojects/ran_replacement/examples/status/rollback-gnb-cutover-open5gs-n79.status.json"
+      )
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert rollback_status["summary"] =~ "stale tunnel cleanup"
+
+    assert Enum.any?(rollback_status["checks"], fn check ->
+             check["name"] == "stale_tunnel_cleanup_confirmed" and check["status"] == "ok"
+           end)
   end
 
   test "rollback evidence fixtures preserve replay and restore context" do
@@ -160,6 +191,21 @@ defmodule RanActionGateway.ReplacementExamplesTest do
                "06-ngap-and-registration-standards-subset.md"
     end)
 
+    ping_evidence =
+      family_artifact("rollback-evidence-ping-failed-open5gs-n79.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert get_in(ping_evidence, ["pre_rollback_state", "stale_tunnel_cleanup"]) =~
+             "cleanup evidence before another session attempt"
+
+    assert get_in(ping_evidence, ["post_rollback_state", "session_scope"]) =~
+             "does not claim broader multi-session parity"
+
+    assert "stale_tunnel_cleanup_reviewable" in get_in(ping_evidence, ["recovery_check", "checks"])
+
+    assert "single_session_scope_explicit" in get_in(ping_evidence, ["recovery_check", "checks"])
+
     post_rollback_verify =
       family_artifact("post-rollback-verify-gnb-cutover-open5gs-n79.json")
       |> File.read!()
@@ -168,6 +214,11 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert post_rollback_verify["restored_from"] == "replacement_primary"
     assert post_rollback_verify["rollback_target"] == "oai_reference"
     assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
+    assert "stale_tunnel_cleanup_confirmed" in post_rollback_verify["verification_checks"]
+    assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~ "stale tunnel cleanup"
+
+    assert get_in(post_rollback_verify, ["restored_state", "session_scope"]) =~
+             "does not claim broader multi-session parity"
 
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in post_rollback_verify[
              "evidence_refs"

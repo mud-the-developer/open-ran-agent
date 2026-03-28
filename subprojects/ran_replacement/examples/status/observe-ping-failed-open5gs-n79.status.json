@@ -144,7 +144,7 @@
       ]
     }
   },
-  "summary": "User-plane observe confirms attach and session hold, but ping diverged on the declared route.",
+  "summary": "User-plane observe confirms the primary session holds, but ping diverged on the declared route and stale tunnel cleanup remains under review before another session attempt.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
   "rollback_available": true,
@@ -194,12 +194,12 @@
       "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ping-001/f1-c.json"
     },
     "f1_u": {
-      "reason": "forwarding state does not yet prove the declared attach-plus-ping path",
+      "reason": "forwarding state does not yet prove the declared attach-plus-ping path or that stale forwarding was drained before another session attempt",
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ping-001/f1-u.json"
     },
     "gtpu": {
-      "reason": "tunnel evidence exists, but end-to-end reachability did not complete",
+      "reason": "tunnel evidence exists, but end-to-end reachability did not complete and stale TEID cleanup remains under review",
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ping-001/gtpu.json"
     },
@@ -230,7 +230,7 @@
     "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ping-001/ue-context-release.json"
   },
   "rollback_status": {
-    "reason": "rollback is available while the user-plane route remains unresolved",
+    "reason": "rollback is available while the user-plane route remains unresolved and stale tunnel cleanup is still under review",
     "status": "pending",
     "evidence_ref": "artifacts/replacement/observe/chg-ran-repl-observe-ping-001/rollback-evidence.json"
   },

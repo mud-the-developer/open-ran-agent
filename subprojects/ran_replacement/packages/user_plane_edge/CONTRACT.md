@@ -82,6 +82,8 @@ The package must eventually emit enough evidence for operators and agents to ans
 - did the replacement-side user-plane path become active
 - which tunnel and forwarding state belongs to the declared UE session
 - did ping traverse the declared path
+- did stale tunnel or half-open forwarding cleanup complete before another session attempt
+- does any follow-up session discussion stay bounded to the same declared UE lane
 - is rollback required because forwarding diverged or stayed half-open
 
 Expected evidence fields:
@@ -98,6 +100,7 @@ Expected evidence fields:
 - Keep this package docs/contracts-first until the user-plane subset is explicit enough to implement thin adapters.
 - Keep every package-local fixture schema-backed by the replacement request/status schemas.
 - Treat stale `TEID` state, half-open forwarding, and ping-path divergence as first-class incidents.
+- Treat bounded multi-session recovery review as operator-facing evidence only until a sibling lane proves broader session parity.
 - Never hide user-plane rollback needs behind a healthy control-plane or dashboard summary.
 
 ## Non-Goals

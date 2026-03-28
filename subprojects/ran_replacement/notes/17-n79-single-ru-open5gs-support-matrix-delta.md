@@ -50,8 +50,10 @@ implicit proof for unrelated RU/core/profile families.
 ### `F1-U` And `GTP-U`
 
 - keep the user-plane evidence pinned to one declared UE session and one declared route
-- do not stretch the current ping failure and rollback artifacts into proof for other forwarding or tunnel families
-- require a new family bundle if the tunnel path, UE class, or core-session assumptions change materially
+- keep stale-tunnel cleanup and any next-session review bounded to the same declared UE lane rather than treating them as broad multi-session parity
+- require status, compare-report, and rollback surfaces to say whether forwarding or TEID cleanup completed before another session attempt
+- do not stretch the current ping failure and rollback artifacts into proof for other forwarding or tunnel families, concurrent multi-session behavior, or multi-UE parity
+- require a new family bundle if the tunnel path, concurrent session assumptions, UE class, or core-session assumptions change materially
 
 ## Evidence Bundle
 
@@ -63,6 +65,7 @@ It currently includes:
 
 - registration-rejected compare report
 - ping-failed compare report
+- ping-failed rollback evidence with stale-tunnel cleanup review
 - failed-cutover rollback evidence
 
 Those files prove only this family and must not be cited as evidence for a

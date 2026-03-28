@@ -167,11 +167,14 @@ Compare:
 - forwarding state
 - tunnel or forwarding association
 - UE session to tunnel binding
+- stale forwarding cleanup state before another session attempt
 - evidence that user-plane traffic can flow
 
 Rollback:
 
 - note whether forwarding was drained or restored cleanly
+- note whether stale forwarding cleanup completed before another session attempt on the same declared UE lane
+- note whether any follow-up session discussion is still bounded and non-topology-expanding
 - note whether the user-plane path is safe for another attach attempt
 
 ### `GTP-U`
@@ -181,11 +184,15 @@ Compare:
 - tunnel creation or TEID mapping
 - downlink and uplink route state
 - session binding
+- stale tunnel or stale TEID cleanup state
+- whether the review is about the active session or a bounded same-UE next-session attempt
 - ping reachability on the declared route
 
 Rollback:
 
 - note whether the tunnel state was reset or preserved as planned
+- note whether stale tunnel cleanup completed before another session attempt
+- note whether the recovery claim stays bounded to the same UE lane and does not imply broad multi-session parity
 - note whether ping failure was caused by data-plane state or a separate issue
 
 ### RU Sync

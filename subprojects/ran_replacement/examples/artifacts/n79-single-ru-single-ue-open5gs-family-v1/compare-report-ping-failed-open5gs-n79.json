@@ -33,6 +33,8 @@
     "release_state": "UE context release remains clean and auditable after the verify window.",
     "pdu_session": "The UE holds a declared IPv4 session on the internet DNN.",
     "gtpu": "The tunnel and route are bound to the declared UE session.",
+    "stale_tunnel_cleanup": "Tunnel and forwarding state are either active for the declared session or explicitly cleaned before another session attempt.",
+    "session_scope": "Only the primary session plus bounded same-UE recovery review are in scope.",
     "ping_target": "8.8.8.8"
   },
   "observed_state": {
@@ -40,13 +42,15 @@
     "release_state": "UE context release completed after the failed ping verification window.",
     "pdu_session": "The UE established a PDU session.",
     "gtpu": "The tunnel exists, but user-plane reachability does not complete end to end.",
+    "stale_tunnel_cleanup": "Forwarding and TEID cleanup remain under review before another same-UE session attempt.",
+    "session_scope": "The review remains bounded to the primary session plus same-UE next-session safety.",
     "ping_target": "8.8.8.8"
   },
   "gate_class": "degraded",
   "diff_summary": [
     "Control-plane registration is already past the acceptance threshold.",
-    "PDU session exists, but user-plane forwarding does not produce a successful ping.",
-    "The failure is isolated to the declared user-plane path until proven otherwise."
+    "The primary declared PDU session exists, but user-plane forwarding does not produce a successful ping.",
+    "The recovery review keeps stale tunnel cleanup and same-UE next-session safety explicit without widening into broader multi-session parity."
   ],
   "evidence_refs": [
     "subprojects/ran_replacement/examples/status/verify-attach-ping-open5gs-n79.status.json",
@@ -59,8 +63,8 @@
     "subprojects/ran_replacement/notes/14-compare-report-and-rollback-evidence-templates.md"
   ],
   "rollback_target": "oai_reference",
-  "operator_next_step": "Inspect the user-plane route, tunnel binding, and forwarding evidence before retrying the same attach path.",
-  "summary": "Ping review diverged after successful registration and points to a user-plane failure on the declared route.",
+  "operator_next_step": "Inspect stale tunnel cleanup, tunnel binding, and forwarding evidence before retrying another session on the same UE lane.",
+  "summary": "Ping review diverged after successful registration and keeps stale tunnel cleanup plus bounded same-UE session recovery explicit on the declared route.",
   "failure_class": "user_plane_failure",
   "ngap_subset": {
     "standards_subset_ref": "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
