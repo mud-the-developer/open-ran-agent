@@ -163,6 +163,7 @@ flow uses:
 - `examples/ranctl/precheck-oai-du-rfsim-local.json`
 - `examples/ranctl/plan-oai-du-rfsim-local.json`
 - `examples/ranctl/apply-oai-du-rfsim-local.json`
+- `examples/ranctl/observe-oai-du-rfsim-local.json`
 - `examples/ranctl/verify-oai-du-rfsim-local.json`
 - `examples/ranctl/rollback-oai-du-rfsim-local.json`
 - `mise.toml`
@@ -177,6 +178,55 @@ mise run oai-rfsim-rollback
 `oai-rfsim-lifecycle` wraps `precheck -> plan -> apply -> verify` and keeps
 polling `verify` until the JSON payload reaches `status=verified`, which avoids
 false negatives during OAI warm-up.
+
+The same lane now has a repo-local observability surface that stays aligned with
+the YON-87 lifecycle and rollback commands:
+
+```bash
+# bring the lane up
+mise run oai-rfsim-lifecycle
+
+# capture a durable observe artifact for the current lane
+bin/ranctl observe --file examples/ranctl/observe-oai-du-rfsim-local.json
+
+# open the operator surface
+bin/ran-dashboard
+
+# tear the lane down through the same workflow family
+mise run oai-rfsim-rollback
+```
+
+`observe` now persists `artifacts/observations/<change-or-incident>.json`, and
+the dashboard reads the latest repo-local OAI observe artifact for each
+`cell_group` so operators can inspect the split lane without starting from raw
+Docker logs.
+
+## Repo-local observability surface
+
+`bin/ran-dashboard` is the operator-facing surface for the repo-local split
+RFsim lane. The `Repo-local OAI Observe` inspector card is populated from the
+latest `observe` artifact and shows:
+
+- current runtime state for the repo-local `CU-CP`, `CU-UP`, and `DU`
+- per-service running and health status
+- documented token/count metrics derived from the current Docker log tail
+- the artifact path that produced the dashboard view
+
+The current token/count metrics are intentionally narrow and operator-facing:
+
+| Metric | Source | Meaning |
+| --- | --- | --- |
+| `du_frame_slot_count` | DU container Docker log tail, token `Frame.Slot` | Evidence that the DU MAC slot loop is active in the current observe window |
+| `du_f1_setup_response_count` | DU container Docker log tail, token `received F1 Setup Response` | Evidence that the CU-CP F1 setup response reached the DU |
+| `du_rfsim_wait_count` | DU container Docker log tail, token `Running as server waiting opposite rfsimulators to connect` | Evidence that the DU is still waiting on the RFsim peer |
+| `cucp_f1_setup_response_count` | CU-CP container Docker log tail, token `sending F1 Setup Response` | Evidence that the CU-CP answered the DU on F1-C |
+| `cuup_e1_established_count` | CU-UP container Docker log tail, token `E1 connection established` | Evidence that the CU-UP established E1 with the CU-CP |
+| `ue_start_count` / `ue_tun_configured_count` | Optional UE container Docker log tail | Evidence that the repo-local UE softmodem started and configured its tunnel when the UE lane is enabled |
+
+Operators should read these counters as bounded, current-tail indicators. They
+are not lifetime totals; they are counts of known bring-up or steady-state
+tokens in the current `docker logs --tail 2000 <container>` window that
+`observe` captured.
 
 Use [examples/ranctl/apply-oai-du-docker-template.json](https://github.com/mud-the-developer/open-ran-agent/blob/main/examples/ranctl/apply-oai-du-docker-template.json) as the request shape. The bridge will:
 

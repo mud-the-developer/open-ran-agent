@@ -388,8 +388,10 @@ defmodule RanActionGateway.Runner do
          runtime: runtime_observe,
          native_probe: native_probe
        }
+       |> maybe_add_observe_artifact(change)
        |> maybe_put_replacement_status(:observe, change, [])
-       |> materialize_replacement_artifacts(:observe, change)}
+       |> materialize_replacement_artifacts(:observe, change)
+       |> persist_observe(change)}
     end
   end
 
@@ -436,6 +438,31 @@ defmodule RanActionGateway.Runner do
   end
 
   defp persist_precheck(payload, _change), do: payload
+
+  defp maybe_add_observe_artifact(payload, %Change{} = change) do
+    case observe_ref(change) do
+      ref when is_binary(ref) ->
+        Map.put(payload, :artifacts, [Store.observation_path(ref)])
+
+      _ ->
+        payload
+    end
+  end
+
+  defp persist_observe(payload, %Change{} = change) do
+    case observe_ref(change) do
+      ref when is_binary(ref) ->
+        Store.write_json(Store.observation_path(ref), payload)
+        payload
+
+      _ ->
+        payload
+    end
+  end
+
+  defp observe_ref(%Change{change_id: change_id, incident_id: incident_id}) do
+    change_id || incident_id
+  end
 
   defp require(errors, field, value) do
     if present?(value), do: errors, else: [{field, "is required"} | errors]
@@ -3484,7 +3511,16 @@ defmodule RanActionGateway.Runner do
   end
 
   defp recent_change_refs(limit) do
-    ["prechecks", "plans", "changes", "verify", "captures", "approvals", "rollback_plans"]
+    [
+      "prechecks",
+      "plans",
+      "changes",
+      "observations",
+      "verify",
+      "captures",
+      "approvals",
+      "rollback_plans"
+    ]
     |> Enum.flat_map(fn kind ->
       Path.wildcard(Path.join([Store.artifact_root(), kind, "*.json"]))
     end)
@@ -3770,6 +3806,7 @@ defmodule RanActionGateway.Runner do
   defp native_probe_snapshot(%Change{change_id: change_id}) do
     [
       Store.precheck_path(change_id),
+      Store.observation_path(change_id),
       Store.verify_path(change_id),
       Store.change_state_path(change_id),
       Store.plan_path(change_id)

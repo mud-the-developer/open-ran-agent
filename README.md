@@ -463,13 +463,17 @@ lighter operator entrypoint is now:
 
 ```bash
 mise run oai-rfsim-lifecycle
+bin/ranctl observe --file examples/ranctl/observe-oai-du-rfsim-local.json
+bin/ran-dashboard
 mise run oai-rfsim-rollback
 ```
 
 Those tasks wrap the repo-local split request set under `examples/ranctl/*-oai-du-rfsim-local.json`,
 use the split conf fixtures under `examples/oai/gnb-*-rfsim-split.conf.example`,
 and keep the verify step in a short poll loop until `ranctl` reports JSON status
-`verified` instead of only trusting the first process exit code.
+`verified` instead of only trusting the first process exit code. `observe` now
+persists a repo-local OAI artifact that `bin/ran-dashboard` renders as the
+operator-facing DU/CU runtime and token-counter surface for that lane.
 
 To run against your own OAI conf set, replace the three `*_conf_path` fields in `examples/ranctl/apply-oai-du-docker-template.json` and reuse the same metadata for `precheck`, `plan`, `apply`, and `verify`. Add `metadata.oai_runtime.ue_conf_path` when you want the bounded UE bringup lane, and keep `metadata.oai_simulation` only for simulation-only proof; it is intentionally not a live-lab claim.
 

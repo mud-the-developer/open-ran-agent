@@ -37,6 +37,66 @@ defmodule RanActionGateway.OaiRuntime do
   }
 
   @log_tail_lines "10000"
+  @observe_log_tail_lines "2000"
+  @observe_metric_specs [
+    %{
+      role: "du",
+      id: "du_frame_slot_count",
+      label: "DU Frame.Slot tokens",
+      pattern: ~r/Frame\.Slot/,
+      source_pattern: "Frame.Slot",
+      meaning: "Counts DU MAC slot-loop tokens in the current Docker log tail."
+    },
+    %{
+      role: "du",
+      id: "du_f1_setup_response_count",
+      label: "DU F1 setup responses",
+      pattern: ~r/received F1 Setup Response/,
+      source_pattern: "received F1 Setup Response",
+      meaning: "Counts DU log tokens confirming the CU-CP F1 setup response reached the DU."
+    },
+    %{
+      role: "du",
+      id: "du_rfsim_wait_count",
+      label: "DU RFsim wait tokens",
+      pattern: ~r/Running as server waiting opposite rfsimulators to connect/,
+      source_pattern: "Running as server waiting opposite rfsimulators to connect",
+      meaning: "Counts DU log tokens showing the RFsim server loop is waiting for the peer side."
+    },
+    %{
+      role: "cucp",
+      id: "cucp_f1_setup_response_count",
+      label: "CU-CP F1 setup responses",
+      pattern: ~r/sending F1 Setup Response/,
+      source_pattern: "sending F1 Setup Response",
+      meaning: "Counts CU-CP log tokens proving the split control plane answered the DU F1 setup."
+    },
+    %{
+      role: "cuup",
+      id: "cuup_e1_established_count",
+      label: "CU-UP E1 established tokens",
+      pattern: ~r/E1 connection established/,
+      source_pattern: "E1 connection established",
+      meaning: "Counts CU-UP log tokens confirming E1 association with the CU-CP."
+    },
+    %{
+      role: "ue",
+      id: "ue_start_count",
+      label: "UE startup tokens",
+      pattern: ~r/Starting NR UE soft modem/,
+      source_pattern: "Starting NR UE soft modem",
+      meaning:
+        "Counts UE log tokens confirming the repo-local UE process entered softmodem startup."
+    },
+    %{
+      role: "ue",
+      id: "ue_tun_configured_count",
+      label: "UE tunnel configured tokens",
+      pattern: ~r/Interface oaitun_ue1 successfully configured/,
+      source_pattern: "Interface oaitun_ue1 successfully configured",
+      meaning: "Counts UE log tokens confirming the UE tunnel device was configured."
+    }
+  ]
 
   @type spec_map :: map()
 
@@ -241,12 +301,21 @@ defmodule RanActionGateway.OaiRuntime do
   @spec observe(String.t() | nil, map()) :: {:ok, map()} | {:error, map()}
   def observe(cell_group_id, metadata) do
     with {:ok, spec} <- resolve(cell_group_id, metadata),
-         {:ok, statuses} <- inspect_runtime(spec) do
+         {:ok, statuses} <- inspect_runtime(spec),
+         {:ok, observed_containers} <- enrich_observed_containers(spec, statuses) do
+      token_metrics = Enum.flat_map(observed_containers, &Map.get(&1, "token_metrics", []))
+
       {:ok,
        %{
+         lane_id: "oai_split_rfsim_repo_local_v1",
          runtime_mode: runtime_mode(spec),
          project_name: spec["project_name"],
-         containers: statuses
+         runtime_state: observed_runtime_state(observed_containers),
+         service_count: length(observed_containers),
+         running_service_count: Enum.count(observed_containers, & &1["running"]),
+         healthy_service_count: Enum.count(observed_containers, &(&1["health"] == "healthy")),
+         containers: observed_containers,
+         token_metrics: token_metrics
        }}
     end
   end
@@ -906,6 +975,129 @@ defmodule RanActionGateway.OaiRuntime do
         {:ok, Enum.map(statuses, fn {:ok, payload} -> payload end)}
     end
   end
+
+  defp enrich_observed_containers(spec, statuses) when is_list(statuses) do
+    roles = runtime_container_roles(spec)
+
+    observed =
+      Enum.map(statuses, fn status ->
+        container_name = status["name"]
+        role_info = Map.get(roles, container_name, %{})
+        role = role_info["role"]
+
+        case CommandRunner.run(
+               "docker",
+               ["logs", "--tail", @observe_log_tail_lines, container_name],
+               into: ""
+             ) do
+          {output, 0} ->
+            token_metrics = token_metrics_for_container(container_name, role, output)
+
+            {:ok,
+             status
+             |> Map.put("role", role)
+             |> Map.put("service_name", role_info["service_name"])
+             |> Map.put("log_probe_status", "ok")
+             |> Map.put("log_tail_line_count", log_line_count(output))
+             |> Map.put("token_counts", token_count_map(token_metrics))
+             |> Map.put("token_metrics", token_metrics)}
+
+          {output, exit_code} ->
+            {:ok,
+             status
+             |> Map.put("role", role)
+             |> Map.put("service_name", role_info["service_name"])
+             |> Map.put("log_probe_status", "error")
+             |> Map.put("log_tail_line_count", 0)
+             |> Map.put("log_error", "docker logs failed with exit code #{exit_code}")
+             |> Map.put("log_error_output", output)
+             |> Map.put("token_counts", %{})
+             |> Map.put("token_metrics", [])}
+        end
+      end)
+
+    {:ok, Enum.map(observed, fn {:ok, payload} -> payload end)}
+  end
+
+  defp runtime_container_roles(spec) do
+    %{
+      spec["du_container_name"] => %{
+        "role" => "du",
+        "service_name" => spec["du_service_name"]
+      },
+      spec["cucp_container_name"] => %{
+        "role" => "cucp",
+        "service_name" => spec["cucp_service_name"]
+      },
+      spec["cuup_container_name"] => %{
+        "role" => "cuup",
+        "service_name" => spec["cuup_service_name"]
+      }
+    }
+    |> maybe_put_ue_container_role(spec)
+  end
+
+  defp maybe_put_ue_container_role(roles, spec) do
+    if ue_requested?(spec) do
+      Map.put(roles, spec["ue_container_name"], %{
+        "role" => "ue",
+        "service_name" => spec["ue_service_name"]
+      })
+    else
+      roles
+    end
+  end
+
+  defp token_metrics_for_container(container_name, role, output) when is_binary(role) do
+    @observe_metric_specs
+    |> Enum.filter(&(&1.role == role))
+    |> Enum.map(fn spec ->
+      %{
+        "id" => spec.id,
+        "label" => spec.label,
+        "count" => count_matches(output, spec.pattern),
+        "role" => role,
+        "container_name" => container_name,
+        "source_kind" => "docker_logs_tail",
+        "source_pattern" => spec.source_pattern,
+        "source_tail_lines" => String.to_integer(@observe_log_tail_lines),
+        "meaning" => spec.meaning
+      }
+    end)
+  end
+
+  defp token_metrics_for_container(_container_name, _role, _output), do: []
+
+  defp token_count_map(metrics) do
+    Map.new(metrics, fn metric -> {metric["id"], metric["count"]} end)
+  end
+
+  defp count_matches(body, regex) do
+    regex
+    |> Regex.scan(body)
+    |> length()
+  end
+
+  defp log_line_count(body) do
+    body
+    |> String.split("\n", trim: true)
+    |> length()
+  end
+
+  defp observed_runtime_state(containers) when is_list(containers) and containers != [] do
+    cond do
+      Enum.all?(containers, &(&1["running"] and &1["health"] == "healthy")) ->
+        "running"
+
+      Enum.any?(containers, &(!&1["running"] or &1["log_probe_status"] == "error")) ->
+        "degraded"
+
+      true ->
+        "warming"
+    end
+  end
+
+  defp observed_runtime_state(_containers), do: "unavailable"
 
   defp write_logs(change_id, spec) do
     Enum.reduce_while(runtime_containers(spec), :ok, fn container_name, :ok ->

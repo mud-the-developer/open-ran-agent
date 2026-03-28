@@ -6,7 +6,16 @@ defmodule RanObservability.Dashboard.Snapshot do
   alias RanObservability.CommandRunner
   alias RanObservability.Dashboard.DeployRunner
 
-  @artifact_kinds ~w(plans changes verify captures approvals rollback_plans probe_snapshots)
+  @artifact_kinds ~w(
+    plans
+    changes
+    observations
+    verify
+    captures
+    approvals
+    rollback_plans
+    probe_snapshots
+  )
   @retention_policy %{
     json_keep: 20,
     runtime_keep: 8,
@@ -20,6 +29,7 @@ defmodule RanObservability.Dashboard.Snapshot do
     command_runner = Keyword.get(opts, :command_runner, CommandRunner)
     recent_bundles = recent_release_bundles(artifact_root, 6)
     recent_changes = recent_activity(artifact_root, 12)
+    oai_observations = latest_oai_observations_by_cell_group(artifact_root)
     native_contract_runs = recent_native_contract_runs(recent_changes, 8)
     remote_runs = recent_remote_runs(artifact_root, 6)
     install_runs = recent_install_runs(artifact_root, 8)
@@ -43,6 +53,7 @@ defmodule RanObservability.Dashboard.Snapshot do
         agent_runtime_count: length(agent_containers),
         healthy_runtime_count: Enum.count(containers, &health_ok?/1),
         recent_change_count: length(recent_changes),
+        oai_observation_count: map_size(oai_observations),
         native_contract_count: length(native_contract_runs),
         recent_bundle_count: length(recent_bundles),
         remote_run_count: length(remote_runs),
@@ -55,7 +66,12 @@ defmodule RanObservability.Dashboard.Snapshot do
         topology_source: RanConfig.topology_source(),
         validation: sanitize_validation(RanConfig.validation_report()),
         supported_backends: Enum.map(RanCore.supported_backends(), &Atom.to_string/1),
-        cell_groups: Enum.map(RanConfig.cell_groups(), &format_cell_group(&1, artifact_root))
+        cell_groups:
+          Enum.map(
+            RanConfig.cell_groups(),
+            &format_cell_group(&1, artifact_root, oai_observations)
+          ),
+        oai_repo_local_lanes: Map.values(oai_observations)
       },
       release: %{
         readiness: sanitize_release_readiness(RanConfig.release_readiness()),
@@ -101,7 +117,7 @@ defmodule RanObservability.Dashboard.Snapshot do
     }
   end
 
-  defp format_cell_group(cell_group, artifact_root) do
+  defp format_cell_group(cell_group, artifact_root, oai_observations) do
     id = fetch_value(cell_group, :id)
 
     %{
@@ -118,7 +134,8 @@ defmodule RanObservability.Dashboard.Snapshot do
         |> fetch_value(:oai_runtime, %{})
         |> fetch_value(:mode)
         |> to_string_value(),
-      control_state: load_control_state(artifact_root, id)
+      control_state: load_control_state(artifact_root, id),
+      oai_observation: Map.get(oai_observations, id)
     }
   end
 
@@ -293,12 +310,14 @@ defmodule RanObservability.Dashboard.Snapshot do
          {:ok, stat} <- File.stat(path) do
       updated_at = stat.mtime |> NaiveDateTime.from_erl!() |> DateTime.from_naive!("Etc/UTC")
       native_contract = decode_native_contract(payload)
+      oai_observation = decode_oai_observation(payload, path, updated_at)
 
       %{
         id: payload["change_id"] || payload["incident_id"] || Path.basename(path, ".json"),
         command: payload["command"],
         status: payload["status"],
         scope: payload["scope"],
+        cell_group: payload["cell_group"],
         summary: payload["summary"],
         path: Path.expand(path),
         phase: path |> Path.dirname() |> Path.basename(),
@@ -311,12 +330,90 @@ defmodule RanObservability.Dashboard.Snapshot do
         rollback_plan_ref: payload["rollback_plan_ref"],
         source_plan: payload["source_plan"],
         restored_from: payload["restored_from"],
-        native_contract: native_contract
+        native_contract: native_contract,
+        oai_observation: oai_observation
       }
     else
       _ -> nil
     end
   end
+
+  defp latest_oai_observations_by_cell_group(artifact_root) do
+    [artifact_root, "observations", "*.json"]
+    |> Path.join()
+    |> Path.wildcard()
+    |> Enum.map(&decode_artifact/1)
+    |> Enum.reject(&is_nil/1)
+    |> Enum.filter(fn artifact ->
+      is_binary(artifact.cell_group) and is_map(artifact.oai_observation)
+    end)
+    |> Enum.sort_by(& &1.updated_at_unix, :desc)
+    |> Enum.reduce(%{}, fn artifact, acc ->
+      Map.put_new(acc, artifact.cell_group, artifact.oai_observation)
+    end)
+  end
+
+  defp decode_oai_observation(payload, path, updated_at) do
+    runtime = payload["runtime"] || %{}
+    lane_id = runtime["lane_id"]
+    runtime_mode = runtime["runtime_mode"]
+    containers = runtime["containers"] || []
+    token_metrics = runtime["token_metrics"] || []
+
+    if lane_id == "oai_split_rfsim_repo_local_v1" or runtime_mode == "docker_compose_rfsim_f1" do
+      %{
+        id: payload["change_id"] || payload["incident_id"] || Path.basename(path, ".json"),
+        path: Path.expand(path),
+        cell_group: payload["cell_group"],
+        project_name: runtime["project_name"],
+        lane_id: lane_id || "oai_split_rfsim_repo_local_v1",
+        runtime_mode: runtime_mode,
+        runtime_state: runtime["runtime_state"] || "unknown",
+        service_count: runtime["service_count"] || length(containers),
+        running_service_count:
+          runtime["running_service_count"] || Enum.count(containers, &truthy?(&1["running"])),
+        healthy_service_count:
+          runtime["healthy_service_count"] ||
+            Enum.count(containers, &(&1["health"] == "healthy")),
+        updated_at: updated_at |> DateTime.truncate(:second) |> DateTime.to_iso8601(),
+        containers: Enum.map(containers, &summarize_oai_container/1),
+        token_metrics: Enum.map(token_metrics, &summarize_oai_metric/1),
+        token_metric_count: length(token_metrics)
+      }
+    else
+      nil
+    end
+  end
+
+  defp summarize_oai_container(container) do
+    %{
+      name: container["name"],
+      role: container["role"],
+      service_name: container["service_name"],
+      running: container["running"],
+      status: container["status"],
+      health: container["health"],
+      log_probe_status: container["log_probe_status"],
+      log_tail_line_count: container["log_tail_line_count"],
+      token_counts: container["token_counts"] || %{}
+    }
+  end
+
+  defp summarize_oai_metric(metric) do
+    %{
+      id: metric["id"],
+      label: metric["label"],
+      count: metric["count"],
+      role: metric["role"],
+      container_name: metric["container_name"],
+      source_kind: metric["source_kind"],
+      source_pattern: metric["source_pattern"],
+      source_tail_lines: metric["source_tail_lines"],
+      meaning: metric["meaning"]
+    }
+  end
+
+  defp truthy?(value), do: value in [true, "true", "running", "healthy"]
 
   defp recent_native_contract_runs(recent_changes, limit) do
     recent_changes
