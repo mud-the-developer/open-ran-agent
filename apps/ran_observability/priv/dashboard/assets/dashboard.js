@@ -949,6 +949,213 @@ function renderProtocolStatePanel(cellGroup, focusedRun) {
   `;
 }
 
+function renderInspectorKeyValue(label, value) {
+  return `
+    <div class="inspector-row">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value ?? "n/a")}</strong>
+    </div>
+  `;
+}
+
+function renderArtifactRefCard(ref) {
+  return `
+    <div class="protocol-detail">
+      <div class="runtime-top">
+        <div class="inspector-title">${escapeHtml(ref.label || ref.id || "artifact ref")}</div>
+        <span class="runtime-tag">${escapeHtml(ref.kind || "ref")}</span>
+      </div>
+      <div class="lane-note">${escapeHtml(ref.ref || "n/a")}</div>
+    </div>
+  `;
+}
+
+function renderArtifactRefBlock(title, refs, emptyMessage) {
+  return `
+    <div class="section-kicker">${escapeHtml(title)}</div>
+    ${refs?.length
+      ? `<div class="protocol-grid">${refs.map(renderArtifactRefCard).join("")}</div>`
+      : `<div class="lane-note">${escapeHtml(emptyMessage)}</div>`}
+  `;
+}
+
+function renderProvenanceCard(entry) {
+  const tags = [
+    entry.proof_kind,
+    entry.evidence_tier,
+    entry.conformance_profile,
+    entry.target_profile,
+    entry.core_profile,
+    entry.reference_count ? `${entry.reference_count} refs` : null
+  ].filter(Boolean);
+
+  return `
+    <div class="protocol-detail">
+      <div class="runtime-top">
+        <div class="inspector-title">${escapeHtml(entry.lane || "provenance")}</div>
+        <span class="runtime-tag">${escapeHtml(entry.proof_kind || "evidence")}</span>
+      </div>
+      ${entry.note ? `<div class="lane-note">${escapeHtml(entry.note)}</div>` : ""}
+      ${entry.baseline_ref ? `<div class="lane-note">Baseline: ${escapeHtml(entry.baseline_ref)}</div>` : ""}
+      ${tags.length
+        ? `<div class="focus-tags">${tags.map((tag) => `<span class="runtime-tag">${escapeHtml(tag)}</span>`).join("")}</div>`
+        : ""}
+    </div>
+  `;
+}
+
+function renderArtifactBundleSection(bundle) {
+  if (!bundle) {
+    return "";
+  }
+
+  const manifest = bundle.manifest || {};
+  const manifestRows = [
+    ["Bundle ref", manifest.ref],
+    ["Captured at", manifest.captured_at],
+    ["Scope", manifest.scope],
+    ["Cell group", manifest.cell_group],
+    ["Change", manifest.change_id],
+    ["Incident", manifest.incident_id],
+    ["Artifact root", manifest.artifact_root]
+  ].filter(([, value]) => value !== null && value !== undefined && value !== "");
+
+  return `
+    <div class="protocol-section">
+      <div class="inspector-row">
+        <span>Artifact bundle</span>
+        <strong>${escapeHtml(manifest.ref || manifest.change_id || "indexed")}</strong>
+      </div>
+      ${bundle.summary ? `<div class="lane-note">${escapeHtml(bundle.summary)}</div>` : ""}
+      <div class="protocol-grid">
+        <div class="protocol-card">
+          <div class="section-kicker">Manifest</div>
+          ${manifestRows.length
+            ? `<div class="inspector-rows">${manifestRows.map(([label, value]) => renderInspectorKeyValue(label, value)).join("")}</div>`
+            : `<div class="lane-note">No manifest rows were indexed for this bundle.</div>`}
+          <div class="lane-note">Source: ${escapeHtml(bundle.source_ref || "n/a")}</div>
+        </div>
+        ${bundle.provenance?.length
+          ? `
+            <div class="protocol-card">
+              <div class="section-kicker">Provenance</div>
+              <div class="protocol-grid">
+                ${bundle.provenance.map(renderProvenanceCard).join("")}
+              </div>
+            </div>
+          `
+          : ""}
+      </div>
+      ${renderArtifactRefBlock("Workflow refs", bundle.workflow_refs, "No workflow refs were indexed for this bundle.")}
+      ${renderArtifactRefBlock("Runtime refs", bundle.runtime_refs, "No runtime refs were indexed for this bundle.")}
+      ${renderArtifactRefBlock("Review refs", bundle.review_refs, "No review refs were indexed for this bundle.")}
+      ${renderArtifactRefBlock(
+        "Declared lane evidence",
+        bundle.declared_lane_refs,
+        "No declared lane evidence refs were indexed for this bundle."
+      )}
+    </div>
+  `;
+}
+
+function renderRollbackCheckCard(check) {
+  return `
+    <div class="protocol-detail">
+      <div class="runtime-top">
+        <div class="inspector-title">${escapeHtml(check.name || "review check")}</div>
+        ${protocolStatusPill(check.status || "unknown")}
+      </div>
+      <div class="lane-note">${escapeHtml(check.detail || "No detail available.")}</div>
+    </div>
+  `;
+}
+
+function renderRollbackReplaySection(drilldown) {
+  if (!drilldown) {
+    return "";
+  }
+
+  const contextRows = [
+    ["Status", drilldown.status || (drilldown.rollback_available ? "available" : "unknown")],
+    ["Rollback target", drilldown.rollback_target],
+    ["Restored from", drilldown.restored_from],
+    ["Comparison scope", drilldown.comparison_scope],
+    ["Rollback available", drilldown.rollback_available ? "yes" : "no"]
+  ].filter(([, value]) => value !== null && value !== undefined && value !== "");
+
+  const tags = [
+    drilldown.comparison_scope ? `scope ${drilldown.comparison_scope}` : null,
+    ...(drilldown.provenance || []).map((entry) => entry.lane).filter(Boolean)
+  ].filter(Boolean);
+
+  return `
+    <div class="protocol-section">
+      <div class="inspector-row">
+        <span>Rollback and replay</span>
+        ${protocolStatusPill(drilldown.status || (drilldown.rollback_available ? "ok" : "unknown"))}
+      </div>
+      ${drilldown.summary ? `<div class="lane-note">${escapeHtml(drilldown.summary)}</div>` : ""}
+      ${drilldown.reason ? `<div class="lane-note">${escapeHtml(drilldown.reason)}</div>` : ""}
+      ${tags.length
+        ? `<div class="focus-tags">${tags.map((tag) => `<span class="runtime-tag">${escapeHtml(tag)}</span>`).join("")}</div>`
+        : ""}
+      <div class="protocol-grid">
+        <div class="protocol-card">
+          <div class="section-kicker">Recovery context</div>
+          <div class="inspector-rows">
+            ${contextRows.map(([label, value]) => renderInspectorKeyValue(label, value)).join("")}
+          </div>
+          <div class="lane-note">Source: ${escapeHtml(drilldown.source_ref || "n/a")}</div>
+        </div>
+        ${drilldown.review_checks?.length
+          ? `
+            <div class="protocol-card">
+              <div class="section-kicker">Review checks</div>
+              <div class="protocol-grid">
+                ${drilldown.review_checks.map(renderRollbackCheckCard).join("")}
+              </div>
+            </div>
+          `
+          : ""}
+      </div>
+      ${renderArtifactRefBlock("Replay inputs", drilldown.replay_refs, "No replay inputs were indexed for this run.")}
+      ${renderArtifactRefBlock("Rollback evidence", drilldown.rollback_refs, "No rollback evidence refs were indexed for this run.")}
+      ${drilldown.suggested_next?.length
+        ? `
+          <div class="section-kicker">Suggested next</div>
+          <div class="lane-list">
+            ${drilldown.suggested_next
+              .map((step) => `<div class="lane-note">${escapeHtml(step)}</div>`)
+              .join("")}
+          </div>
+        `
+        : ""}
+    </div>
+  `;
+}
+
+function renderRawRefSection(refs) {
+  return `
+    <div class="protocol-section">
+      <div class="section-kicker">Direct refs</div>
+      ${refs.length
+        ? `
+          <div class="lane-list">
+            ${refs
+              .slice(0, 8)
+              .map(
+                (ref) => `
+                  <div class="lane-note">${escapeHtml(ref)}</div>
+                `
+              )
+              .join("")}
+          </div>
+        `
+        : `<div class="lane-note">No artifact refs attached.</div>`}
+    </div>
+  `;
+}
+
 function renderRunPanel(focusedRun) {
   const target = byId("run-panel");
 
@@ -964,6 +1171,8 @@ function renderRunPanel(focusedRun) {
     focusedRun.source_plan,
     ...(focusedRun.artifacts || [])
   ].filter(Boolean);
+  const artifactBundle = focusedRun.artifact_bundle || null;
+  const rollbackReplay = focusedRun.rollback_replay || null;
 
   target.innerHTML = `
     <div class="section-kicker">Run Contract</div>
@@ -978,18 +1187,9 @@ function renderRunPanel(focusedRun) {
       <div class="inspector-row"><span>Rollback from</span><strong>${escapeHtml(focusedRun.restored_from || "n/a")}</strong></div>
       <div class="inspector-row"><span>Next</span><strong>${escapeHtml((focusedRun.next || []).join(" -> ") || "none")}</strong></div>
     </div>
-    <div class="lane-list">
-      ${refs.length
-        ? refs
-            .slice(0, 6)
-            .map(
-              (ref) => `
-                <div class="lane-note">${escapeHtml(ref)}</div>
-              `
-            )
-            .join("")
-        : `<div class="lane-note">No artifact refs attached.</div>`}
-    </div>
+    ${renderArtifactBundleSection(artifactBundle)}
+    ${renderRollbackReplaySection(rollbackReplay)}
+    ${renderRawRefSection(refs)}
   `;
 }
 

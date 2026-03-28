@@ -312,6 +312,8 @@ defmodule RanObservability.Dashboard.Snapshot do
       native_contract = decode_native_contract(payload)
       oai_observation = decode_oai_observation(payload, path, updated_at)
       protocol_state = decode_protocol_state(payload, path)
+      artifact_bundle = decode_artifact_bundle(payload, path)
+      rollback_replay = decode_rollback_replay(payload, path, artifact_bundle)
 
       %{
         id: payload["change_id"] || payload["incident_id"] || Path.basename(path, ".json"),
@@ -333,7 +335,9 @@ defmodule RanObservability.Dashboard.Snapshot do
         restored_from: payload["restored_from"],
         native_contract: native_contract,
         oai_observation: oai_observation,
-        protocol_state: protocol_state
+        protocol_state: protocol_state,
+        artifact_bundle: artifact_bundle,
+        rollback_replay: rollback_replay
       }
     else
       _ -> nil
@@ -657,6 +661,444 @@ defmodule RanObservability.Dashboard.Snapshot do
 
   defp truthy?(value), do: value in [true, "true", "running", "healthy"]
 
+  defp decode_artifact_bundle(payload, path) do
+    bundle = fetch_value(payload, :bundle, %{})
+    manifest = fetch_value(bundle, :manifest, %{})
+    workflow = fetch_value(bundle, :workflow, %{})
+    runtime = fetch_value(bundle, :runtime, %{})
+    review = fetch_value(bundle, :review, %{})
+
+    declared_lane_evidence =
+      fetch_value(
+        bundle,
+        :declared_lane_evidence,
+        fetch_value(payload, :declared_lane_evidence, %{})
+      )
+
+    workflow_refs = artifact_bundle_workflow_refs(workflow)
+    runtime_refs = artifact_bundle_runtime_refs(runtime)
+    review_refs = artifact_bundle_review_refs(review)
+    declared_lane_refs = artifact_bundle_declared_lane_refs(declared_lane_evidence)
+    provenance = artifact_bundle_provenance(payload, runtime, declared_lane_evidence)
+
+    if map_size(manifest) > 0 or workflow_refs != [] or runtime_refs != [] or review_refs != [] or
+         declared_lane_refs != [] or provenance != [] do
+      %{
+        source_ref: Path.expand(path),
+        summary: fetch_value(payload, :summary),
+        manifest: artifact_bundle_manifest(manifest, payload),
+        workflow_refs: workflow_refs,
+        runtime_refs: runtime_refs,
+        review_refs: review_refs,
+        declared_lane_refs: declared_lane_refs,
+        provenance: provenance
+      }
+    else
+      nil
+    end
+  end
+
+  defp artifact_bundle_manifest(manifest, payload) do
+    %{
+      ref: fetch_value(manifest, :ref),
+      captured_at: fetch_value(manifest, :captured_at),
+      scope: fetch_value(manifest, :scope, fetch_value(payload, :scope)),
+      cell_group: fetch_value(manifest, :cell_group, fetch_value(payload, :cell_group)),
+      change_id: fetch_value(manifest, :change_id, fetch_value(payload, :change_id)),
+      incident_id: fetch_value(manifest, :incident_id, fetch_value(payload, :incident_id)),
+      artifact_root: fetch_value(manifest, :artifact_root)
+    }
+    |> compact_map()
+  end
+
+  defp artifact_bundle_workflow_refs(workflow) do
+    ([
+       artifact_ref_item("precheck", "Precheck", fetch_value(workflow, :precheck), "workflow"),
+       artifact_ref_item("plan", "Plan", fetch_value(workflow, :plan), "workflow"),
+       artifact_ref_item(
+         "change_state",
+         "Change state",
+         fetch_value(workflow, :change_state),
+         "workflow"
+       ),
+       artifact_ref_item("verify", "Verify", fetch_value(workflow, :verify), "workflow"),
+       artifact_ref_item(
+         "rollback_plan",
+         "Rollback plan",
+         fetch_value(workflow, :rollback_plan),
+         "workflow"
+       ),
+       artifact_ref_item(
+         "config_snapshot",
+         "Config snapshot",
+         fetch_value(workflow, :config_snapshot),
+         "workflow"
+       ),
+       artifact_ref_item(
+         "control_snapshot",
+         "Control snapshot",
+         fetch_value(workflow, :control_snapshot),
+         "workflow"
+       ),
+       artifact_ref_item(
+         "probe_snapshot",
+         "Probe snapshot",
+         fetch_value(workflow, :probe_snapshot),
+         "workflow"
+       ),
+       artifact_ref_item("capture", "Capture bundle", fetch_value(workflow, :capture), "workflow")
+     ] ++
+       indexed_artifact_refs(
+         "approval",
+         "Approval",
+         fetch_value(workflow, :approvals, []),
+         "workflow"
+       ))
+    |> dedupe_artifact_refs()
+  end
+
+  defp artifact_bundle_runtime_refs(runtime) do
+    simulation = fetch_value(runtime, :simulation, %{})
+
+    ([
+       artifact_ref_item(
+         "compose_path",
+         "Compose file",
+         fetch_value(runtime, :compose_path),
+         "runtime"
+       )
+     ] ++
+       indexed_artifact_refs(
+         "runtime_log",
+         "Runtime log",
+         fetch_value(runtime, :logs, []),
+         "runtime"
+       ) ++
+       indexed_artifact_refs(
+         "runtime_config",
+         "Runtime config",
+         fetch_value(runtime, :configs, []),
+         "runtime"
+       ) ++ simulation_artifact_refs(simulation))
+    |> dedupe_artifact_refs()
+  end
+
+  defp artifact_bundle_review_refs(review) do
+    [
+      artifact_ref_item(
+        "request_snapshot",
+        "Request snapshot",
+        fetch_value(review, :request_snapshot),
+        "review"
+      ),
+      artifact_ref_item(
+        "compare_report",
+        "Compare report",
+        fetch_value(review, :compare_report),
+        "review"
+      ),
+      artifact_ref_item(
+        "rollback_evidence",
+        "Rollback evidence",
+        fetch_value(review, :rollback_evidence),
+        "review"
+      )
+    ]
+    |> dedupe_artifact_refs()
+  end
+
+  defp artifact_bundle_declared_lane_refs(declared_lane_evidence) do
+    [
+      artifact_ref_item(
+        "attach_ref",
+        "Attach evidence",
+        fetch_value(declared_lane_evidence, :attach_ref),
+        "bounded_standards"
+      ),
+      artifact_ref_item(
+        "registration_ref",
+        "Registration evidence",
+        fetch_value(declared_lane_evidence, :registration_ref),
+        "bounded_standards"
+      ),
+      artifact_ref_item(
+        "pdu_session_ref",
+        "PDU session evidence",
+        fetch_value(declared_lane_evidence, :pdu_session_ref),
+        "bounded_standards"
+      ),
+      artifact_ref_item(
+        "ping_ref",
+        "Ping evidence",
+        fetch_value(declared_lane_evidence, :ping_ref),
+        "bounded_standards"
+      ),
+      artifact_ref_item(
+        "rollback_ref",
+        "Rollback evidence",
+        fetch_value(declared_lane_evidence, :rollback_ref),
+        "bounded_standards"
+      )
+    ]
+    |> dedupe_artifact_refs()
+  end
+
+  defp simulation_artifact_refs(simulation) when is_map(simulation) do
+    [
+      artifact_ref_item(
+        "simulation_attach",
+        "Simulation attach",
+        fetch_value(simulation, :attach_ref),
+        "runtime"
+      ),
+      artifact_ref_item(
+        "simulation_registration",
+        "Simulation registration",
+        fetch_value(simulation, :registration_ref),
+        "runtime"
+      ),
+      artifact_ref_item(
+        "simulation_session",
+        "Simulation session",
+        fetch_value(simulation, :session_ref),
+        "runtime"
+      ),
+      artifact_ref_item(
+        "simulation_ping",
+        "Simulation ping",
+        fetch_value(simulation, :ping_ref),
+        "runtime"
+      ),
+      artifact_ref_item(
+        "simulation_rollback",
+        "Simulation rollback",
+        fetch_value(simulation, :rollback_ref),
+        "runtime"
+      )
+    ]
+    |> dedupe_artifact_refs()
+  end
+
+  defp simulation_artifact_refs(_simulation), do: []
+
+  defp artifact_bundle_provenance(payload, runtime, declared_lane_evidence) do
+    simulation = fetch_value(runtime, :simulation, %{})
+    conformance_claim = fetch_value(payload, :conformance_claim, %{})
+    simulation_refs = simulation_artifact_refs(simulation)
+    declared_lane_refs = artifact_bundle_declared_lane_refs(declared_lane_evidence)
+
+    []
+    |> maybe_append_provenance(
+      map_size(simulation) > 0 or simulation_refs != [],
+      %{
+        lane: "Repo-local simulation",
+        proof_kind: "repo_local_simulation",
+        note:
+          "Simulation evidence stays reviewable but remains rehearsal-only and separate from bounded standards proof.",
+        reference_count: length(simulation_refs)
+      }
+      |> compact_map()
+    )
+    |> maybe_append_provenance(
+      map_size(conformance_claim) > 0 or declared_lane_refs != [],
+      %{
+        lane: "Bounded standards",
+        proof_kind: "bounded_standards",
+        note:
+          "Bounded standards evidence remains explicit and separate from repo-local simulation counters.",
+        evidence_tier: conformance_claim |> fetch_value(:evidence_tier) |> to_string_value(),
+        conformance_profile: conformance_claim |> fetch_value(:profile),
+        baseline_ref: conformance_claim |> fetch_value(:baseline_ref),
+        target_profile:
+          fetch_value(payload, :target_profile) ||
+            fetch_value(declared_lane_evidence, :target_profile),
+        core_profile: fetch_value(payload, :core_profile),
+        reference_count: length(declared_lane_refs)
+      }
+      |> compact_map()
+    )
+  end
+
+  defp decode_rollback_replay(payload, path, artifact_bundle) do
+    bundle = fetch_value(payload, :bundle, %{})
+    workflow = fetch_value(bundle, :workflow, %{})
+    review = fetch_value(bundle, :review, %{})
+    rollback_status = fetch_value(payload, :rollback_status, %{})
+    artifacts = fetch_value(payload, :artifacts, [])
+    suggested_next = decode_string_list(fetch_value(payload, :suggested_next, []))
+    review_checks = decode_review_checks(fetch_value(payload, :checks, []))
+
+    rollback_refs =
+      ([
+         artifact_ref_item(
+           "rollback_plan_ref",
+           "Rollback plan",
+           fetch_value(payload, :rollback_plan_ref),
+           "rollback"
+         ),
+         artifact_ref_item(
+           "workflow_rollback_plan",
+           "Workflow rollback plan",
+           fetch_value(workflow, :rollback_plan),
+           "rollback"
+         ),
+         artifact_ref_item(
+           "rollback_status_ref",
+           "Rollback status evidence",
+           fetch_value(rollback_status, :evidence_ref),
+           "rollback"
+         ),
+         artifact_ref_item(
+           "review_rollback_evidence",
+           "Rollback evidence",
+           fetch_value(review, :rollback_evidence),
+           "rollback"
+         )
+       ] ++
+         matching_artifact_refs(artifacts, "rollback", [
+           {"rollback_evidence", "Rollback evidence", "rollback-evidence.json"},
+           {"post_rollback_verify", "Post-rollback verify", "post-rollback-verify.json"},
+           {"rollback_artifact", "Rollback artifact", "rollback.json"}
+         ]))
+      |> dedupe_artifact_refs()
+
+    replay_refs =
+      ([
+         artifact_ref_item(
+           "request_snapshot",
+           "Request snapshot",
+           fetch_value(review, :request_snapshot),
+           "replay"
+         ),
+         artifact_ref_item(
+           "compare_report",
+           "Compare report",
+           fetch_value(review, :compare_report),
+           "replay"
+         ),
+         artifact_ref_item(
+           "source_plan",
+           "Source plan",
+           fetch_value(payload, :source_plan),
+           "replay"
+         ),
+         artifact_ref_item(
+           "capture_ref",
+           "Capture bundle",
+           fetch_value(workflow, :capture),
+           "replay"
+         )
+       ] ++
+         matching_artifact_refs(artifacts, "replay", [
+           {"request_snapshot", "Request snapshot", "request.json"},
+           {"compare_report", "Compare report", "compare-report.json"}
+         ]))
+      |> dedupe_artifact_refs()
+
+    status =
+      fetch_value(rollback_status, :status) ||
+        if(fetch_value(payload, :command) == "rollback",
+          do: fetch_value(payload, :status),
+          else: nil
+        ) ||
+        if(truthy?(fetch_value(payload, :rollback_available)), do: "ok", else: nil)
+
+    if (rollback_refs != [] or replay_refs != [] or review_checks != [] or suggested_next != [] or
+          status) || fetch_value(payload, :rollback_target) ||
+         fetch_value(payload, :comparison_scope) do
+      %{
+        source_ref: Path.expand(path),
+        summary: fetch_value(payload, :summary),
+        status: status,
+        reason: fetch_value(rollback_status, :reason),
+        rollback_target: fetch_value(payload, :rollback_target),
+        restored_from: fetch_value(payload, :restored_from),
+        comparison_scope: fetch_value(payload, :comparison_scope),
+        rollback_available: truthy?(fetch_value(payload, :rollback_available)),
+        rollback_refs: rollback_refs,
+        replay_refs: replay_refs,
+        suggested_next: suggested_next,
+        review_checks: review_checks,
+        provenance: if(is_map(artifact_bundle), do: artifact_bundle.provenance || [], else: [])
+      }
+    else
+      nil
+    end
+  end
+
+  defp decode_review_checks(checks) when is_list(checks) do
+    checks
+    |> Enum.map(fn
+      check when is_map(check) ->
+        %{
+          name: check |> fetch_value(:name) |> to_string_value(),
+          status: check |> fetch_value(:status) |> to_string_value(),
+          detail: check |> fetch_value(:detail)
+        }
+        |> compact_map()
+
+      _ ->
+        nil
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp decode_review_checks(_checks), do: []
+
+  defp decode_string_list(values) when is_list(values) do
+    values
+    |> Enum.filter(&is_binary/1)
+  end
+
+  defp decode_string_list(_values), do: []
+
+  defp maybe_append_provenance(entries, true, entry) when is_map(entry) and map_size(entry) > 0,
+    do: entries ++ [entry]
+
+  defp maybe_append_provenance(entries, _condition, _entry), do: entries
+
+  defp matching_artifact_refs(refs, kind, definitions) when is_list(refs) do
+    Enum.flat_map(definitions, fn {id, label, suffix} ->
+      refs
+      |> Enum.filter(&(is_binary(&1) and String.ends_with?(Path.basename(&1), suffix)))
+      |> Enum.map(&artifact_ref_item(id, label, &1, kind))
+    end)
+  end
+
+  defp matching_artifact_refs(_refs, _kind, _definitions), do: []
+
+  defp indexed_artifact_refs(id_prefix, label, refs, kind) when is_list(refs) do
+    multiple? = length(refs) > 1
+
+    refs
+    |> Enum.with_index(1)
+    |> Enum.map(fn {ref, index} ->
+      index_label = if(multiple?, do: "#{label} #{index}", else: label)
+      artifact_ref_item("#{id_prefix}_#{index}", index_label, ref, kind)
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp indexed_artifact_refs(_id_prefix, _label, _refs, _kind), do: []
+
+  defp dedupe_artifact_refs(refs) do
+    refs
+    |> Enum.reject(&is_nil/1)
+    |> Enum.uniq_by(& &1.ref)
+  end
+
+  defp artifact_ref_item(id, label, ref, kind) when is_binary(ref) and ref != "" do
+    %{id: id, label: label, ref: ref, kind: kind}
+  end
+
+  defp artifact_ref_item(_id, _label, _ref, _kind), do: nil
+
+  defp compact_map(map) do
+    map
+    |> Enum.reject(fn {_key, value} -> value in [nil, "", []] end)
+    |> Map.new()
+  end
+
   defp recent_native_contract_runs(recent_changes, limit) do
     recent_changes
     |> Enum.filter(&(&1.native_contract && map_size(&1.native_contract) > 0))
@@ -826,67 +1268,71 @@ defmodule RanObservability.Dashboard.Snapshot do
   defp native_contract_summary(_map, _source), do: nil
 
   defp native_contract_timing_fields(map) when is_map(map) do
-    session = native_contract_section(map, :session)
-    session_source = if map_size(session) > 0, do: session, else: map
+    if native_contract_context?(map) do
+      session = native_contract_section(map, :session)
+      session_source = if map_size(session) > 0, do: session, else: map
 
-    drain =
-      native_contract_section(session_source, :drain)
-      |> case do
-        %{} = nested when map_size(nested) > 0 -> nested
-        _ -> native_contract_section(map, :drain)
-      end
+      drain =
+        native_contract_section(session_source, :drain)
+        |> case do
+          %{} = nested when map_size(nested) > 0 -> nested
+          _ -> native_contract_section(map, :drain)
+        end
 
-    queue =
-      native_contract_section(session_source, :queue)
-      |> case do
-        %{} = nested when map_size(nested) > 0 -> nested
-        _ -> native_contract_section(map, :queue)
-      end
+      queue =
+        native_contract_section(session_source, :queue)
+        |> case do
+          %{} = nested when map_size(nested) > 0 -> nested
+          _ -> native_contract_section(map, :queue)
+        end
 
-    timing =
-      native_contract_section(session_source, :timing)
-      |> case do
-        %{} = nested when map_size(nested) > 0 -> nested
-        _ -> native_contract_section(map, :timing)
-      end
+      timing =
+        native_contract_section(session_source, :timing)
+        |> case do
+          %{} = nested when map_size(nested) > 0 -> nested
+          _ -> native_contract_section(map, :timing)
+        end
 
-    %{
-      session_epoch:
-        contract_field_any(session, [:session_epoch, :epoch]) ||
-          contract_field_any(map, [:session_epoch, :epoch]),
-      session_started_at:
-        contract_field_any(session, [:session_started_at, :started_at]) ||
-          contract_field_any(map, [:session_started_at, :started_at]),
-      last_submit_at:
-        contract_field_any(session, [:last_submit_at]) ||
-          contract_field_any(map, [:last_submit_at]),
-      last_uplink_at:
-        contract_field_any(session, [:last_uplink_at]) ||
-          contract_field_any(map, [:last_uplink_at]),
-      last_resume_at:
-        contract_field_any(session, [:last_resume_at]) ||
-          contract_field_any(map, [:last_resume_at]),
-      drain_state:
-        contract_field_any(drain, [:drain_state, :state]) ||
-          contract_field_any(map, [:drain_state, :state]),
-      drain_reason:
-        contract_field_any(drain, [:drain_reason, :reason]) ||
-          contract_field_any(map, [:drain_reason, :reason]),
-      queue_depth:
-        contract_field_any(queue, [:queue_depth, :depth]) ||
-          contract_field_any(map, [:queue_depth, :depth]),
-      deadline_miss_count:
-        contract_field_any(timing, [:deadline_miss_count]) ||
-          contract_field_any(map, [:deadline_miss_count]),
-      timing_window_us:
-        contract_field_any(timing, [:timing_window_us, :window_us]) ||
-          contract_field_any(map, [:timing_window_us, :window_us]),
-      timing_budget_us:
-        contract_field_any(timing, [:timing_budget_us, :budget_us]) ||
-          contract_field_any(map, [:timing_budget_us, :budget_us])
-    }
-    |> Enum.reject(fn {_key, value} -> is_nil(value) end)
-    |> Enum.into(%{})
+      %{
+        session_epoch:
+          contract_field_any(session, [:session_epoch, :epoch]) ||
+            contract_field_any(map, [:session_epoch, :epoch]),
+        session_started_at:
+          contract_field_any(session, [:session_started_at, :started_at]) ||
+            contract_field_any(map, [:session_started_at, :started_at]),
+        last_submit_at:
+          contract_field_any(session, [:last_submit_at]) ||
+            contract_field_any(map, [:last_submit_at]),
+        last_uplink_at:
+          contract_field_any(session, [:last_uplink_at]) ||
+            contract_field_any(map, [:last_uplink_at]),
+        last_resume_at:
+          contract_field_any(session, [:last_resume_at]) ||
+            contract_field_any(map, [:last_resume_at]),
+        drain_state:
+          contract_field_any(drain, [:drain_state, :state]) ||
+            contract_field_any(map, [:drain_state, :state]),
+        drain_reason:
+          contract_field_any(drain, [:drain_reason, :reason]) ||
+            contract_field_any(map, [:drain_reason, :reason]),
+        queue_depth:
+          contract_field_any(queue, [:queue_depth, :depth]) ||
+            contract_field_any(map, [:queue_depth, :depth]),
+        deadline_miss_count:
+          contract_field_any(timing, [:deadline_miss_count]) ||
+            contract_field_any(map, [:deadline_miss_count]),
+        timing_window_us:
+          contract_field_any(timing, [:timing_window_us, :window_us]) ||
+            contract_field_any(map, [:timing_window_us, :window_us]),
+        timing_budget_us:
+          contract_field_any(timing, [:timing_budget_us, :budget_us]) ||
+            contract_field_any(map, [:timing_budget_us, :budget_us])
+      }
+      |> Enum.reject(fn {_key, value} -> is_nil(value) end)
+      |> Enum.into(%{})
+    else
+      %{}
+    end
   end
 
   defp native_contract_timing_fields(_map), do: %{}
@@ -927,15 +1373,47 @@ defmodule RanObservability.Dashboard.Snapshot do
   end
 
   defp native_contract_healthish?(map) do
-    Enum.any?([:checks, :tone, :state], fn key ->
-      case fetch_value(map, key, nil) do
-        nil -> false
-        [] -> false
-        %{} -> false
-        _ -> true
-      end
-    end)
+    native_contract_context?(map) and
+      Enum.any?([:checks, :tone, :state], fn key ->
+        case fetch_value(map, key, nil) do
+          nil -> false
+          [] -> false
+          %{} -> false
+          _ -> true
+        end
+      end)
   end
+
+  defp native_contract_context?(map) when is_map(map) do
+    Enum.any?(
+      [
+        :backend_family,
+        :worker_kind,
+        :transport_worker,
+        :execution_lane,
+        :device_session_ref,
+        :policy_surface_ref,
+        :handshake_ref,
+        :probe_evidence_ref,
+        :session,
+        :drain,
+        :queue,
+        :timing,
+        :health,
+        :signals
+      ],
+      fn key ->
+        case fetch_value(map, key, nil) do
+          nil -> false
+          [] -> false
+          %{} = nested -> map_size(nested) > 0
+          _ -> true
+        end
+      end
+    )
+  end
+
+  defp native_contract_context?(_map), do: false
 
   defp native_contract_signals(map) do
     direct = native_contract_signal_fields(map)

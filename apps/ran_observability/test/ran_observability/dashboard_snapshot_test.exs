@@ -159,12 +159,22 @@ defmodule RanObservability.DashboardSnapshotTest do
     skills = Path.join(tmp_dir, "skills")
 
     File.mkdir_p!(Path.join(artifacts, "plans"))
+    File.mkdir_p!(Path.join(artifacts, "captures"))
+    File.mkdir_p!(Path.join(artifacts, "changes"))
     File.mkdir_p!(Path.join(artifacts, "observations"))
     File.mkdir_p!(Path.join(artifacts, "verify"))
+    File.mkdir_p!(Path.join(artifacts, "approvals"))
+    File.mkdir_p!(Path.join(artifacts, "rollback_plans"))
+    File.mkdir_p!(Path.join(artifacts, "config_snapshots"))
+    File.mkdir_p!(Path.join(artifacts, "control_snapshots"))
     File.mkdir_p!(Path.join(artifacts, "runtime/demo"))
+    File.mkdir_p!(Path.join(artifacts, "runtime/chg-review-001/logs"))
+    File.mkdir_p!(Path.join(artifacts, "runtime/chg-review-001/conf"))
     File.mkdir_p!(Path.join(artifacts, "releases/bootstrap-ui-001"))
     File.mkdir_p!(Path.join(artifacts, "deploy_preview/quick_install/20260323T095333"))
     File.mkdir_p!(Path.join(artifacts, "install_runs/ran-lab-02/20260323T105012-ship"))
+    File.mkdir_p!(Path.join(artifacts, "replacement/capture/chg-review-001"))
+    File.mkdir_p!(Path.join(artifacts, "replacement/rollback/chg-review-001"))
 
     File.mkdir_p!(
       Path.join(artifacts, "remote_runs/ran-lab-01/20260323T005029-precheck/fetch/extracted")
@@ -401,6 +411,174 @@ defmodule RanObservability.DashboardSnapshotTest do
               "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
           }
         }
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "captures/inc-review-001-request.json"),
+      JSON.encode!(%{
+        "scope" => "ue_session",
+        "change_id" => "chg-review-001",
+        "incident_id" => "inc-review-001",
+        "rollback_target" => "oai_reference",
+        "reason" => "capture operator-facing drilldowns"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "captures/inc-review-001-compare-report.json"),
+      JSON.encode!(%{
+        "comparison_scope" => "registration",
+        "gate_class" => "blocked",
+        "failure_class" => "registration_failure",
+        "operator_next_step" => "review the compare report before replaying the bounded lane"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "captures/inc-review-001-rollback-evidence.json"),
+      JSON.encode!(%{
+        "rollback_target" => "oai_reference",
+        "rollback_reason" => "registration rejected on the bounded standards lane",
+        "operator_notes" => "rollback remained explicit and reviewable"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "rollback_plans/chg-review-001.json"),
+      JSON.encode!(%{
+        "change_id" => "chg-review-001",
+        "rollback_target" => "oai_reference",
+        "target_backend" => "replacement_shadow"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "approvals/chg-review-001-rollback.json"),
+      JSON.encode!(%{
+        "approved" => true,
+        "approved_by" => "operator.dashboard"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "config_snapshots/inc-review-001.json"),
+      JSON.encode!(%{
+        "change_id" => "chg-review-001",
+        "incident_id" => "inc-review-001"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "control_snapshots/inc-review-001.json"),
+      JSON.encode!(%{
+        "change_id" => "chg-review-001",
+        "incident_id" => "inc-review-001"
+      })
+    )
+
+    File.write!(
+      Path.join(artifacts, "captures/inc-review-001.json"),
+      JSON.encode!(%{
+        "status" => "captured",
+        "command" => "capture-artifacts",
+        "scope" => "ue_session",
+        "target_ref" => "n79_single_ru_single_ue_lab_v1",
+        "cell_group" => "cg-001",
+        "change_id" => "chg-review-001",
+        "incident_id" => "inc-review-001",
+        "summary" =>
+          "Capture preserved the artifact bundle plus rollback and replay evidence for the bounded review lane.",
+        "target_backend" => "replacement_shadow",
+        "target_profile" => "n79_single_ru_single_ue_lab_v1",
+        "core_profile" => "open5gs_nsa_lab_v1",
+        "comparison_scope" => "registration",
+        "rollback_target" => "oai_reference",
+        "rollback_available" => true,
+        "source_plan" => "artifacts/plans/chg-review-001.json",
+        "suggested_next" => [
+          "inspect the compare report before replaying the bounded lane",
+          "confirm the rollback target remains explicit before the next mutation"
+        ],
+        "checks" => [
+          %{
+            "name" => "compare_report_ready",
+            "status" => "ok",
+            "detail" => "the compare report stayed attached to the review bundle"
+          },
+          %{
+            "name" => "rollback_target_explicit",
+            "status" => "ok",
+            "detail" => "rollback target remains explicit for replay and recovery"
+          }
+        ],
+        "rollback_status" => %{
+          "status" => "ok",
+          "evidence_ref" => "artifacts/captures/inc-review-001-rollback-evidence.json",
+          "reason" =>
+            "rollback evidence and replay inputs stay attached to the focused capture bundle"
+        },
+        "conformance_claim" => %{
+          "profile" => "oai_visible_5g_standards_baseline_v1",
+          "evidence_tier" => "milestone_proof",
+          "baseline_ref" =>
+            "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
+        },
+        "bundle" => %{
+          "manifest" => %{
+            "ref" => "inc-review-001",
+            "captured_at" => "2026-03-23T11:05:00Z",
+            "scope" => "ue_session",
+            "cell_group" => "cg-001",
+            "change_id" => "chg-review-001",
+            "incident_id" => "inc-review-001",
+            "artifact_root" => "artifacts"
+          },
+          "workflow" => %{
+            "plan" => "artifacts/plans/chg-review-001.json",
+            "change_state" => "artifacts/changes/chg-review-001.json",
+            "verify" => "artifacts/verify/chg-review-001.json",
+            "rollback_plan" => "artifacts/rollback_plans/chg-review-001.json",
+            "approvals" => ["artifacts/approvals/chg-review-001-rollback.json"],
+            "config_snapshot" => "artifacts/config_snapshots/inc-review-001.json",
+            "control_snapshot" => "artifacts/control_snapshots/inc-review-001.json",
+            "capture" => "artifacts/captures/inc-review-001.json"
+          },
+          "runtime" => %{
+            "compose_path" => "artifacts/runtime/chg-review-001/docker-compose.yml",
+            "logs" => ["artifacts/runtime/chg-review-001/logs/gnb.log"],
+            "configs" => ["artifacts/runtime/chg-review-001/conf/gnb.conf"],
+            "simulation" => %{
+              "attach_ref" => "artifacts/simulation/attach.json",
+              "registration_ref" => "artifacts/simulation/registration.json",
+              "session_ref" => "artifacts/simulation/session.json",
+              "ping_ref" => "artifacts/simulation/ping.json",
+              "rollback_ref" => "artifacts/simulation/rollback.json"
+            }
+          },
+          "review" => %{
+            "request_snapshot" => "artifacts/captures/inc-review-001-request.json",
+            "compare_report" => "artifacts/captures/inc-review-001-compare-report.json",
+            "rollback_evidence" => "artifacts/captures/inc-review-001-rollback-evidence.json"
+          },
+          "declared_lane_evidence" => %{
+            "target_profile" => "n79_single_ru_single_ue_lab_v1",
+            "attach_ref" => "artifacts/replacement/capture/chg-review-001/attach.json",
+            "registration_ref" =>
+              "artifacts/replacement/capture/chg-review-001/registration.json",
+            "pdu_session_ref" => "artifacts/replacement/capture/chg-review-001/pdu-session.json",
+            "ping_ref" => "artifacts/replacement/capture/chg-review-001/ping.json",
+            "rollback_ref" =>
+              "artifacts/replacement/rollback/chg-review-001/rollback-evidence.json"
+          }
+        },
+        "artifacts" => [
+          "artifacts/captures/inc-review-001.json",
+          "artifacts/captures/inc-review-001-request.json",
+          "artifacts/captures/inc-review-001-compare-report.json",
+          "artifacts/captures/inc-review-001-rollback-evidence.json",
+          "artifacts/replacement/rollback/chg-review-001/post-rollback-verify.json"
+        ]
       })
     )
 
@@ -745,6 +923,51 @@ defmodule RanObservability.DashboardSnapshotTest do
                Enum.any?(change.protocol_state.outcome_rows, fn row ->
                  row.id == "attach" and row.status == "failed"
                end)
+           end)
+
+    assert Enum.any?(snapshot.activity.recent_changes, fn change ->
+             change.id == "chg-review-001" and change.command == "capture-artifacts" and
+               change.artifact_bundle.manifest.ref == "inc-review-001" and
+               change.artifact_bundle.manifest.artifact_root == "artifacts" and
+               Enum.any?(change.artifact_bundle.workflow_refs, fn ref ->
+                 ref.label == "Rollback plan" and
+                   ref.ref =~ "artifacts/rollback_plans/chg-review-001.json"
+               end) and
+               Enum.any?(change.artifact_bundle.runtime_refs, fn ref ->
+                 ref.label == "Simulation registration" and
+                   ref.ref =~ "artifacts/simulation/registration.json"
+               end) and
+               Enum.any?(change.artifact_bundle.review_refs, fn ref ->
+                 ref.label == "Compare report" and
+                   ref.ref =~ "artifacts/captures/inc-review-001-compare-report.json"
+               end) and
+               Enum.any?(change.artifact_bundle.declared_lane_refs, fn ref ->
+                 ref.label == "Rollback evidence" and
+                   ref.ref =~
+                     "artifacts/replacement/rollback/chg-review-001/rollback-evidence.json"
+               end) and
+               Enum.any?(change.artifact_bundle.provenance, fn entry ->
+                 entry.proof_kind == "repo_local_simulation"
+               end) and
+               Enum.any?(change.artifact_bundle.provenance, fn entry ->
+                 entry.proof_kind == "bounded_standards" and
+                   entry.target_profile == "n79_single_ru_single_ue_lab_v1"
+               end) and
+               change.rollback_replay.rollback_target == "oai_reference" and
+               change.rollback_replay.comparison_scope == "registration" and
+               Enum.any?(change.rollback_replay.replay_refs, fn ref ->
+                 ref.label == "Request snapshot" and
+                   ref.ref =~ "artifacts/captures/inc-review-001-request.json"
+               end) and
+               Enum.any?(change.rollback_replay.rollback_refs, fn ref ->
+                 ref.label == "Post-rollback verify" and
+                   ref.ref =~
+                     "artifacts/replacement/rollback/chg-review-001/post-rollback-verify.json"
+               end) and
+               Enum.any?(change.rollback_replay.review_checks, fn check ->
+                 check.name == "rollback_target_explicit" and check.status == "ok"
+               end) and
+               "inspect the compare report before replaying the bounded lane" in change.rollback_replay.suggested_next
            end)
 
     assert [%{host: "ran-lab-01", command: "precheck", fetch_status: "fetched"}] =
