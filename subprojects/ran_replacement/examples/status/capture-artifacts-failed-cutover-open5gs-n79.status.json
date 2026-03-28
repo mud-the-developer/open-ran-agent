@@ -12,7 +12,7 @@
     "evidence_tier": "milestone_proof",
     "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   },
-  "summary": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane.",
+  "summary": "Capture preserved the failed replacement evidence bundle for rollback review, including explicit F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh semantics.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
   "approval_required": false,
@@ -50,6 +50,21 @@
       "detail": "cleanup evidence remains explicit in the preserved review bundle"
     },
     {
+      "name": "F1-C re-establishment guard",
+      "status": "ok",
+      "detail": "F1-C cleanup and retry semantics remain explicit in the preserved review bundle"
+    },
+    {
+      "name": "E1AP bearer re-establishment",
+      "status": "ok",
+      "detail": "E1AP bearer recovery semantics remain explicit in the preserved review bundle"
+    },
+    {
+      "name": "handover_adjacent_refresh_bounded",
+      "status": "ok",
+      "detail": "the preserved bundle keeps the first handover-adjacent refresh bounded to the declared single-lane profile"
+    },
+    {
       "name": "registration_reviewed",
       "status": "ok",
       "detail": "registration-path evidence is part of the review bundle"
@@ -68,7 +83,7 @@
   "rollback_status": {
     "status": "pending",
     "evidence_ref": "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json",
-    "reason": "rollback is available but has not yet been executed"
+    "reason": "rollback is available while F1-C/E1AP release and re-establishment remain under review"
   },
   "gate_class": "blocked",
   "release_status": {
@@ -194,10 +209,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -228,11 +244,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"

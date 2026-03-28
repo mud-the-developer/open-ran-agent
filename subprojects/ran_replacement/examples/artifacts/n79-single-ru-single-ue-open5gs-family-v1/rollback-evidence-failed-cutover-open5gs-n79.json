@@ -53,10 +53,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -87,11 +88,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"
@@ -128,13 +129,13 @@
     "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json"
   ],
   "rollback_id": "rbk-chg-ran-repl-capture-cutover-001",
-  "rollback_reason": "The captured mismatch keeps rollback explicit until the lane is corrected.",
+  "rollback_reason": "The captured mismatch keeps rollback explicit until the F1-C/E1AP release and re-establishment trail is corrected.",
   "triggering_gate": "blocked",
   "pre_rollback_state": {
     "gate_class": "blocked",
     "compare_report_ref": "artifacts/captures/inc-ran-repl-cutover-001-compare-report.json",
     "cutover_state": "replacement_primary",
-    "observed_problem": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+    "observed_problem": "Capture preserved the failed replacement evidence bundle for rollback review, including explicit F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh semantics."
   },
   "post_rollback_state": {
     "rollback_target": "oai_reference",
@@ -151,5 +152,5 @@
       "review_path_auditable"
     ]
   },
-  "operator_notes": "Rollback was not executed, but the captured evidence preserves the explicit recovery path and the bounded Reset claim."
+  "operator_notes": "Rollback was not executed, but the captured evidence preserves the explicit F1-C/E1AP recovery trail, including the bounded handover-adjacent refresh state."
 }

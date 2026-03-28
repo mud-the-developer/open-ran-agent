@@ -12,7 +12,7 @@
     "evidence_tier": "milestone_proof",
     "baseline_ref": "subprojects/ran_replacement/notes/16-oai-visible-5g-standards-conformance-baseline.md"
   },
-  "summary": "F1E1-control-edge observe confirms that control-plane association diverged from the planned cutover lane.",
+  "summary": "Control-plane replacement observe confirms that F1-C release and re-establishment guardrails plus E1AP bearer release, re-establishment, and bounded handover-adjacent refresh diverged from the planned cutover lane.",
   "target_backend": "replacement_primary",
   "rollback_target": "oai_reference",
   "approval_required": false,
@@ -24,7 +24,7 @@
   ],
   "suggested_next": [
     "capture artifacts for the failed cutover",
-    "review f1-c and e1ap association state against the compare report",
+    "review F1-C/E1AP release and re-establishment state against the compare report",
     "prepare rollback if the divergence persists"
   ],
   "checks": [
@@ -41,32 +41,32 @@
     {
       "name": "f1e1_divergence_explained",
       "status": "degraded",
-      "detail": "control-plane association and bearer coordination no longer match the expected compare report"
+      "detail": "F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh no longer match the expected compare report"
     }
   ],
   "plane_status": {
     "c_plane": {
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/cutover-control-plane.json",
-      "reason": "control-plane state is only partially healthy after cutover"
+      "reason": "control-plane release and re-establishment state is partially healthy but not ready for leave-running"
     }
   },
   "interface_status": {
     "f1_c": {
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/f1-c-cutover.json",
-      "reason": "association or configuration state diverged from the planned lane"
+      "reason": "UE-context release, re-establishment guardrails, or single-lane handover-adjacent refresh diverged from the planned F1-C lane"
     },
     "e1ap": {
       "status": "degraded",
       "evidence_ref": "artifacts/replacement/observe/e1ap-cutover.json",
-      "reason": "bearer or activity-state coordination diverged from the compare report"
+      "reason": "bearer release, re-establishment, or single-lane handover-adjacent refresh diverged from the compare report"
     }
   },
   "rollback_status": {
     "status": "pending",
     "evidence_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-failed-cutover-open5gs-n79.json",
-    "reason": "rollback is available but not yet executed"
+    "reason": "rollback is available while F1-C/E1AP release and re-establishment remain under review"
   },
   "failure_class": "cutover_or_rollback_failure",
   "ngap_subset": {
@@ -118,10 +118,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -152,11 +153,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"

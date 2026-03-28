@@ -81,10 +81,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -115,11 +116,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"
@@ -144,7 +145,7 @@
       ]
     }
   },
-  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed.",
+  "summary": "Rollback returned the gnb lane from replacement_primary to the declared oai_reference target after replacement review failed, keeping the F1-C/E1AP release and re-establishment trail explicit.",
   "target_backend": "oai_reference",
   "rollback_target": "oai_reference",
   "restored_from": "replacement_primary",
@@ -185,6 +186,21 @@
       "detail": "cleanup evidence remains explicit after rollback",
       "name": "UE Context Release",
       "status": "ok"
+    },
+    {
+      "name": "F1-C re-establishment guard",
+      "status": "ok",
+      "detail": "F1-C cleanup and retry semantics remain explicit after rollback"
+    },
+    {
+      "name": "E1AP bearer re-establishment",
+      "status": "ok",
+      "detail": "E1AP bearer recovery semantics remain explicit after rollback"
+    },
+    {
+      "name": "handover_adjacent_refresh_bounded",
+      "status": "ok",
+      "detail": "the bounded handover-adjacent refresh stays explicit without implying mobility transfer"
     },
     {
       "detail": "registration-path evidence is part of the review bundle",

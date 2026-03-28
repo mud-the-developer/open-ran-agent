@@ -684,11 +684,12 @@ defmodule RanActionGateway.CLITest do
       assert observe.core_profile == "open5gs_nsa_lab_v1"
       assert observe.gate_class == "degraded"
       assert observe.failure_class == "cutover_or_rollback_failure"
+      assert observe.summary =~ "handover-adjacent refresh"
 
       assert get_in(observe, [:plane_status, :c_plane, :status]) == "degraded"
 
       assert get_in(observe, [:plane_status, :c_plane, :reason]) =~
-               "partially healthy but not ready for leave-running"
+               "release and re-establishment state is partially healthy"
 
       assert get_in(observe, [:plane_status, :c_plane, :evidence_ref]) =~
                "artifacts/replacement/observe/"
@@ -699,7 +700,7 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/observe/"
 
       assert get_in(observe, [:interface_status, "f1_c", :reason]) =~
-               "association or configuration state diverged"
+               "UE-context release, re-establishment guardrails"
 
       assert get_in(observe, [:interface_status, "e1ap", :status]) == "degraded"
 
@@ -707,7 +708,28 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/observe/"
 
       assert get_in(observe, [:interface_status, "e1ap", :reason]) =~
-               "bearer or activity-state coordination diverged"
+               "bearer release, re-establishment"
+
+      assert "UE context re-establishment guard" in get_in(observe, [
+               :protocol_claims,
+               "f1_c",
+               "required_procedures"
+             ])
+
+      assert "UE context modification (single-lane handover-adjacent refresh)" in get_in(
+               observe,
+               [:protocol_claims, "f1_c", "required_procedures"]
+             )
+
+      assert "Bearer context release" in get_in(
+               observe,
+               [:protocol_claims, "e1ap", "required_procedures"]
+             )
+
+      assert "Bearer context modification (single-lane handover-adjacent refresh)" in get_in(
+               observe,
+               [:protocol_claims, "e1ap", "required_procedures"]
+             )
 
       assert get_in(observe, [:rollback_status, :status]) == "pending"
 
@@ -715,7 +737,7 @@ defmodule RanActionGateway.CLITest do
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
 
       assert get_in(observe, [:rollback_status, :reason]) =~
-               "rollback is available but not yet executed"
+               "release and re-establishment remain under review"
     end)
   end
 
@@ -842,6 +864,7 @@ defmodule RanActionGateway.CLITest do
       assert capture.rollback_target == "oai_reference"
       assert capture.rollback_available == true
       assert capture.summary =~ "failed replacement evidence bundle"
+      assert capture.summary =~ "handover-adjacent refresh semantics"
       assert capture.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert capture.conformance_claim.evidence_tier == "milestone_proof"
       assert capture.core_endpoint.n2["amf_host"] == "10.41.83.45"
@@ -859,6 +882,9 @@ defmodule RanActionGateway.CLITest do
       assert get_in(capture, [:rollback_status, :evidence_ref]) ==
                "artifacts/replacement/n79_single_ru_single_ue_lab_v1/rollback.json"
 
+      assert get_in(capture, [:rollback_status, :reason]) =~
+               "release and re-establishment remain under review"
+
       assert get_in(capture, [:ngap_procedure_trace, :last_observed]) == "UE Context Release"
 
       assert Map.new(capture.ngap_procedure_trace.procedures, &{&1.name, &1.status})["Reset"] ==
@@ -872,6 +898,26 @@ defmodule RanActionGateway.CLITest do
       assert Enum.any?(
                capture.checks,
                &(&1["name"] == "compare_report_ready" and &1["status"] == "ok")
+             )
+
+      assert Enum.any?(
+               capture.checks,
+               &(&1["name"] == "F1-C re-establishment guard" and &1["status"] == "ok")
+             )
+
+      assert Enum.any?(
+               capture.checks,
+               &(&1["name"] == "E1AP bearer re-establishment" and &1["status"] == "ok")
+             )
+
+      assert "UE context modification (single-lane handover-adjacent refresh)" in get_in(
+               capture,
+               [:protocol_claims, "f1_c", "required_procedures"]
+             )
+
+      assert "Bearer context modification (single-lane handover-adjacent refresh)" in get_in(
+               capture,
+               [:protocol_claims, "e1ap", "required_procedures"]
              )
 
       assert Enum.any?(capture.artifacts, &String.ends_with?(&1, "-compare-report.json"))
@@ -898,8 +944,25 @@ defmodule RanActionGateway.CLITest do
              )
 
       assert Enum.any?(
+               cutover_compare_report["diff_summary"],
+               &String.contains?(&1, "handover-adjacent refresh")
+             )
+
+      assert "UE context re-establishment guard" in get_in(
+               cutover_compare_report,
+               ["protocol_claims", "f1_c", "required_procedures"]
+             )
+
+      assert Enum.any?(
                cutover_rollback_evidence["evidence_refs"],
                &String.ends_with?(&1, "/reset.json")
+             )
+
+      assert cutover_rollback_evidence["operator_notes"] =~ "handover-adjacent refresh state"
+
+      assert "Bearer context re-establishment" in get_in(
+               cutover_rollback_evidence,
+               ["protocol_claims", "e1ap", "required_procedures"]
              )
 
       rollback_payload =
@@ -920,6 +983,7 @@ defmodule RanActionGateway.CLITest do
       assert rollback.restored_from == "replacement_primary"
       assert rollback.summary =~ "from replacement_primary to the declared oai_reference target"
       assert rollback.summary =~ "declared oai_reference target"
+      assert rollback.summary =~ "release and re-establishment trail explicit"
       assert rollback.target_profile == "n79_single_ru_single_ue_lab_v1"
       assert rollback.conformance_claim.evidence_tier == "milestone_proof"
       assert "review the compare report that triggered rollback" in rollback.suggested_next
@@ -945,6 +1009,10 @@ defmodule RanActionGateway.CLITest do
                check["name"] == "approval_evidence_present" and check["status"] == "ok"
              end)
 
+      assert Enum.any?(rollback.checks, fn check ->
+               check["name"] == "handover_adjacent_refresh_bounded" and check["status"] == "ok"
+             end)
+
       assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/post-rollback-verify.json"))
       assert Enum.any?(rollback.artifacts, &String.ends_with?(&1, "/reset.json"))
       assert File.exists?(Store.change_state_path("chg-ran-repl-rollback-001"))
@@ -963,6 +1031,11 @@ defmodule RanActionGateway.CLITest do
 
       assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~
                "reviewable without SSH archaeology"
+
+      assert "Bearer context modification (single-lane handover-adjacent refresh)" in get_in(
+               post_rollback_verify,
+               ["protocol_claims", "e1ap", "required_procedures"]
+             )
 
       assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
     end)

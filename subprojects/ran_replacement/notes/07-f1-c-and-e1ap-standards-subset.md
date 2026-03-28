@@ -35,16 +35,23 @@ The milestone 1 control-plane subset should cover the procedures needed to compl
   - gNB to DU association and setup
   - DU to CU configuration exchange
   - cell and serving-cell setup needed for the declared target profile
-  - UE context creation and release
+  - UE context creation, release, and re-establishment guard state
+  - single-lane UE context refresh that stays inside the declared DU and serving-cell ownership
   - bearer or DRB control progression required for registration and session setup
   - failure and release handling needed for deterministic rollback evidence
 - `E1AP`
   - CU-CP and CU-UP association and setup
   - bearer or activity-state coordination needed for the target profile
   - control-path state needed to support the declared attach and session path
-  - clean release and re-establishment behavior during cutover or rollback
+  - clean bearer release and re-establishment behavior during cutover or rollback
+  - single-lane bearer-context refresh that remains handover-adjacent without moving ownership across DU or CU-UP boundaries
 
 The subset must be standards-correct for the supported procedure set. Unsupported procedures should be explicitly out of scope rather than partially faked.
+
+The first handover-adjacent `F1-C` and `E1AP` transitions stay bounded:
+
+- they may refresh context or bearer state inside the already-declared single-lane ownership path
+- they must not imply multi-DU, multi-cell, path-switch, or source-target mobility support
 
 ## State Assumptions
 
@@ -129,7 +136,7 @@ This note does not claim:
 - full `F1-C` procedure parity beyond the target-profile subset
 - full `E1AP` procedure parity beyond the target-profile subset
 - multi-cell control-plane scaling
-- handover
+- handover transfer or path switch across a new DU, CU-UP, or serving-cell ownership boundary
 - cross-lab portability
 - replacing the real `Open5GS` core in this track
 - RT hot-path implementation details
