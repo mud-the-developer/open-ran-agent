@@ -45,6 +45,10 @@ This section is the narrative path through the repo's current architecture. Read
     <strong>15. Support posture</strong>
     <span>Current control/evidence surfaces, evidence-backed runtime lanes, and future expansion lanes such as vendor-backed Aerial and external cuMAC.</span>
   </a>
+  <a class="doc-hub-card" href="/architecture/16-oai-rfsim-ue-sim-dashboard-walkthrough">
+    <strong>16. OAI RFsim dashboard walkthrough</strong>
+    <span>Reviewer path for the repo-local OAI RFsim + UE sim lane, dashboard proof surface, and linked issue/PR evidence.</span>
+  </a>
 </div>
 
 ## Suggested reading order
@@ -54,3 +58,4 @@ This section is the narrative path through the repo's current architecture. Read
 3. Read [09-oai-du-runtime-bridge](./09-oai-du-runtime-bridge.md) and [12-target-host-deployment](./12-target-host-deployment.md) if you care about real host rollout.
 4. Keep [14-debug-and-evidence-workflow](./14-debug-and-evidence-workflow.md) open when running changes.
 5. Use [15-production-control-evidence-and-interoperability-lanes](./15-production-control-evidence-and-interoperability-lanes.md) when you need the current bounded support versus future-expansion boundary.
+6. Use [16-oai-rfsim-ue-sim-dashboard-walkthrough](./16-oai-rfsim-ue-sim-dashboard-walkthrough.md) when you need the operator-facing simulation dashboard proof path plus the current issue / PR evidence trail.

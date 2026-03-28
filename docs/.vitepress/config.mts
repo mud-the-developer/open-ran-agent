@@ -55,7 +55,9 @@ export default defineConfig({
             { text: "11. Control State And Artifact Retention", link: "/architecture/11-control-state-and-artifact-retention" },
             { text: "12. Target Host Deployment", link: "/architecture/12-target-host-deployment" },
             { text: "13. OCUDU-Inspired Ops Profiles", link: "/architecture/13-ocudu-inspired-ops-profiles" },
-            { text: "14. Debug And Evidence Workflow", link: "/architecture/14-debug-and-evidence-workflow" }
+            { text: "14. Debug And Evidence Workflow", link: "/architecture/14-debug-and-evidence-workflow" },
+            { text: "15. Production Control, Evidence, And Interoperability Lanes", link: "/architecture/15-production-control-evidence-and-interoperability-lanes" },
+            { text: "16. OAI RFsim + UE Sim Dashboard Walkthrough", link: "/architecture/16-oai-rfsim-ue-sim-dashboard-walkthrough" }
           ]
         }
       ],

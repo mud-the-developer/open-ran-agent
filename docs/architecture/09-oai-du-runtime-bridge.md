@@ -217,6 +217,11 @@ the dashboard reads the latest repo-local OAI observe artifact for each
 `cell_group` so operators can inspect the split lane without starting from raw
 Docker logs.
 
+For the reviewer-facing Pages walkthrough that stitches these commands, the
+dashboard surface, the checked-in simulation review bundle, and the linked
+Linear / PR evidence together, see
+[16. OAI RFsim + UE Sim Dashboard Walkthrough](./16-oai-rfsim-ue-sim-dashboard-walkthrough.md).
+
 ## Repo-local observability surface
 
 `bin/ran-dashboard` is the operator-facing surface for the repo-local split
