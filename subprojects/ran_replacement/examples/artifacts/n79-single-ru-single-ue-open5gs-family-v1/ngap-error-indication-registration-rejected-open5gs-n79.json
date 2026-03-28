@@ -1,0 +1,20 @@
+{
+  "procedure": "Error Indication",
+  "claim_scope": "bounded_recovery_claim",
+  "target_profile": "n79_single_ru_single_ue_lab_v1",
+  "incident_id": "inc-ran-repl-registration-001",
+  "comparison_scope": "registration",
+  "observed_after": "Downlink NAS Transport",
+  "cleanup_after": "UE Context Release",
+  "summary": "The bounded registration-rejection lane preserves an explicit NGAP Error Indication after the declared Open5GS core rejection and before cleanup completes.",
+  "evidence_refs": [
+    "subprojects/ran_replacement/examples/status/observe-registration-rejected-open5gs-n79.status.json",
+    "subprojects/ran_replacement/examples/status/capture-artifacts-registration-rejected-open5gs-n79.status.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/compare-report-registration-rejected-open5gs-n79.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/rollback-evidence-registration-rejected-open5gs-n79.json"
+  ],
+  "non_claims": [
+    "This does not claim broad NGAP failure-handling parity outside the declared registration-rejection lane.",
+    "This does not imply paging, handover, or path-switch support."
+  ]
+}

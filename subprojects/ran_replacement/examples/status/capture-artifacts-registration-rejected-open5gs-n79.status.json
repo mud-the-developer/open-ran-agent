@@ -42,7 +42,8 @@
     "artifacts/replacement/capture/registration-rejected/core.log",
     "artifacts/replacement/capture/registration-rejected/debug-pack.txt",
     "artifacts/replacement/capture/registration-rejected/compare-report.json",
-    "artifacts/replacement/capture/registration-rejected/ue-context-release.json"
+    "artifacts/replacement/capture/registration-rejected/ue-context-release.json",
+    "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json"
   ],
   "suggested_next": [
     "inspect the compare report for NGAP and subscriber mismatch",
@@ -146,6 +147,12 @@
         "detail": "downlink NAS transport returned a registration rejection from the real Open5GS core"
       },
       {
+        "name": "Error Indication",
+        "status": "ok",
+        "evidence_ref": "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-error-indication-registration-rejected-open5gs-n79.json",
+        "detail": "bounded recovery claim preserves an explicit NGAP error indication after the declared core rejection and before cleanup completes"
+      },
+      {
         "name": "UE Context Release",
         "status": "ok",
         "evidence_ref": "artifacts/replacement/capture/registration-rejected/ue-context-release.json",
@@ -184,7 +191,7 @@
       "Downlink NAS Transport",
       "UE Context Release"
     ],
-    "optional_procedures": [
+    "bounded_claimed_procedures": [
       "Error Indication",
       "Reset"
     ],
@@ -205,7 +212,7 @@
         "Downlink NAS Transport",
         "UE Context Release"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Error Indication",
         "Reset"
       ],

@@ -8,7 +8,7 @@ This note records the milestone-1 NGAP subset for the `n79` replacement track.
 The baseline assumption is a real external `Open5GS` core, a real RU, and a real UE.
 
 The matrix is intentionally small.
-It is meant to tell the team which NGAP procedures are required for milestone 1, which are only optional helpers, and which are deferred until after the initial attach + ping path is proven.
+It is meant to tell the team which NGAP procedures are required for milestone 1, which are explicitly claimed only on bounded recovery lanes, and which remain deferred until after the initial attach + ping path is proven.
 
 ## Matrix
 
@@ -22,13 +22,13 @@ It is meant to tell the team which NGAP procedures are required for milestone 1,
 | `Paging` | Wake a UE that is not actively signaling. | deferred | None in milestone 1 unless a later acceptance case requires it. | Low. Not needed for the initial attach + ping path. |
 | `Handover Preparation` | Transfer UE control between access nodes. | deferred | None in milestone 1. | Low. Outside the initial single-cell attach scope. |
 | `Path Switch Request` | Move user-plane anchoring after mobility events. | deferred | None in milestone 1. | Low. Only matters once handover is in scope. |
-| `Error Indication` | Report recoverable NG control-plane errors to the peer. | optional | Error traces may appear in captures, but the milestone does not depend on initiating this procedure. | Medium. Useful for diagnosis, but not a success criterion. |
-| `Reset` | Force a broad control-plane state reset. | optional | Should appear only as an explicit recovery action or a lab cleanup artifact. | High, but only as an escape hatch. It is not part of the happy path. |
+| `Error Indication` | Report recoverable NG control-plane errors to the peer. | bounded recovery claim | `observe` and `capture-artifacts` registration-rejection lanes must preserve explicit `Error Indication` proof in repo-visible status and compare-report surfaces. | Medium. Claimed only for the bounded failure-review lane, not for broad NGAP parity. |
+| `Reset` | Force a broad control-plane state reset. | bounded recovery claim | cutover review and rollback lanes must preserve explicit `Reset` proof in rollback-status, rollback-evidence, and post-rollback verification surfaces. | High. Claimed only as an operator-approved recovery action on the bounded lane. |
 
 ## Interpretation Rules
 
 - `required` means milestone 1 is not complete without the procedure working in the declared attach + ping flow.
-- `optional` means the procedure may appear in evidence or recovery, but milestone 1 must not depend on it.
+- `bounded recovery claim` means the procedure is explicitly supported only on named failure or rollback lanes and must not be used to imply full NGAP parity.
 - `deferred` means it is out of scope for milestone 1 and should not be counted as attach-path progress.
 
 ## Evidence Rules
@@ -49,4 +49,3 @@ If a required NGAP procedure fails, the evidence must show:
 - whether the failure was access, transport, or core rejection
 - whether `UE Context Release` completed
 - whether control returned to the declared rollback target
-
