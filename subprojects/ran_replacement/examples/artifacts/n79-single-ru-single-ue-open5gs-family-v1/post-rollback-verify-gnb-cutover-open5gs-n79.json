@@ -22,7 +22,7 @@
     "recovery_path_auditable"
   ],
   "restored_state": {
-    "summary": "Post-rollback verification confirms the declared oai_reference target is reviewable without SSH archaeology.",
+    "summary": "Post-rollback verification confirms the declared oai_reference target and the F1-C/E1AP release and re-establishment trail are reviewable without SSH archaeology.",
     "core_link_status": "ok",
     "release_status": "ok",
     "ru_status": "unknown"
@@ -56,10 +56,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -90,11 +91,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"

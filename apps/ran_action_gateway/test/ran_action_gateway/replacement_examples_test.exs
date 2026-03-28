@@ -106,6 +106,21 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert cutover_report["failure_class"] == "cutover_or_rollback_failure"
     assert cutover_report["comparison_scope"] == "cutover"
+    assert cutover_report["summary"] =~ "handover-adjacent refresh semantics"
+
+    assert Enum.any?(cutover_report["diff_summary"], fn line ->
+             String.contains?(line, "handover-adjacent refresh")
+           end)
+
+    assert "UE context re-establishment guard" in get_in(
+             cutover_report,
+             ["protocol_claims", "f1_c", "required_procedures"]
+           )
+
+    assert "Bearer context modification (single-lane handover-adjacent refresh)" in get_in(
+             cutover_report,
+             ["protocol_claims", "e1ap", "required_procedures"]
+           )
 
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in cutover_report[
              "evidence_refs"
@@ -136,6 +151,16 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
       assert get_in(status, ["ngap_subset", "standards_subset_ref"]) =~
                "06-ngap-and-registration-standards-subset.md"
+
+      assert "UE context re-establishment guard" in get_in(
+               status,
+               ["protocol_claims", "f1_c", "required_procedures"]
+             )
+
+      assert "Bearer context release" in get_in(
+               status,
+               ["protocol_claims", "e1ap", "required_procedures"]
+             )
     end)
   end
 
@@ -168,6 +193,21 @@ defmodule RanActionGateway.ReplacementExamplesTest do
     assert post_rollback_verify["restored_from"] == "replacement_primary"
     assert post_rollback_verify["rollback_target"] == "oai_reference"
     assert "post_rollback_verify_recorded" in post_rollback_verify["verification_checks"]
+
+    assert get_in(post_rollback_verify, ["restored_state", "summary"]) =~
+             "release and re-establishment trail"
+
+    cutover_evidence =
+      family_artifact("rollback-evidence-failed-cutover-open5gs-n79.json")
+      |> File.read!()
+      |> JSON.decode!()
+
+    assert cutover_evidence["operator_notes"] =~ "handover-adjacent refresh state"
+
+    assert "UE context modification (single-lane handover-adjacent refresh)" in get_in(
+             cutover_evidence,
+             ["protocol_claims", "f1_c", "required_procedures"]
+           )
 
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in post_rollback_verify[
              "evidence_refs"

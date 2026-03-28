@@ -2,7 +2,7 @@
   "change_id": "chg-ran-repl-capture-cutover-001",
   "incident_id": "inc-ran-repl-cutover-001",
   "rollback_target": "oai_reference",
-  "summary": "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane.",
+  "summary": "Capture preserved the failed replacement evidence bundle for rollback review, including explicit F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh semantics.",
   "target_profile": "n79_single_ru_single_ue_lab_v1",
   "conformance_claim": {
     "profile": "oai_visible_5g_standards_baseline_v1",
@@ -93,10 +93,11 @@
         "Configuration exchange",
         "Cell and serving-cell control",
         "UE context creation",
-        "UE context release"
+        "UE context release",
+        "UE context re-establishment guard",
+        "UE context modification (single-lane handover-adjacent refresh)"
       ],
       "optional_procedures": [
-        "UE context modification",
         "Reset-driven recovery"
       ],
       "deferred_procedures": [
@@ -127,11 +128,11 @@
       "required_procedures": [
         "Association and setup",
         "Bearer or activity-state coordination",
-        "Release and re-establishment"
+        "Bearer context release",
+        "Bearer context re-establishment",
+        "Bearer context modification (single-lane handover-adjacent refresh)"
       ],
-      "optional_procedures": [
-        "Bearer context modification"
-      ],
+      "optional_procedures": [],
       "deferred_procedures": [
         "Multi-CU-UP path re-route",
         "Handover bearer transfer"
@@ -157,9 +158,9 @@
     }
   },
   "diff_summary": [
-    "The captured evidence bundle preserves the mismatch that blocked or degraded the declared lane.",
-    "The rollback target remains explicit for replay and recovery.",
-    "The bounded Reset claim is explicit for the cutover rollback lane and does not imply broad NGAP recovery parity."
+    "The captured mismatch keeps F1-C UE-context release and re-establishment guardrails explicit on the declared lane.",
+    "The review bundle also keeps E1AP bearer release, re-establishment, and bounded handover-adjacent refresh explicit without implying full mobility support.",
+    "The rollback target remains explicit for replay and recovery."
   ],
   "evidence_refs": [
     "artifacts/captures/inc-ran-repl-cutover-001.json",

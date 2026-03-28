@@ -873,6 +873,7 @@ defmodule RanActionGateway.Runner do
       |> put_optional(:rollback_target, replacement_rollback_target(change))
       |> Map.put(:conformance_claim, replacement_conformance_claim(phase))
       |> Map.put(:core_endpoint, replacement_core_endpoint(replacement))
+      |> Map.put(:protocol_claims, replacement_protocol_claims(change))
       |> Map.put(:summary, replacement_summary(phase, change, base_status))
       |> Map.put(:gate_class, replacement_gate_class(phase, replacement_status))
       |> Map.put(:core_profile, replacement["core_profile"])
@@ -1167,6 +1168,20 @@ defmodule RanActionGateway.Runner do
     end
   end
 
+  defp replacement_protocol_claims(%Change{} = change) do
+    profile = replacement_target_profile_contract(change)
+    claims = profile["standards_subset"] || %{}
+
+    ngap_subset =
+      replacement_metadata(change)["ngap_subset"] || Map.get(claims, "ngap") || %{}
+
+    if claims == %{} do
+      if ngap_subset == %{}, do: %{}, else: %{"ngap" => ngap_subset}
+    else
+      Map.put(claims, "ngap", ngap_subset)
+    end
+  end
+
   defp replacement_declared_evidence_refs(%Change{} = change) do
     profile = replacement_target_profile_contract(change)
     overlay = replacement_target_profile_overlay(change)
@@ -1254,7 +1269,7 @@ defmodule RanActionGateway.Runner do
         "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
 
       phase == :observe and control_plane_scope?(change) ->
-        "Control-plane replacement observe confirms that association state diverged from the planned cutover lane."
+        "Control-plane replacement observe confirms that F1-C release and re-establishment guardrails plus E1AP bearer release, re-establishment, and bounded handover-adjacent refresh diverged from the planned cutover lane."
 
       true ->
         "#{phase |> Atom.to_string()} replacement #{target_role} status is #{status}"
@@ -1674,7 +1689,8 @@ defmodule RanActionGateway.Runner do
           replacement_declared_evidence_ref(change, :rollback, :observe, "rollback-evidence"),
         reason:
           if(control_plane_cutover_review?(change) or status == "failed",
-            do: "rollback is available but not yet executed",
+            do:
+              "rollback is available while F1-C/E1AP release and re-establishment remain under review",
             else: nil
           )
       })
@@ -1695,12 +1711,14 @@ defmodule RanActionGateway.Runner do
         |> maybe_put_control_plane_interface("f1_c", %{
           status: "degraded",
           evidence_ref: replacement_evidence_ref(:observe, change, "f1_c"),
-          reason: "association or configuration state diverged from the planned lane"
+          reason:
+            "UE-context release, re-establishment guardrails, or single-lane handover-adjacent refresh diverged from the planned F1-C lane"
         })
         |> maybe_put_control_plane_interface("e1ap", %{
           status: "degraded",
           evidence_ref: replacement_evidence_ref(:observe, change, "e1ap"),
-          reason: "bearer or activity-state coordination diverged from the compare report"
+          reason:
+            "bearer release, re-establishment, or single-lane handover-adjacent refresh diverged from the compare report"
         })
       end)
     else
@@ -1730,10 +1748,10 @@ defmodule RanActionGateway.Runner do
   defp control_plane_observe_reason(%Change{} = change, status) do
     cond do
       control_plane_cutover_review?(change) ->
-        "control-plane state is partially healthy but not ready for leave-running"
+        "control-plane release and re-establishment state is partially healthy but not ready for leave-running"
 
       status == "failed" ->
-        "control-plane association or coordination diverged from the planned lane"
+        "control-plane release, re-establishment, or coordination diverged from the planned lane"
 
       true ->
         nil
@@ -2137,7 +2155,7 @@ defmodule RanActionGateway.Runner do
             "Capture preserved the user-plane evidence bundle after ping failed on the declared route."
 
           true ->
-            "Capture preserved the failed replacement evidence bundle for rollback review on the declared lane."
+            "Capture preserved the failed replacement evidence bundle for rollback review, including explicit F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh semantics."
         end
       )
       |> Map.put(:gate_class, replacement_capture_gate_class(change, replacement))
@@ -2168,6 +2186,21 @@ defmodule RanActionGateway.Runner do
             "UE Context Release",
             "ok",
             "cleanup evidence remains explicit in the preserved review bundle"
+          ),
+          review_check(
+            "F1-C re-establishment guard",
+            "ok",
+            "F1-C cleanup and retry semantics remain explicit in the preserved review bundle"
+          ),
+          review_check(
+            "E1AP bearer re-establishment",
+            "ok",
+            "E1AP bearer recovery semantics remain explicit in the preserved review bundle"
+          ),
+          review_check(
+            "handover_adjacent_refresh_bounded",
+            "ok",
+            "the preserved bundle keeps the first handover-adjacent refresh bounded to the declared single-lane profile"
           )
         ])
       )
@@ -2181,7 +2214,7 @@ defmodule RanActionGateway.Runner do
             :capture_artifacts,
             "rollback-evidence"
           ),
-          "rollback is available but has not yet been executed"
+          "rollback is available while F1-C/E1AP release and re-establishment remain under review"
         )
       )
     end
@@ -2227,6 +2260,21 @@ defmodule RanActionGateway.Runner do
           "UE Context Release",
           "ok",
           "cleanup evidence remains explicit after rollback"
+        ),
+        review_check(
+          "F1-C re-establishment guard",
+          "ok",
+          "F1-C cleanup and retry semantics remain explicit after rollback"
+        ),
+        review_check(
+          "E1AP bearer re-establishment",
+          "ok",
+          "E1AP bearer recovery semantics remain explicit after rollback"
+        ),
+        review_check(
+          "handover_adjacent_refresh_bounded",
+          "ok",
+          "the bounded handover-adjacent refresh stays explicit without implying mobility transfer"
         )
       ])
     )
@@ -2472,9 +2520,9 @@ defmodule RanActionGateway.Runner do
     target = rollback_target || "rollback"
 
     if is_binary(restored_from) and restored_from != "" and restored_from != target do
-      "Rollback returned the #{target_role} lane from #{restored_from} to the declared #{target} target after replacement review failed."
+      "Rollback returned the #{target_role} lane from #{restored_from} to the declared #{target} target after replacement review failed, keeping the F1-C/E1AP release and re-establishment trail explicit."
     else
-      "Rollback returned the #{target_role} lane to the declared #{target} target after replacement review failed."
+      "Rollback returned the #{target_role} lane to the declared #{target} target after replacement review failed, keeping the F1-C/E1AP release and re-establishment trail explicit."
     end
   end
 
@@ -3495,6 +3543,9 @@ defmodule RanActionGateway.Runner do
       failure_class: failure_class,
       ngap_subset:
         payload[:ngap_subset] || payload["ngap_subset"] || replacement["ngap_subset"] || %{},
+      protocol_claims:
+        payload[:protocol_claims] || payload["protocol_claims"] ||
+          replacement_protocol_claims(change),
       diff_summary: replacement_diff_summary(gate_class, failure_class),
       evidence_refs: replacement_report_evidence_refs(payload, change, phase),
       rollback_target:
@@ -3533,6 +3584,9 @@ defmodule RanActionGateway.Runner do
       triggering_gate: gate_class,
       failure_class: failure_class,
       ngap_subset: ngap_subset,
+      protocol_claims:
+        payload[:protocol_claims] || payload["protocol_claims"] ||
+          replacement_protocol_claims(change),
       pre_rollback_state: %{
         compare_report_ref: compare_report_path,
         gate_class: gate_class,
@@ -3562,9 +3616,9 @@ defmodule RanActionGateway.Runner do
       operator_notes:
         if(phase == :rollback,
           do:
-            "Rollback preserved a reviewable recovery path and kept the reference lane explicit.",
+            "Rollback preserved a reviewable recovery path and kept the F1-C/E1AP release, re-establishment, and bounded handover-adjacent refresh trail explicit.",
           else:
-            "Rollback was not executed, but the captured evidence preserves the explicit recovery path."
+            "Rollback was not executed, but the captured evidence preserves the explicit F1-C/E1AP recovery trail, including the bounded handover-adjacent refresh state."
         )
     }
   end
@@ -3611,11 +3665,14 @@ defmodule RanActionGateway.Runner do
       verification_checks: replacement_recovery_checks(:rollback, "pass"),
       restored_state: %{
         summary:
-          "Post-rollback verification confirms the declared #{rollback_target} target is reviewable without SSH archaeology.",
+          "Post-rollback verification confirms the declared #{rollback_target} target and the F1-C/E1AP release and re-establishment trail are reviewable without SSH archaeology.",
         release_status: status_label(release_status),
         core_link_status: status_label(core_link_status),
         ru_status: status_label(ru_status)
       },
+      protocol_claims:
+        payload[:protocol_claims] || payload["protocol_claims"] ||
+          replacement_protocol_claims(change),
       evidence_refs:
         ([release_status, core_link_status, ru_status] ++ Map.values(interface_status))
         |> Enum.map(fn
@@ -3705,6 +3762,14 @@ defmodule RanActionGateway.Runner do
     ]
   end
 
+  defp replacement_diff_summary(_gate_class, "cutover_or_rollback_failure") do
+    [
+      "The captured mismatch keeps F1-C UE-context release and re-establishment guardrails explicit on the declared lane.",
+      "The review bundle also keeps E1AP bearer release, re-establishment, and bounded handover-adjacent refresh explicit without implying full mobility support.",
+      "The rollback target remains explicit for replay and recovery."
+    ]
+  end
+
   defp replacement_diff_summary(_gate_class, _failure_class) do
     [
       "The captured evidence bundle preserves the mismatch that blocked or degraded the declared lane.",
@@ -3742,14 +3807,15 @@ defmodule RanActionGateway.Runner do
 
   defp replacement_rollback_reason(:rollback, _gate_class),
     do:
-      "The captured mismatch made the declared rollback target safer than leaving the changed lane active."
+      "The captured mismatch made the declared rollback target safer than leaving the F1-C/E1AP release and re-establishment drift active."
 
   defp replacement_rollback_reason(_phase, "pass"),
     do:
       "Rollback was not required because the declared lane stayed within the live-lab proof envelope."
 
   defp replacement_rollback_reason(_phase, _gate_class),
-    do: "The captured mismatch keeps rollback explicit until the lane is corrected."
+    do:
+      "The captured mismatch keeps rollback explicit until the F1-C/E1AP release and re-establishment trail is corrected."
 
   defp replacement_recovery_status(:rollback, _gate_class), do: "ok"
   defp replacement_recovery_status(_phase, "pass"), do: "ok"

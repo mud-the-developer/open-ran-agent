@@ -67,6 +67,7 @@ Minimum sections:
 - The report must say which interface family is being compared.
 - The report must carry the declared protocol claim set for the same single-lane profile whenever it compares interface-facing evidence.
 - When a bounded NGAP recovery claim is promoted, the report must name the claimed procedure and include its proof reference in `evidence_refs`.
+- When an `F1-C` or `E1AP` release, re-establishment, or bounded handover-adjacent claim is promoted, the report must name the claimed transition and include its proof reference in `evidence_refs`.
 - The report must distinguish `expected` from `observed`.
 - The report must call out whether a mismatch is functional, procedural, or
   evidence-related.
@@ -107,6 +108,7 @@ operator memory.
   decision.
 - The rollback evidence must preserve the same protocol claim set and failure class that justified the decision.
 - When rollback relies on a bounded NGAP recovery claim, the rollback evidence must name the claimed procedure and preserve the proof reference.
+- When rollback relies on `F1-C` or `E1AP` release, re-establishment, or bounded handover-adjacent semantics, the rollback evidence must keep those named transitions explicit enough for replay review.
 - The rollback evidence must show whether the rollback target was restored
   cleanly.
 - The rollback evidence must not rely on implicit operator memory.
@@ -139,12 +141,15 @@ Compare:
 - CU-CP and DU association state
 - setup or re-establishment state
 - configuration acceptance state
-- release state versus rollback expectations
+- UE context release state versus rollback expectations
+- re-establishment guard state that explains whether another single-lane retry is safe
+- single-lane handover-adjacent context refresh state without implying source-target transfer
 
 Rollback:
 
 - note whether the control-plane association returned to the rollback target
 - note whether pending UE context state was cleared or retained by design
+- note whether the release and re-establishment trail stayed explicit enough for another bounded retry
 
 ### `E1AP`
 
@@ -153,12 +158,14 @@ Compare:
 - CU-CP and CU-UP association state
 - setup or re-establishment state
 - bearer or activity coordination state
-- release state versus rollback expectations
+- bearer release and re-establishment state versus rollback expectations
+- single-lane handover-adjacent bearer refresh state without implying mobility transfer
 
 Rollback:
 
 - note whether CU-UP coordination returned to the rollback target
 - note whether user-plane coordination can be retried safely
+- note whether the bounded bearer refresh trail stayed explicit without implying full mobility support
 
 ### `F1-U`
 
