@@ -63,6 +63,7 @@ Bootstrap artifact naming remains deterministic and append-only by reference id.
 - change-scoped plans and state:
   - `artifacts/plans/<change_id>.json`
   - `artifacts/changes/<change_id>.json`
+  - `artifacts/observations/<change_id-or-incident_id>.json`
   - `artifacts/verify/<change_id>.json`
   - `artifacts/rollback_plans/<change_id>.json`
   - `artifacts/approvals/<change_id>-<command>.json`

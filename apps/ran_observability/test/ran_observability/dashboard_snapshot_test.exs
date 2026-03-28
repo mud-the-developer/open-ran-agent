@@ -159,6 +159,7 @@ defmodule RanObservability.DashboardSnapshotTest do
     skills = Path.join(tmp_dir, "skills")
 
     File.mkdir_p!(Path.join(artifacts, "plans"))
+    File.mkdir_p!(Path.join(artifacts, "observations"))
     File.mkdir_p!(Path.join(artifacts, "verify"))
     File.mkdir_p!(Path.join(artifacts, "runtime/demo"))
     File.mkdir_p!(Path.join(artifacts, "releases/bootstrap-ui-001"))
@@ -171,6 +172,91 @@ defmodule RanObservability.DashboardSnapshotTest do
 
     File.mkdir_p!(Path.join(skills, "ran-observe/scripts"))
     File.mkdir_p!(Path.join(skills, "ran-observe/references"))
+
+    File.write!(
+      Path.join(artifacts, "observations/chg-oai-observe-001.json"),
+      JSON.encode!(%{
+        "status" => "observed",
+        "command" => "observe",
+        "scope" => "cell_group",
+        "cell_group" => "cg-001",
+        "change_id" => "chg-oai-observe-001",
+        "summary" => "repo-local OAI observe captured runtime state",
+        "runtime" => %{
+          "lane_id" => "oai_split_rfsim_repo_local_v1",
+          "runtime_mode" => "docker_compose_rfsim_f1",
+          "project_name" => "ran-oai-du-local-rfsim",
+          "runtime_state" => "running",
+          "service_count" => 3,
+          "running_service_count" => 3,
+          "healthy_service_count" => 3,
+          "containers" => [
+            %{
+              "name" => "ran-oai-du-local-rfsim-cucp",
+              "role" => "cucp",
+              "service_name" => "oai-cucp",
+              "running" => true,
+              "status" => "running",
+              "health" => "healthy",
+              "log_probe_status" => "ok",
+              "log_tail_line_count" => 1,
+              "token_counts" => %{"cucp_f1_setup_response_count" => 1}
+            },
+            %{
+              "name" => "ran-oai-du-local-rfsim-cuup",
+              "role" => "cuup",
+              "service_name" => "oai-cuup",
+              "running" => true,
+              "status" => "running",
+              "health" => "healthy",
+              "log_probe_status" => "ok",
+              "log_tail_line_count" => 1,
+              "token_counts" => %{"cuup_e1_established_count" => 1}
+            },
+            %{
+              "name" => "ran-oai-du-local-rfsim-du",
+              "role" => "du",
+              "service_name" => "oai-du",
+              "running" => true,
+              "status" => "running",
+              "health" => "healthy",
+              "log_probe_status" => "ok",
+              "log_tail_line_count" => 2,
+              "token_counts" => %{
+                "du_frame_slot_count" => 2,
+                "du_f1_setup_response_count" => 0,
+                "du_rfsim_wait_count" => 0
+              }
+            }
+          ],
+          "token_metrics" => [
+            %{
+              "id" => "du_frame_slot_count",
+              "label" => "DU Frame.Slot tokens",
+              "count" => 2,
+              "role" => "du",
+              "container_name" => "ran-oai-du-local-rfsim-du",
+              "source_kind" => "docker_logs_tail",
+              "source_pattern" => "Frame.Slot",
+              "source_tail_lines" => 2000,
+              "meaning" => "Counts DU MAC slot-loop tokens in the current Docker log tail."
+            },
+            %{
+              "id" => "cucp_f1_setup_response_count",
+              "label" => "CU-CP F1 setup responses",
+              "count" => 1,
+              "role" => "cucp",
+              "container_name" => "ran-oai-du-local-rfsim-cucp",
+              "source_kind" => "docker_logs_tail",
+              "source_pattern" => "sending F1 Setup Response",
+              "source_tail_lines" => 2000,
+              "meaning" =>
+                "Counts CU-CP log tokens proving the split control plane answered the DU F1 setup."
+            }
+          ]
+        }
+      })
+    )
 
     File.write!(
       Path.join(artifacts, "plans/chg-ui-001.json"),
@@ -368,6 +454,7 @@ defmodule RanObservability.DashboardSnapshotTest do
 
     assert snapshot.overview.ran_runtime_count == 1
     assert snapshot.overview.agent_runtime_count == 1
+    assert snapshot.overview.oai_observation_count == 1
     assert snapshot.overview.recent_bundle_count == 1
     assert snapshot.overview.remote_run_count == 1
     assert snapshot.overview.install_run_count == 2
@@ -460,6 +547,15 @@ defmodule RanObservability.DashboardSnapshotTest do
 
     assert [%{name: "runtime.log"}] = snapshot.runtime.evidence
     assert [%{bundle_id: "bootstrap-ui-001"}] = snapshot.release.recent_bundles
+    assert [%{cell_group: "cg-001", runtime_state: "running"}] = snapshot.ran.oai_repo_local_lanes
+
+    assert Enum.any?(snapshot.ran.cell_groups, fn group ->
+             group.id == "cg-001" and
+               group.oai_observation.project_name == "ran-oai-du-local-rfsim" and
+               group.oai_observation.runtime_state == "running" and
+               group.oai_observation.token_metric_count == 2 and
+               length(group.oai_observation.containers) == 3
+           end)
 
     assert [%{host: "ran-lab-01", command: "precheck", fetch_status: "fetched"}] =
              snapshot.deploy.recent_remote_runs

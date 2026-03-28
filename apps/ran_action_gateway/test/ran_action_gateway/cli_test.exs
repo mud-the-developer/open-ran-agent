@@ -1187,6 +1187,7 @@ defmodule RanActionGateway.CLITest do
       precheck_payload = load.("precheck-oai-du-rfsim-local.json") |> JSON.encode!()
       plan_payload = load.("plan-oai-du-rfsim-local.json") |> JSON.encode!()
       apply_payload = load.("apply-oai-du-rfsim-local.json") |> JSON.encode!()
+      observe_payload = load.("observe-oai-du-rfsim-local.json") |> JSON.encode!()
       verify_payload = load.("verify-oai-du-rfsim-local.json") |> JSON.encode!()
       rollback_payload = load.("rollback-oai-du-rfsim-local.json") |> JSON.encode!()
 
@@ -1208,6 +1209,33 @@ defmodule RanActionGateway.CLITest do
       assert compose_body =~ "--MACRLCs.[0].remote_n_address 10.213.72.2"
 
       assert {:ok, %{status: "applied"}} = CLI.run(["apply", "--json", apply_payload])
+
+      assert {:ok, observe} = CLI.run(["observe", "--json", observe_payload])
+      assert observe.status == "observed"
+      assert observe.runtime.lane_id == "oai_split_rfsim_repo_local_v1"
+      assert observe.runtime.runtime_state == "running"
+      assert observe.runtime.service_count == 3
+      assert observe.runtime.running_service_count == 3
+      assert observe.runtime.healthy_service_count == 3
+
+      assert Enum.any?(observe.runtime.token_metrics, fn metric ->
+               metric["id"] == "du_frame_slot_count" and metric["count"] == 2
+             end)
+
+      assert Enum.any?(observe.runtime.token_metrics, fn metric ->
+               metric["id"] == "cucp_f1_setup_response_count" and metric["count"] == 1
+             end)
+
+      assert Enum.any?(observe.runtime.token_metrics, fn metric ->
+               metric["id"] == "cuup_e1_established_count" and metric["count"] == 1
+             end)
+
+      assert File.exists?(Store.observation_path("chg-oai-du-001"))
+
+      assert {:ok, persisted_observe} = Store.read_json(Store.observation_path("chg-oai-du-001"))
+      assert get_in(persisted_observe, ["runtime", "lane_id"]) == "oai_split_rfsim_repo_local_v1"
+      assert get_in(persisted_observe, ["runtime", "runtime_state"]) == "running"
+      assert get_in(persisted_observe, ["runtime", "service_count"]) == 3
 
       assert {:ok, verify} = CLI.run(["verify", "--json", verify_payload])
       assert verify.status == "verified"

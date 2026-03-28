@@ -8,6 +8,7 @@ defmodule RanActionGateway.Store do
     prechecks
     plans
     changes
+    observations
     verify
     captures
     approvals
@@ -42,6 +43,9 @@ defmodule RanActionGateway.Store do
   @spec change_state_path(String.t()) :: String.t()
   def change_state_path(change_id),
     do: Path.join([@artifact_root, "changes", "#{change_id}.json"])
+
+  @spec observation_path(String.t()) :: String.t()
+  def observation_path(ref), do: Path.join([@artifact_root, "observations", "#{ref}.json"])
 
   @spec verify_path(String.t()) :: String.t()
   def verify_path(change_id), do: Path.join([@artifact_root, "verify", "#{change_id}.json"])

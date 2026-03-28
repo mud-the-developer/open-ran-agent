@@ -211,9 +211,12 @@ function groupContainersForMission(data, cellGroup) {
     return data.runtime.containers || [];
   }
 
+  const projectName = currentOaiObservation(cellGroup)?.project_name;
+
   return (data.runtime.containers || []).filter((container) => {
     const haystack = `${container.name} ${container.compose_project || ""}`.toLowerCase();
-    return haystack.includes(cellGroup.id.toLowerCase());
+    return haystack.includes(cellGroup.id.toLowerCase())
+      || (projectName && container.compose_project === projectName);
   });
 }
 
@@ -263,6 +266,25 @@ function missionRuntimeCount(data, cellGroup) {
   return groupContainersForMission(data, cellGroup).length;
 }
 
+function currentOaiObservation(cellGroup) {
+  return cellGroup?.oai_observation || null;
+}
+
+function roleLabel(role) {
+  switch (role) {
+    case "du":
+      return "DU";
+    case "cucp":
+      return "CU-CP";
+    case "cuup":
+      return "CU-UP";
+    case "ue":
+      return "UE";
+    default:
+      return role || "service";
+  }
+}
+
 function renderMissionList(data, cellGroup) {
   const groups = data.ran.cell_groups || [];
 
@@ -279,6 +301,7 @@ function renderMissionList(data, cellGroup) {
           <div class="mission-meta">${escapeHtml(group.backend)} / ${escapeHtml(group.scheduler)}</div>
           <div class="mission-meta">freeze ${escapeHtml(group.control_state?.attach_freeze?.status || "inactive")} / drain ${escapeHtml(group.control_state?.drain?.status || "idle")}</div>
           <div class="mission-meta">${missionRuntimeCount(data, group)} linked runtime surfaces</div>
+          <div class="mission-meta">repo-local OAI observe ${escapeHtml(currentOaiObservation(group)?.runtime_state || "not captured")}</div>
         </button>
       `
     )
@@ -335,6 +358,8 @@ function renderTopbar(data, cellGroup) {
 }
 
 function renderBrief(data, cellGroup) {
+  const observe = currentOaiObservation(cellGroup);
+
   byId("brief-title").textContent = cellGroup
     ? `${cellGroup.id} mission orchestration`
     : "Mission orchestration";
@@ -351,12 +376,16 @@ function renderBrief(data, cellGroup) {
     data.ran.topology_source
       ? `Topology source is ${data.ran.topology_source}.`
       : "Topology source is the repo default config.",
+    observe
+      ? `Latest repo-local OAI observe is ${observe.runtime_state} with ${observe.running_service_count}/${observe.service_count} services running and ${observe.token_metric_count} documented token counters.`
+      : "No repo-local OAI observe artifact has been captured yet for the focused mission.",
     cellGroup
       ? `Focused backend is ${cellGroup.backend} with failover to ${cellGroup.failover_targets.join(", ") || "none"}.`
       : "No focused cell group is selected."
   ].join(" ");
 
   const metrics = [
+    ["OAI Lanes", data.overview.oai_observation_count || 0],
     ["RAN Runtime", data.overview.ran_runtime_count],
     ["Agent Mesh", data.overview.agent_runtime_count],
     ["Healthy", data.overview.healthy_runtime_count],
@@ -368,6 +397,14 @@ function renderBrief(data, cellGroup) {
     ["Debug Failures", data.overview.debug_failure_count || 0],
     ["Prune", data.overview.prune_candidate_count || 0]
   ];
+
+  if (observe) {
+    metrics.unshift(
+      ["OAI Services", observe.service_count],
+      ["OAI Healthy", observe.healthy_service_count],
+      ["OAI Tokens", observe.token_metric_count]
+    );
+  }
 
   byId("brief-metrics").innerHTML = metrics
     .map(
@@ -491,6 +528,7 @@ function renderFocusSummary(data, cellGroup, focusedRun, focusedContainer) {
   const target = byId("focus-summary");
   const nativeContractRun = findFocusedNativeContract(data, focusedRun);
   const nativeContract = nativeContractRun?.native_contract || null;
+  const observe = currentOaiObservation(cellGroup);
 
   if (!cellGroup) {
     target.innerHTML = `<div class="empty">No focused mission.</div>`;
@@ -525,6 +563,8 @@ function renderFocusSummary(data, cellGroup, focusedRun, focusedContainer) {
       <div class="inspector-row"><span>Failover</span><strong>${escapeHtml(cellGroup.failover_targets.join(", ") || "none")}</strong></div>
       <div class="inspector-row"><span>Attach freeze</span><strong>${escapeHtml(cellGroup.control_state?.attach_freeze?.status || "inactive")}</strong></div>
       <div class="inspector-row"><span>Drain</span><strong>${escapeHtml(cellGroup.control_state?.drain?.status || "idle")}</strong></div>
+      <div class="inspector-row"><span>OAI observe</span><strong>${escapeHtml(observe?.runtime_state || "not captured")}</strong></div>
+      <div class="inspector-row"><span>OAI project</span><strong>${escapeHtml(observe?.project_name || "n/a")}</strong></div>
       <div class="inspector-row"><span>Contract worker</span><strong>${escapeHtml(nativeContract?.worker_kind || "n/a")}</strong></div>
       <div class="inspector-row"><span>Contract transport</span><strong>${escapeHtml(nativeContract?.transport_worker || "n/a")}</strong></div>
       <div class="inspector-row"><span>Contract lane</span><strong>${escapeHtml(nativeContract?.execution_lane || "n/a")}</strong></div>
@@ -716,6 +756,60 @@ function renderNativeContractPanel(focusedRun) {
           `
         )
         .join("")}
+    </div>
+  `;
+}
+
+function renderOaiObservationPanel(cellGroup) {
+  const target = byId("oai-panel");
+  const observe = currentOaiObservation(cellGroup);
+
+  if (!observe) {
+    target.innerHTML = `<div class="empty">No repo-local OAI observe artifact has been captured for the focused mission.</div>`;
+    return;
+  }
+
+  const containerRows = (observe.containers || [])
+    .map((container) => `
+      <div class="inspector-row">
+        <span>${escapeHtml(roleLabel(container.role))}</span>
+        <strong>${escapeHtml(`${container.status || "unknown"} / ${container.health || "n/a"} / logs ${container.log_probe_status || "n/a"}`)}</strong>
+      </div>
+    `)
+    .join("");
+
+  const metricNotes = (observe.token_metrics || [])
+    .map(
+      (metric) => `
+        <div class="lane-note">
+          ${escapeHtml(`${metric.label}: ${metric.count} :: ${metric.meaning} [${roleLabel(metric.role)} / ${metric.container_name} / token "${metric.source_pattern}"]`)}
+        </div>
+      `
+    )
+    .join("");
+
+  target.innerHTML = `
+    <div class="section-kicker">Repo-local OAI Observe</div>
+    <h4>${escapeHtml(observe.project_name || observe.lane_id || "oai observe")}</h4>
+    <div class="inspector-meta">${escapeHtml(`${observe.runtime_state} / ${observe.runtime_mode || "n/a"} / ${observe.updated_at}`)}</div>
+    <div class="focus-tags">
+      <span class="runtime-tag">${escapeHtml(observe.lane_id || "oai_split_rfsim_repo_local_v1")}</span>
+      <span class="runtime-tag">${escapeHtml(`${observe.running_service_count}/${observe.service_count} running`)}</span>
+      <span class="runtime-tag">${escapeHtml(`${observe.healthy_service_count} healthy`)}</span>
+      <span class="runtime-tag">${escapeHtml(`${observe.token_metric_count} token metrics`)}</span>
+    </div>
+    <div class="inspector-rows">
+      <div class="inspector-row"><span>Artifact</span><strong>${escapeHtml(observe.path || "n/a")}</strong></div>
+      <div class="inspector-row"><span>Project</span><strong>${escapeHtml(observe.project_name || "n/a")}</strong></div>
+      <div class="inspector-row"><span>Lane</span><strong>${escapeHtml(observe.lane_id || "n/a")}</strong></div>
+      <div class="inspector-row"><span>Runtime state</span><strong>${escapeHtml(observe.runtime_state || "n/a")}</strong></div>
+      <div class="inspector-row"><span>Services running</span><strong>${escapeHtml(`${observe.running_service_count}/${observe.service_count}`)}</strong></div>
+      <div class="inspector-row"><span>Healthy services</span><strong>${escapeHtml(observe.healthy_service_count)}</strong></div>
+      ${containerRows}
+    </div>
+    <div class="section-kicker">Token Metrics</div>
+    <div class="lane-list">
+      ${metricNotes || '<div class="lane-note">No token counters were captured in the current observe artifact.</div>'}
     </div>
   `;
 }
@@ -1393,6 +1487,7 @@ function render(snapshot) {
   renderFocusSummary(snapshot, cellGroup, focusedRun, focusedContainer);
   renderPolicyPanel(snapshot);
   renderNativeContractPanel(focusedRun);
+  renderOaiObservationPanel(cellGroup);
   renderRunPanel(focusedRun);
   renderEvidencePanel(evidence);
   renderLanePanel(snapshot, focusedRun);
