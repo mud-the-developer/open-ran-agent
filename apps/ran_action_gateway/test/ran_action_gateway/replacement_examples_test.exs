@@ -111,6 +111,7 @@ defmodule RanActionGateway.ReplacementExamplesTest do
 
     assert cutover_report["failure_class"] == "cutover_or_rollback_failure"
     assert cutover_report["comparison_scope"] == "cutover"
+
     assert "subprojects/ran_replacement/examples/artifacts/n79-single-ru-single-ue-open5gs-family-v1/ngap-reset-failed-cutover-open5gs-n79.json" in cutover_report[
              "evidence_refs"
            ]
@@ -198,22 +199,26 @@ defmodule RanActionGateway.ReplacementExamplesTest do
       |> File.read!()
       |> JSON.decode!()
 
-    assert get_in(cutover_evidence, ["protocol_claims", "f1_c", "bounded_claimed_procedures"]) == [
-             "UE context modification",
-             "Reset-driven recovery"
-           ]
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_c", "bounded_claimed_procedures"]) ==
+             [
+               "UE context modification",
+               "Reset-driven recovery"
+             ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "e1ap", "bounded_claimed_procedures"]) == [
-             "Bearer context modification"
-           ]
+    assert get_in(cutover_evidence, ["protocol_claims", "e1ap", "bounded_claimed_procedures"]) ==
+             [
+               "Bearer context modification"
+             ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "f1_u", "bounded_claimed_procedures"]) == [
-             "Tunnel update"
-           ]
+    assert get_in(cutover_evidence, ["protocol_claims", "f1_u", "bounded_claimed_procedures"]) ==
+             [
+               "Tunnel update"
+             ]
 
-    assert get_in(cutover_evidence, ["protocol_claims", "gtpu", "bounded_claimed_procedures"]) == [
-             "Tunnel rebind"
-           ]
+    assert get_in(cutover_evidence, ["protocol_claims", "gtpu", "bounded_claimed_procedures"]) ==
+             [
+               "Tunnel rebind"
+             ]
 
     post_rollback_verify =
       family_artifact("post-rollback-verify-gnb-cutover-open5gs-n79.json")
