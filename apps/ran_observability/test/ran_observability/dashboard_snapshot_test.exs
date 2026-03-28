@@ -380,25 +380,71 @@ defmodule RanObservability.DashboardSnapshotTest do
             "standards_subset_ref" =>
               "subprojects/ran_replacement/notes/06-ngap-and-registration-standards-subset.md",
             "procedure_matrix_ref" =>
-              "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md"
+              "subprojects/ran_replacement/notes/09-ngap-procedure-support-matrix.md",
+            "required_procedures" => [
+              "NG Setup",
+              "Initial UE Message",
+              "Uplink NAS Transport",
+              "Downlink NAS Transport",
+              "UE Context Release"
+            ],
+            "bounded_claimed_procedures" => ["Error Indication", "Reset"],
+            "deferred_procedures" => [
+              "Paging",
+              "Handover Preparation",
+              "Path Switch Request"
+            ]
           },
           "f1_c" => %{
             "standards_subset_ref" =>
               "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
             "procedure_matrix_ref" =>
-              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
+            "required_procedures" => [
+              "Association and setup",
+              "Configuration exchange",
+              "Cell and serving-cell control",
+              "UE context creation",
+              "UE context release"
+            ],
+            "optional_procedures" => ["UE context modification", "Reset-driven recovery"],
+            "deferred_procedures" => [
+              "Handover context transfer",
+              "Multi-DU context coordination"
+            ]
           },
           "e1ap" => %{
             "standards_subset_ref" =>
               "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
             "procedure_matrix_ref" =>
-              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
+            "required_procedures" => [
+              "Association and setup",
+              "Bearer or activity-state coordination",
+              "Release and re-establishment"
+            ],
+            "optional_procedures" => ["Bearer context modification"],
+            "deferred_procedures" => [
+              "Multi-CU-UP path re-route",
+              "Handover bearer transfer"
+            ]
           },
           "f1_u" => %{
             "standards_subset_ref" =>
               "subprojects/ran_replacement/notes/07-f1-c-and-e1ap-standards-subset.md",
             "procedure_matrix_ref" =>
-              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md"
+              "subprojects/ran_replacement/notes/10-f1-c-and-e1ap-procedure-support-matrix.md",
+            "required_procedures" => [
+              "Bearer path establishment",
+              "Downlink forwarding path",
+              "Uplink forwarding path",
+              "Failure detection and rollback visibility"
+            ],
+            "optional_procedures" => ["Tunnel update"],
+            "deferred_procedures" => [
+              "Forwarding relocation during handover",
+              "Multi-UE forwarding fan-out"
+            ]
           }
         }
       })
@@ -732,12 +778,27 @@ defmodule RanObservability.DashboardSnapshotTest do
 
     assert Enum.any?(snapshot.activity.recent_changes, fn change ->
              change.id == "chg-bounded-standards-001" and
+               change.protocol_state.proof_scope == "real_lab_milestone_proof" and
                change.protocol_state.gate_class == "blocked" and
                change.protocol_state.evidence_tier == "milestone_proof" and
+               change.protocol_state.claim_summary.interface_count == 4 and
+               change.protocol_state.claim_summary.evidenced_interface_count == 4 and
+               change.protocol_state.claim_summary.required_total == 17 and
+               change.protocol_state.claim_summary.bounded_claim_total == 2 and
+               change.protocol_state.claim_summary.optional_total == 4 and
+               change.protocol_state.claim_summary.deferred_total == 9 and
                change.protocol_state.ngap_last_observed == "Downlink NAS Transport" and
                Enum.any?(change.protocol_state.interface_rows, fn row ->
                  row.id == "f1_c" and row.status == "ok" and
                    row.standards_subset_ref =~ "07-f1-c-and-e1ap-standards-subset.md"
+               end) and
+               Enum.any?(change.protocol_state.claim_rows, fn row ->
+                 row.id == "ngap" and row.status == "failed" and row.total_procedures == 10 and
+                   Enum.any?(row.categories, fn category ->
+                     category.id == "bounded_claim" and category.count == 2 and
+                       "Error Indication" in category.procedures and
+                       "Reset" in category.procedures
+                   end)
                end) and
                Enum.any?(change.protocol_state.plane_rows, fn row ->
                  row.id == "c_plane" and row.status == "failed"

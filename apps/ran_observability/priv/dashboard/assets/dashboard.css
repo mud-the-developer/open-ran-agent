@@ -679,6 +679,7 @@ input {
 
 .status-pill.inactive,
 .status-pill.idle,
+.status-pill.documented,
 .status-pill.unavailable,
 .status-pill.unknown {
   background: rgba(255, 255, 255, 0.08);
@@ -752,6 +753,14 @@ input {
   border-top: 0;
 }
 
+.protocol-section.simulation-proof {
+  border-top-color: rgba(10, 123, 120, 0.18);
+}
+
+.protocol-section.real-lab-proof {
+  border-top-color: rgba(220, 106, 49, 0.22);
+}
+
 .protocol-cards,
 .protocol-grid {
   display: flex;
@@ -769,6 +778,70 @@ input {
 
 .protocol-card.simulation {
   background: linear-gradient(180deg, rgba(10, 123, 120, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.claim-summary-grid {
+  margin-top: 4px;
+}
+
+.claim-summary-card {
+  background: linear-gradient(180deg, rgba(220, 106, 49, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.claim-card {
+  background: linear-gradient(180deg, rgba(220, 106, 49, 0.08), rgba(255, 255, 255, 0.04));
+}
+
+.claim-card[open] {
+  border-color: rgba(220, 106, 49, 0.28);
+}
+
+.claim-card-summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.claim-card-summary::-webkit-details-marker {
+  display: none;
+}
+
+.claim-card-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.claim-drilldown-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(246, 242, 234, 0.62);
+}
+
+.claim-category-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.claim-category-card {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.claim-procedure-list {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  color: rgba(246, 242, 234, 0.84);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.claim-procedure-list li + li {
+  margin-top: 4px;
 }
 
 .protocol-card .section-kicker,
