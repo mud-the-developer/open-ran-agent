@@ -249,7 +249,7 @@ If any one of those is missing, the result is not `pass`.
 `ranctl` should treat the gates as the control contract, not as incidental logs.
 
 - `ranctl precheck` computes the gate class and refuses unsafe cutover planning.
-- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must not imply support outside the required attach-path procedures plus the explicitly bounded `ngap_subset.bounded_claimed_procedures`.
+- `ranctl plan` may only describe mutation when `precheck` is not `blocked`, and it must keep the declared `required_procedures`, `bounded_claimed_procedures`, and `deferred_procedures` split explicit rather than implying broader parity.
 - `ranctl apply` requires the explicit approval gate already defined by the repo rules.
 - `ranctl verify` confirms whether the current state is still standards-correct or whether rollback is now the safer operator action.
 - `ranctl capture-artifacts` freezes the evidence that justified the decision.

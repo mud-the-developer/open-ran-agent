@@ -113,7 +113,7 @@
         "UE context creation",
         "UE context release"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "UE context modification",
         "Reset-driven recovery"
       ],
@@ -131,7 +131,7 @@
         "Uplink forwarding path",
         "Failure detection and rollback visibility"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel update"
       ],
       "deferred_procedures": [
@@ -147,7 +147,7 @@
         "Bearer or activity-state coordination",
         "Release and re-establishment"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Bearer context modification"
       ],
       "deferred_procedures": [
@@ -165,7 +165,7 @@
         "Uplink route forwarding",
         "Tunnel release and cleanup"
       ],
-      "optional_procedures": [
+      "bounded_claimed_procedures": [
         "Tunnel rebind"
       ],
       "deferred_procedures": [

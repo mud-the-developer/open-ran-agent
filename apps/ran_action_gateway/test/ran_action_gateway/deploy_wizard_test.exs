@@ -69,6 +69,18 @@ defmodule RanActionGateway.DeployWizardTest do
            ]) ==
              true
 
+    assert get_in(request_payload, [
+             "metadata",
+             "replacement",
+             "ngap_subset",
+             "bounded_claimed_procedures"
+           ]) == ["Error Indication", "Reset"]
+
+    refute Map.has_key?(
+             get_in(request_payload, ["metadata", "replacement", "ngap_subset"]),
+             "optional_procedures"
+           )
+
     assert {:ok, profile_body} = File.read(result.files.profile_path)
     assert {:ok, profile_payload} = JSON.decode(profile_body)
     assert profile_payload["name"] == "stable_ops"

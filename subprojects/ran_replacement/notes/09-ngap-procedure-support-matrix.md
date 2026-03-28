@@ -39,6 +39,7 @@ Evidence should stay aligned with the replacement track contract surface:
 - `plan` should state the target profile, the real `Open5GS` core endpoint, and the rollback target.
 - `verify` should show the last observed NGAP procedure and whether registration progressed.
 - `capture-artifacts` should preserve the attach trace, cleanup trace, and any rollback evidence.
+- compare-report and rollback surfaces should keep any claimed `Error Indication` or `Reset` behavior explicit when those procedures explain the safer operator action.
 
 ## Rollback Rule
 

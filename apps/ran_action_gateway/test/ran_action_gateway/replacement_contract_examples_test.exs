@@ -30,6 +30,25 @@ defmodule RanActionGateway.ReplacementContractExamplesTest do
              "support_matrix_delta_refs"
            ]
 
+    assert get_in(profile, ["standards_subset", "f1_c", "bounded_claimed_procedures"]) == [
+             "UE context modification",
+             "Reset-driven recovery"
+           ]
+
+    assert get_in(profile, ["standards_subset", "e1ap", "bounded_claimed_procedures"]) == [
+             "Bearer context modification"
+           ]
+
+    assert get_in(profile, ["standards_subset", "f1_u", "bounded_claimed_procedures"]) == [
+             "Tunnel update"
+           ]
+
+    assert get_in(profile, ["standards_subset", "gtpu", "bounded_claimed_procedures"]) == [
+             "Tunnel rebind"
+           ]
+
+    refute Map.has_key?(profile["standards_subset"]["ngap"], "optional_procedures")
+
     assert compatibility["compatibility_profile"] == "open5gs_public_surface_ran_visible_v1"
     assert compatibility["required_nf_set"] == ["AMF", "SMF", "UPF"]
     assert "NGAP" in compatibility["required_io_surfaces"]

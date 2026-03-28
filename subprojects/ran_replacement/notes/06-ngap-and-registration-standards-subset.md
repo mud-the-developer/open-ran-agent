@@ -54,6 +54,14 @@ The supported subset must be sufficient for:
 - session establishment handoff into the core
 - release handling after failure or rollback
 
+Milestone 1 also claims bounded support for:
+
+- `Error Indication`
+- `Reset`
+
+These are reviewable recovery or diagnosis claims, not happy-path pass gates.
+They must remain explicit in compare-report, status, and rollback evidence.
+
 ## Procedure Ordering Assumptions
 
 The replacement lane should treat the following as the expected ordering model for milestone 1:
